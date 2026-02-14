@@ -41,7 +41,8 @@
     "pretrained",
     "onnx",
     "ONNX",
-    "dtype"
+    "dtype",
+    "ffprobe"
   ],
   "ignorePaths": ["node_modules", "dist", "pnpm-lock.yaml", "*.json"]
 }

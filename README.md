@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Tests](https://img.shields.io/badge/Tests-171%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-172%20passing-brightgreen)](tests/)
 [![Playwright](https://img.shields.io/badge/Playwright-Browser%20Automation-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev)
 [![FFmpeg](https://img.shields.io/badge/FFmpeg-Video%20Rendering-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org)
 
@@ -23,11 +23,11 @@ records everything, and renders a production-ready MP4.
 
 ## Demo
 
-> A task manager app demo — generated entirely from a [70-line YAML spec](examples/todo-app.demo.yaml).
+> A task manager app demo with voice narration — generated entirely from a [YAML spec](examples/todo-app.demo.yaml).
 
 https://github.com/45ck/demo-machine/raw/master/examples/todo-app-demo.mp4
 
-Notice the **smooth cursor movement** to each target, **character-by-character typing** in the input field, and **deliberate pauses** between actions. This is not a screen recording — it's generated from code.
+Notice the **smooth cursor movement** to each target, **character-by-character typing**, **voice narration** that leads into each action, and **polished overlays** with fades. This is not a screen recording — it's generated from code.
 
 <details>
 <summary><b>View the YAML spec that produced this video</b></summary>
@@ -49,6 +49,7 @@ chapters:
     steps:
       - action: navigate
         url: "http://localhost:4567"
+        narration: "Welcome to TaskFlow, a simple and elegant task manager."
       - action: wait
         timeout: 1000
 
@@ -56,6 +57,7 @@ chapters:
     steps:
       - action: click
         selector: "#get-started"
+        narration: "Let's click Get Started to begin managing our tasks."
       - action: wait
         timeout: 800
 
@@ -66,6 +68,7 @@ chapters:
       - action: type
         selector: "#task-input"
         text: "Design new landing page"
+        narration: "We'll type in our first task — designing a new landing page."
       - action: click
         selector: "#add-btn"
       - action: wait
@@ -73,6 +76,7 @@ chapters:
       - action: type
         selector: "#task-input"
         text: "Review pull requests"
+        narration: "Next, let's add a task to review pull requests."
       - action: click
         selector: "#add-btn"
       - action: wait
@@ -80,6 +84,7 @@ chapters:
       - action: type
         selector: "#task-input"
         text: "Write unit tests"
+        narration: "And one more — writing unit tests."
       - action: click
         selector: "#add-btn"
       - action: wait
@@ -89,6 +94,7 @@ chapters:
     steps:
       - action: click
         selector: ".task-checkbox"
+        narration: "To mark a task as done, just click the checkbox."
       - action: wait
         timeout: 800
 
@@ -96,10 +102,12 @@ chapters:
     steps:
       - action: click
         selector: "[data-filter='completed']"
+        narration: "We can filter to see only completed tasks."
       - action: wait
         timeout: 800
       - action: click
         selector: "[data-filter='all']"
+        narration: "Or switch back to view all tasks at once."
       - action: wait
         timeout: 500
 ```
@@ -152,7 +160,6 @@ pnpm build
 ```bash
 node dist/cli.js run examples/todo-app.demo.yaml \
   --output ./output \
-  --no-narration \
   --no-headless
 ```
 
@@ -321,7 +328,7 @@ src/
   narration/          # TTS providers + subtitles
   redaction/          # Blur + secret scanning
   utils/              # Logger, process helpers
-tests/                # 171 tests across 13 suites
+tests/                # 172 tests across 13 suites
 examples/             # Example specs + demo apps
 ```
 
@@ -329,7 +336,7 @@ examples/             # Example specs + demo apps
 
 ```bash
 pnpm build          # Compile TypeScript
-pnpm test           # Run 171 tests
+pnpm test           # Run 172 tests
 pnpm lint           # ESLint
 pnpm format         # Prettier check
 pnpm typecheck      # tsc --noEmit
