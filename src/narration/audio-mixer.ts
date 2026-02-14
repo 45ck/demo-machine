@@ -2,16 +2,11 @@ import { spawn } from "node:child_process";
 import { writeFile, mkdir, rm, copyFile } from "node:fs/promises";
 import { join } from "node:path";
 import { createLogger } from "../utils/logger.js";
-import type { TTSProvider } from "./types.js";
+import type { TTSProvider, NarrationMixResult } from "./types.js";
 import type { NarrationSegment } from "./types.js";
+import { adjustTiming, computeNarrationDuration, type TimedSegment } from "./timing.js";
 
 const logger = createLogger("audio-mixer");
-
-interface TimedSegment {
-  path: string;
-  startMs: number;
-  durationMs: number;
-}
 
 function probeAudioDurationMs(filePath: string): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -49,7 +44,7 @@ export async function mixNarrationAudio(
   segments: NarrationSegment[],
   provider: TTSProvider,
   outputDir: string,
-): Promise<string | undefined> {
+): Promise<NarrationMixResult | undefined> {
   if (segments.length === 0) {
     logger.info("No narration segments found, skipping TTS");
     return undefined;
@@ -83,33 +78,20 @@ export async function mixNarrationAudio(
       await mixWithFfmpeg(segmentFiles, audioPath);
     }
 
+    const totalDurationMs = computeNarrationDuration(segmentFiles);
+
     logger.info("Narration synthesized");
-    return audioPath;
+    return {
+      audioPath,
+      segments: segmentFiles.map((sf, i) => ({
+        text: segments[i]!.text,
+        startMs: sf.startMs,
+        durationMs: sf.durationMs,
+      })),
+      totalDurationMs,
+    };
   } finally {
     await rm(tmpDir, { recursive: true, force: true });
-  }
-}
-
-const GAP_MS = 200;
-
-function adjustTiming(segmentFiles: TimedSegment[]): void {
-  // Shift narration to lead into the action: audio finishes when the action happens
-  for (let i = 0; i < segmentFiles.length; i++) {
-    const seg = segmentFiles[i]!;
-    const actionMs = seg.startMs;
-    seg.startMs = Math.max(0, actionMs - seg.durationMs);
-    logger.debug(
-      `Segment ${i + 1}: action at ${actionMs}ms, narration ${seg.durationMs}ms → starts at ${seg.startMs}ms`,
-    );
-  }
-
-  // Prevent overlap: if a segment starts before the previous one finishes, push it forward
-  for (let i = 1; i < segmentFiles.length; i++) {
-    const prev = segmentFiles[i - 1]!;
-    const prevEndMs = prev.startMs + prev.durationMs + GAP_MS;
-    if (segmentFiles[i]!.startMs < prevEndMs) {
-      segmentFiles[i]!.startMs = prevEndMs;
-    }
   }
 }
 
@@ -132,9 +114,13 @@ function mixWithFfmpeg(segmentFiles: TimedSegment[], audioPath: string): Promise
 
   return new Promise((resolve, reject) => {
     const proc = spawn("ffmpeg", args, { stdio: "pipe" });
+    const MAX_STDERR = 4096;
     let stderr = "";
     proc.stderr?.on("data", (chunk: Buffer) => {
       stderr += chunk.toString();
+      if (stderr.length > MAX_STDERR) {
+        stderr = stderr.slice(-MAX_STDERR);
+      }
     });
     proc.on("error", (err) => reject(new Error(`Failed to spawn ffmpeg: ${err.message}`)));
     proc.on("close", (code) => {

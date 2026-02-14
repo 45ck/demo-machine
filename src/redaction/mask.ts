@@ -6,6 +6,12 @@ export function generateBlurStyles(selectors: string[]): string {
     return "";
   }
 
+  for (const selector of selectors) {
+    if (/[{}]/.test(selector)) {
+      throw new Error(`Invalid redaction selector (contains braces): ${selector}`);
+    }
+  }
+
   return selectors
     .map(
       (selector) =>

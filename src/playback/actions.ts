@@ -203,7 +203,14 @@ const handleAssert: ActionHandler = async (ctx, step, events) => {
 const handleScreenshot: ActionHandler = async (ctx, step, events) => {
   const start = Date.now();
   if (step.action !== "screenshot") return;
-  const options = step.name ? { path: step.name } : undefined;
+  let options: { path?: string } | undefined;
+  if (step.name) {
+    // Validate screenshot name is a simple filename (no path separators)
+    if (/[/\\]/.test(step.name)) {
+      throw new Error(`Invalid screenshot name (path separators not allowed): ${step.name}`);
+    }
+    options = { path: step.name };
+  }
   await ctx.page.screenshot(options);
   events.push(buildEvent({ action: "screenshot", startTime: start, narration: step.narration }));
 };

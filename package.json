@@ -8,9 +8,13 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
   "engines": {
     "node": ">=22"
   },
+  "packageManager": "pnpm@10.28.0",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -25,11 +29,14 @@
     "knip": "knip",
     "dep-check": "dependency-cruiser src --config",
     "mutation": "stryker run",
+    "prepublishOnly": "pnpm build && pnpm test",
     "prepare": "husky",
     "validate": "pnpm lint && pnpm format && pnpm spell && pnpm typecheck && pnpm test && pnpm knip && pnpm dep-check"
   },
   "dependencies": {
+    "@iarna/toml": "^2.2.5",
     "commander": "^13.1.0",
+    "json5": "^2.2.3",
     "kokoro-js": "^1.2.1",
     "openai": "^6.22.0",
     "playwright": "^1.58.2",
@@ -87,6 +94,9 @@
     "product-demo",
     "screen-recording",
     "yaml",
+    "json5",
+    "toml",
+    "remotion",
     "cli",
     "demo-as-code"
   ],

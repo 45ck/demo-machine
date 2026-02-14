@@ -5,6 +5,7 @@ import { Command } from "commander";
 import { loadSpec } from "./spec/loader.js";
 import type { DemoSpec } from "./spec/types.js";
 import type { ActionEvent } from "./playback/types.js";
+import type { Timeline } from "./editor/types.js";
 import type { PlaywrightPage } from "./playback/actions.js";
 import { createLogger, setLogLevel } from "./utils/logger.js";
 
@@ -86,6 +87,35 @@ program
   });
 
 program
+  .command("format <spec>")
+  .description("Convert spec between formats (json, yaml)")
+  .option("--to <format>", "Output format: json | yaml", "yaml")
+  .option("--out <file>", "Write to file instead of stdout")
+  .action(async (specPath: string, cmdOpts: { to: string; out?: string }) => {
+    const opts = program.opts<GlobalOptions>();
+    applyGlobalOptions(opts);
+    try {
+      const { serializeSpec } = await import("./spec/loader.js");
+      const { writeFile } = await import("node:fs/promises");
+      const spec = await loadSpec(specPath);
+      const format = cmdOpts.to as import("./spec/loader.js").SerializeFormat;
+      if (format !== "json" && format !== "yaml") {
+        throw new Error(`Unsupported output format: "${cmdOpts.to}". Supported: json, yaml`);
+      }
+      const output = serializeSpec(spec, format);
+      if (cmdOpts.out) {
+        await writeFile(cmdOpts.out, output, "utf-8");
+        logger.info(`Written to ${cmdOpts.out}`);
+      } else {
+        process.stdout.write(output);
+      }
+    } catch (err) {
+      logger.error(String(err));
+      process.exitCode = 1;
+    }
+  });
+
+program
   .command("edit <events>")
   .description("Edit from existing event log + raw video")
   .action(async (eventsPath: string) => {
@@ -154,6 +184,47 @@ async function captureFromSpec(specPath: string, opts: GlobalOptions): Promise<C
   }
 }
 
+function extractBranding(
+  spec: DemoSpec,
+): { logo?: string; colors?: { primary: string; background: string } } | undefined {
+  const branding = spec.meta.branding;
+  if (!branding) return undefined;
+  const result: { logo?: string; colors?: { primary: string; background: string } } = {};
+  if (branding.logo) result.logo = branding.logo;
+  const colors = branding.colors;
+  if (colors?.primary && colors.background) {
+    result.colors = { primary: colors.primary, background: colors.background };
+  }
+  return result;
+}
+
+async function prepareNarration(
+  capture: CaptureResult,
+  timeline: Timeline,
+  opts: GlobalOptions,
+): Promise<{
+  timeline: Timeline;
+  audioPath?: string | undefined;
+  extendToMs?: number | undefined;
+}> {
+  if (!opts.narration) return { timeline };
+
+  const { extendTimelineForNarration } = await import("./editor/timeline.js");
+  const narrationResult = await synthesizeAudio(capture.spec, capture.events, opts);
+  if (!narrationResult) return { timeline };
+
+  const originalDurationMs = timeline.totalDurationMs;
+  const extended = extendTimelineForNarration(timeline, narrationResult.totalDurationMs);
+  return {
+    timeline: extended,
+    audioPath: narrationResult.audioPath,
+    extendToMs:
+      narrationResult.totalDurationMs > originalDurationMs
+        ? narrationResult.totalDurationMs
+        : undefined,
+  };
+}
+
 async function runFullPipeline(specPath: string, opts: GlobalOptions): Promise<void> {
   const capture = await captureFromSpec(specPath, opts);
 
@@ -163,36 +234,33 @@ async function runFullPipeline(specPath: string, opts: GlobalOptions): Promise<v
   }
 
   const { buildTimeline } = await import("./editor/timeline.js");
-  const { createRenderer } = await import("./editor/renderer.js");
+  const { createRenderer, createRendererV2 } = await import("./editor/renderer.js");
   const { join } = await import("node:path");
 
-  const timeline = buildTimeline(capture.events, capture.spec);
-  const renderer = createRenderer(opts.renderer);
+  const baseTimeline = buildTimeline(capture.events, capture.spec);
   const outputPath = join(opts.output, "output.mp4");
+  const { timeline, audioPath, extendToMs } = await prepareNarration(capture, baseTimeline, opts);
+  const branding = extractBranding(capture.spec);
 
-  let audioPath: string | undefined;
-  if (opts.narration) {
-    audioPath = await synthesizeAudio(capture.spec, capture.events, opts);
+  if (opts.renderer === "remotion") {
+    const renderer = await createRendererV2("remotion");
+    await renderer.render({
+      spec: capture.spec,
+      outFile: outputPath,
+      tempDir: opts.output,
+      assetsDir: opts.output,
+    });
+  } else {
+    const renderer = createRenderer(opts.renderer);
+    await renderer.render(timeline, {
+      outputPath,
+      videoPath: capture.videoPath,
+      resolution: capture.spec.meta.resolution,
+      ...(audioPath ? { audioPath } : {}),
+      ...(extendToMs ? { extendToMs } : {}),
+      ...(branding ? { branding } : {}),
+    });
   }
-
-  const branding = capture.spec.meta.branding;
-  const colors = branding?.colors;
-
-  const renderBranding: { logo?: string; colors?: { primary: string; background: string } } = {};
-  if (branding?.logo) {
-    renderBranding.logo = branding.logo;
-  }
-  if (colors?.primary && colors.background) {
-    renderBranding.colors = { primary: colors.primary, background: colors.background };
-  }
-
-  await renderer.render(timeline, {
-    outputPath,
-    videoPath: capture.videoPath,
-    resolution: capture.spec.meta.resolution,
-    ...(audioPath ? { audioPath } : {}),
-    ...(branding ? { branding: renderBranding } : {}),
-  });
 
   if (opts.narration) {
     await writeSubtitles(capture.spec, capture.events, opts.output);
@@ -205,7 +273,7 @@ async function synthesizeAudio(
   spec: DemoSpec,
   events: ActionEvent[],
   opts: GlobalOptions,
-): Promise<string | undefined> {
+): Promise<import("./narration/types.js").NarrationMixResult | undefined> {
   const { generateScript } = await import("./narration/script-generator.js");
   const { createTTSProvider } = await import("./narration/provider.js");
   const { mixNarrationAudio } = await import("./narration/audio-mixer.js");
@@ -259,4 +327,9 @@ async function runEditPipeline(eventsPath: string, opts: GlobalOptions): Promise
   logger.info(`Output: ${outputPath}`);
 }
 
-program.parse();
+async function registerSubcommands(): Promise<void> {
+  const { registerVoicesCommand } = await import("./cli/voices.js");
+  registerVoicesCommand(program);
+}
+
+registerSubcommands().then(() => program.parse(), console.error);

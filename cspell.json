@@ -35,6 +35,7 @@
     "boxcolor",
     "boxborderw",
     "reinject",
+    "reinjects",
     "adelay",
     "amix",
     "kokoro",
@@ -42,7 +43,12 @@
     "onnx",
     "ONNX",
     "dtype",
-    "ffprobe"
+    "ffprobe",
+    "jsonc",
+    "toml",
+    "iarna",
+    "tpad",
+    "multilingual"
   ],
   "ignorePaths": ["node_modules", "dist", "pnpm-lock.yaml", "*.json"]
 }

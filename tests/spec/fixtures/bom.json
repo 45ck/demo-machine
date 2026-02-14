@@ -1,0 +1,19 @@
+﻿{
+  "meta": {
+    "title": "Fixture Demo"
+  },
+  "runner": {
+    "url": "http://localhost:3000"
+  },
+  "chapters": [
+    {
+      "title": "Chapter 1",
+      "steps": [
+        {
+          "action": "navigate",
+          "url": "/"
+        }
+      ]
+    }
+  ]
+}

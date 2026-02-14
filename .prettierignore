@@ -1,0 +1,4 @@
+dist/
+coverage/
+tests/spec/fixtures/
+remotion/tsconfig.json

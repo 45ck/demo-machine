@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createRenderer } from "../../src/editor/renderer.js";
+import { createRenderer, createRendererV2 } from "../../src/editor/renderer.js";
 import { FfmpegRenderer } from "../../src/editor/renderers/ffmpeg.js";
 
 describe("createRenderer", () => {
@@ -19,5 +19,25 @@ describe("createRenderer", () => {
 
   it("error message lists supported renderers", () => {
     expect(() => createRenderer("canvas")).toThrow('Supported: "ffmpeg"');
+  });
+});
+
+describe("createRendererV2", () => {
+  it('returns FfmpegRendererAdapter for "ffmpeg"', async () => {
+    const renderer = await createRendererV2("ffmpeg");
+    expect(renderer.id).toBe("ffmpeg");
+  });
+
+  it("throws for unknown renderer id", async () => {
+    await expect(createRendererV2("unknown")).rejects.toThrow('Unknown renderer: "unknown"');
+  });
+
+  it("error message lists supported renderers including remotion", async () => {
+    await expect(createRendererV2("canvas")).rejects.toThrow('"ffmpeg", "remotion"');
+  });
+
+  it("ffmpeg renderer has a render function", async () => {
+    const renderer = await createRendererV2("ffmpeg");
+    expect(typeof renderer.render).toBe("function");
   });
 });

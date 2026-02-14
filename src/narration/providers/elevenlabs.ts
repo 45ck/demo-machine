@@ -1,7 +1,18 @@
-import type { TTSProvider, TTSOptions } from "../types.js";
+import type { TTSProvider, TTSOptions, ElevenLabsVoiceSettings } from "../types.js";
 import { createLogger } from "../../utils/logger.js";
 
 const log = createLogger("tts:elevenlabs");
+
+function buildVoiceSettings(settings: ElevenLabsVoiceSettings): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  if (settings.stability !== undefined) result["stability"] = settings.stability;
+  if (settings.similarity_boost !== undefined)
+    result["similarity_boost"] = settings.similarity_boost;
+  if (settings.style !== undefined) result["style"] = settings.style;
+  if (settings.use_speaker_boost !== undefined)
+    result["use_speaker_boost"] = settings.use_speaker_boost;
+  return result;
+}
 
 export class ElevenLabsTTSProvider implements TTSProvider {
   readonly name = "elevenlabs";
@@ -18,21 +29,30 @@ export class ElevenLabsTTSProvider implements TTSProvider {
       );
     }
 
-    const apiKey = process.env["ELEVENLABS_API_KEY"];
+    const apiKey = process.env["ELEVENLABS_API_KEY"]?.trim();
     if (!apiKey) {
       throw new Error("ELEVENLABS_API_KEY environment variable is not set");
     }
 
     const voice = options.voice ?? "Rachel";
+    const model = options.model ?? "eleven_multilingual_v2";
 
-    log.info(`Synthesizing ${text.length} chars with voice=${voice}`);
+    log.info(`Synthesizing ${text.length} chars with voice=${voice} model=${model}`);
 
     const ElevenLabsClient = mod.ElevenLabsClient;
     const client = new ElevenLabsClient({ apiKey });
-    const stream = await client.textToSpeech.convert(voice, {
+
+    const requestBody: Record<string, unknown> = {
       text,
-      model_id: "eleven_monolingual_v1",
-    });
+      model_id: model,
+      output_format: options.outputFormat ?? "mp3_44100_128",
+    };
+
+    if (options.voiceSettings) {
+      requestBody["voice_settings"] = buildVoiceSettings(options.voiceSettings);
+    }
+
+    const stream = await client.textToSpeech.convert(voice, requestBody);
 
     const chunks: Uint8Array[] = [];
     for await (const chunk of stream) {

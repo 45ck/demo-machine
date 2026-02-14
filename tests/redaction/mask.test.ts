@@ -33,4 +33,16 @@ describe("generateBlurStyles", () => {
       expect(css).toContain(sel);
     }
   });
+
+  it("throws when a selector contains braces", () => {
+    expect(() => generateBlurStyles([".valid", ".bad { color: red }"])).toThrow(
+      "Invalid redaction selector (contains braces)",
+    );
+    expect(() => generateBlurStyles(["div{"])).toThrow(
+      "Invalid redaction selector (contains braces)",
+    );
+    expect(() => generateBlurStyles(["div}"])).toThrow(
+      "Invalid redaction selector (contains braces)",
+    );
+  });
 });

@@ -33,4 +33,5 @@ export interface PlaybackOptions {
   redactionSelectors?: string[] | undefined;
   secretPatterns?: string[] | undefined;
   pacing?: Pacing | undefined;
+  onStepComplete?: ((event: ActionEvent) => Promise<void>) | undefined;
 }

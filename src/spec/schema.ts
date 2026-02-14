@@ -5,9 +5,11 @@ const resolutionSchema = z.object({
   height: z.number().int().positive(),
 });
 
+const cssColorPattern = /^(#[0-9a-fA-F]{3,8}|[a-zA-Z]+(@[0-9.]+)?)$/;
+
 const colorsSchema = z.object({
-  primary: z.string(),
-  background: z.string(),
+  primary: z.string().regex(cssColorPattern, "Invalid color format"),
+  background: z.string().regex(cssColorPattern, "Invalid color format"),
 });
 
 const brandingSchema = z.object({

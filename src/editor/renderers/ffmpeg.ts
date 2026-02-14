@@ -31,7 +31,14 @@ export class FfmpegRenderer implements VideoRenderer {
     }
 
     if (options.audioPath) {
-      args.push("-map", "1:a", "-shortest");
+      args.push("-map", "1:a");
+      if (!options.extendToMs) {
+        args.push("-shortest");
+      }
+    }
+
+    if (options.extendToMs) {
+      args.push("-t", msToSec(options.extendToMs));
     }
 
     args.push("-c:v", "libx264", "-preset", "fast", "-crf", "23");
@@ -41,6 +48,11 @@ export class FfmpegRenderer implements VideoRenderer {
 
   private buildFilterGraph(timeline: Timeline, options: RenderOptions): string | undefined {
     const filterSteps: string[] = [];
+
+    if (options.extendToMs && options.extendToMs > timeline.totalDurationMs) {
+      const padSeconds = (options.extendToMs - timeline.totalDurationMs) / 1000;
+      filterSteps.push(`tpad=stop_mode=clone:stop_duration=${padSeconds.toFixed(3)}`);
+    }
 
     for (const segment of timeline.segments) {
       const filter = this.segmentToFilter(segment, options);
@@ -56,7 +68,7 @@ export class FfmpegRenderer implements VideoRenderer {
     for (let i = 0; i < filterSteps.length; i++) {
       const inputLabel = i === 0 ? "[0:v]" : `[v${i}]`;
       const outputLabel = i === filterSteps.length - 1 ? "[vout]" : `[v${i + 1}]`;
-      parts.push(`${inputLabel}${filterSteps[i]}${outputLabel}`);
+      parts.push(`${inputLabel}${filterSteps[i]!}${outputLabel}`);
     }
 
     return parts.join(";");
@@ -104,10 +116,14 @@ export class FfmpegRenderer implements VideoRenderer {
     return new Promise((resolve, reject) => {
       const proc = spawn("ffmpeg", args, { stdio: "pipe" });
 
+      const MAX_STDERR = 4096;
       let stderr = "";
 
       proc.stderr?.on("data", (chunk: Buffer) => {
         stderr += chunk.toString();
+        if (stderr.length > MAX_STDERR) {
+          stderr = stderr.slice(-MAX_STDERR);
+        }
       });
 
       proc.on("error", (err) => {
@@ -130,5 +146,12 @@ function msToSec(ms: number): string {
 }
 
 function escapeDrawtext(text: string): string {
-  return text.replace(/'/g, "\\'").replace(/:/g, "\\:");
+  return text
+    .replace(/\\/g, "\\\\")
+    .replace(/'/g, "\\'")
+    .replace(/:/g, "\\:")
+    .replace(/;/g, "\\;")
+    .replace(/\[/g, "\\[")
+    .replace(/]/g, "\\]")
+    .replace(/=/g, "\\=");
 }

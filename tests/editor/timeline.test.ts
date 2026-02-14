@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildTimeline } from "../../src/editor/timeline.js";
+import { buildTimeline, extendTimelineForNarration } from "../../src/editor/timeline.js";
 import type { ActionEvent } from "../../src/playback/types.js";
 import type { DemoSpec } from "../../src/spec/types.js";
 
@@ -189,5 +189,74 @@ describe("buildTimeline", () => {
     const contentSegments = timeline.segments.filter((s) => s.type === "content");
     expect(contentSegments[0]!.startMs).toBe(0);
     expect(contentSegments[1]!.startMs).toBe(500);
+  });
+});
+
+describe("extendTimelineForNarration", () => {
+  it("returns same timeline when narration fits", () => {
+    const events = makeEvents(2);
+    const timeline = buildTimeline(events, makeSpec());
+    const result = extendTimelineForNarration(timeline, timeline.totalDurationMs - 100);
+    expect(result).toBe(timeline); // same reference, no change
+  });
+
+  it("extends totalDurationMs when narration is longer", () => {
+    const events = makeEvents(2);
+    const timeline = buildTimeline(events, makeSpec());
+    const extended = extendTimelineForNarration(timeline, timeline.totalDurationMs + 5000);
+    expect(extended.totalDurationMs).toBe(timeline.totalDurationMs + 5000);
+  });
+
+  it("repositions outro to new end", () => {
+    const events = makeEvents(2);
+    const timeline = buildTimeline(events, makeSpec());
+    const newDuration = timeline.totalDurationMs + 5000;
+    const extended = extendTimelineForNarration(timeline, newDuration);
+    const outro = extended.segments.find((s) => s.type === "outro");
+    expect(outro).toBeDefined();
+    expect(outro!.endMs).toBe(newDuration);
+  });
+
+  it("preserves non-outro segments unchanged", () => {
+    const events = makeEvents(2);
+    const timeline = buildTimeline(events, makeSpec());
+    const extended = extendTimelineForNarration(timeline, timeline.totalDurationMs + 5000);
+    const nonOutro = extended.segments.filter((s) => s.type !== "outro");
+    const origNonOutro = timeline.segments.filter((s) => s.type !== "outro");
+    expect(nonOutro).toEqual(origNonOutro);
+  });
+
+  it("returns same reference at exact boundary", () => {
+    const events = makeEvents(2);
+    const timeline = buildTimeline(events, makeSpec());
+    const result = extendTimelineForNarration(timeline, timeline.totalDurationMs);
+    expect(result).toBe(timeline);
+  });
+
+  it("returns same timeline for 0ms narration", () => {
+    const events = makeEvents(2);
+    const timeline = buildTimeline(events, makeSpec());
+    const result = extendTimelineForNarration(timeline, 0);
+    expect(result).toBe(timeline);
+  });
+
+  it("does not mutate the original timeline after extension", () => {
+    const events = makeEvents(2);
+    const timeline = buildTimeline(events, makeSpec());
+    const originalDuration = timeline.totalDurationMs;
+    const originalSegments = [...timeline.segments];
+    extendTimelineForNarration(timeline, timeline.totalDurationMs + 5000);
+    expect(timeline.totalDurationMs).toBe(originalDuration);
+    expect(timeline.segments).toEqual(originalSegments);
+  });
+
+  it("repositions outro startMs to newTotal - 2000", () => {
+    const events = makeEvents(2);
+    const timeline = buildTimeline(events, makeSpec());
+    const newDuration = timeline.totalDurationMs + 5000;
+    const extended = extendTimelineForNarration(timeline, newDuration);
+    const outro = extended.segments.find((s) => s.type === "outro");
+    expect(outro).toBeDefined();
+    expect(outro!.startMs).toBe(newDuration - 2000);
   });
 });

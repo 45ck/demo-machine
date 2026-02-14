@@ -306,4 +306,73 @@ describe("PlaybackEngine", () => {
 
     expect(page.waitForTimeout).toHaveBeenCalledWith(TEST_PACING.settleDelayMs);
   });
+
+  it("calls onStepComplete after each step", async () => {
+    const chapters: Chapter[] = [
+      {
+        title: "Test",
+        steps: [
+          { action: "navigate", url: "https://example.com" },
+          { action: "click", selector: "#btn" },
+        ],
+      },
+    ];
+
+    const onStepComplete = vi
+      .fn<(event: ActionEvent) => Promise<void>>()
+      .mockResolvedValue(undefined);
+
+    const engine = new PlaybackEngine(page, {
+      baseUrl: "https://example.com",
+      onStepComplete,
+    });
+    await engine.execute(chapters);
+
+    expect(onStepComplete).toHaveBeenCalledTimes(2);
+    expect(onStepComplete.mock.calls[0]![0]!.action).toBe("navigate");
+    expect(onStepComplete.mock.calls[1]![0]!.action).toBe("click");
+  });
+
+  it("does not call onStepComplete when not provided", async () => {
+    const chapters: Chapter[] = [
+      {
+        title: "Test",
+        steps: [{ action: "navigate", url: "https://example.com" }],
+      },
+    ];
+
+    const engine = new PlaybackEngine(page, { baseUrl: "https://example.com" });
+    // Should not throw
+    const result = await engine.execute(chapters);
+    expect(result.events).toHaveLength(1);
+  });
+
+  it("propagates onStepComplete errors", async () => {
+    const chapters: Chapter[] = [
+      {
+        title: "Test",
+        steps: [{ action: "navigate", url: "https://example.com" }],
+      },
+    ];
+
+    const callbackError = new Error("callback failed");
+    const onStepComplete = vi
+      .fn<(event: ActionEvent) => Promise<void>>()
+      .mockRejectedValue(callbackError);
+
+    const engine = new PlaybackEngine(page, {
+      baseUrl: "https://example.com",
+      onStepComplete,
+    });
+
+    await expect(engine.execute(chapters)).rejects.toThrow(callbackError);
+  });
+
+  it("returns empty events for empty chapters array", async () => {
+    const engine = new PlaybackEngine(page, { baseUrl: "https://example.com" });
+    const result = await engine.execute([]);
+
+    expect(result.events).toEqual([]);
+    expect(result.durationMs).toBeGreaterThanOrEqual(0);
+  });
 });

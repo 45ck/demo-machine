@@ -154,6 +154,9 @@ export class PlaybackEngine {
       logger.info(`Starting chapter: ${chapter.title}`);
       for (const step of chapter.steps) {
         await executeStep(ctx, step, events, this.options.secretPatterns ?? []);
+        if (this.options.onStepComplete && events.length > 0) {
+          await this.options.onStepComplete(events[events.length - 1]!);
+        }
         if (pacing.settleDelayMs > 0) {
           await this.page.waitForTimeout(pacing.settleDelayMs);
         }

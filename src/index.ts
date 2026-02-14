@@ -1,5 +1,12 @@
 // Spec DSL
-export { loadSpec, validateSpec, SpecLoadError } from "./spec/loader.js";
+export {
+  loadSpec,
+  validateSpec,
+  SpecLoadError,
+  serializeSpec,
+  SUPPORTED_EXTENSIONS,
+} from "./spec/loader.js";
+export type { SerializeFormat } from "./spec/loader.js";
 export { demoSpecSchema } from "./spec/schema.js";
 export type {
   DemoSpec,
@@ -33,8 +40,8 @@ export { writeEventLog, readEventLog } from "./capture/event-log.js";
 export type { CaptureOptions, CaptureBundle } from "./capture/types.js";
 
 // Editor
-export { buildTimeline } from "./editor/timeline.js";
-export { createRenderer } from "./editor/renderer.js";
+export { buildTimeline, extendTimelineForNarration } from "./editor/timeline.js";
+export { createRenderer, createRendererV2 } from "./editor/renderer.js";
 export type {
   Timeline,
   Segment,
@@ -43,12 +50,28 @@ export type {
   RenderOptions,
   VideoRenderer,
 } from "./editor/types.js";
+export type { Renderer, RenderArgs, RenderResult } from "./editor/renderer-types.js";
 
 // Narration
 export { generateScript } from "./narration/script-generator.js";
 export { createTTSProvider } from "./narration/provider.js";
+export { mixNarrationAudio } from "./narration/audio-mixer.js";
 export { generateVTT, generateSRT } from "./narration/subtitles.js";
-export type { NarrationSegment, TTSOptions, TTSProvider } from "./narration/types.js";
+export { cloneVoice } from "./narration/providers/elevenlabs-clone.js";
+export type {
+  CloneVoiceOptions,
+  CloneVoiceResult,
+} from "./narration/providers/elevenlabs-clone.js";
+export { loadVoiceConfig, saveVoiceEntry, listVoices } from "./narration/voice-config.js";
+export type { VoiceConfig, VoiceEntry } from "./narration/voice-config.js";
+export type {
+  NarrationSegment,
+  TTSOptions,
+  TTSProvider,
+  NarrationMixResult,
+  TimedNarrationSegment,
+  ElevenLabsVoiceSettings,
+} from "./narration/types.js";
 
 // Redaction
 export { generateBlurStyles } from "./redaction/mask.js";

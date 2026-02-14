@@ -133,3 +133,25 @@ function addOutroOverlay(segments: Segment[], videoDurationMs: number): void {
     label: "Thanks for watching",
   });
 }
+
+export function extendTimelineForNarration(
+  timeline: Timeline,
+  narrationDurationMs: number,
+): Timeline {
+  if (narrationDurationMs <= timeline.totalDurationMs) return timeline;
+
+  const newTotal = narrationDurationMs;
+  const segments = timeline.segments.map((seg) => {
+    if (seg.type === "outro") {
+      const outroStart = Math.max(0, newTotal - OUTRO_DURATION_MS);
+      return { ...seg, startMs: outroStart, endMs: newTotal };
+    }
+    return seg;
+  });
+
+  return {
+    ...timeline,
+    segments,
+    totalDurationMs: newTotal,
+  };
+}

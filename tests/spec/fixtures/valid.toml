@@ -1,0 +1,12 @@
+[meta]
+title = "Fixture Demo"
+
+[runner]
+url = "http://localhost:3000"
+
+[[chapters]]
+title = "Chapter One"
+
+[[chapters.steps]]
+action = "navigate"
+url = "/"

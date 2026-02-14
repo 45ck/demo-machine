@@ -27,6 +27,7 @@ export interface RenderOptions {
   outputPath: string;
   videoPath: string;
   audioPath?: string | undefined;
+  extendToMs?: number | undefined;
   resolution?: { width: number; height: number } | undefined;
   branding?:
     | {
