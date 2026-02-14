@@ -1,0 +1,69 @@
+meta:
+  title: "TaskFlow - Task Manager Demo"
+  resolution:
+    width: 1920
+    height: 1080
+
+runner:
+  command: "node examples/todo-app/serve.mjs"
+  url: "http://localhost:4567"
+  timeout: 10000
+
+chapters:
+  - title: "Welcome to TaskFlow"
+    steps:
+      - action: navigate
+        url: "http://localhost:4567"
+      - action: wait
+        timeout: 1000
+
+  - title: "Getting Started"
+    steps:
+      - action: click
+        selector: "#get-started"
+      - action: wait
+        timeout: 800
+
+  - title: "Adding Tasks"
+    steps:
+      - action: click
+        selector: "#task-input"
+      - action: type
+        selector: "#task-input"
+        text: "Design new landing page"
+      - action: click
+        selector: "#add-btn"
+      - action: wait
+        timeout: 500
+      - action: type
+        selector: "#task-input"
+        text: "Review pull requests"
+      - action: click
+        selector: "#add-btn"
+      - action: wait
+        timeout: 500
+      - action: type
+        selector: "#task-input"
+        text: "Write unit tests"
+      - action: click
+        selector: "#add-btn"
+      - action: wait
+        timeout: 500
+
+  - title: "Completing a Task"
+    steps:
+      - action: click
+        selector: ".task-checkbox"
+      - action: wait
+        timeout: 800
+
+  - title: "Filtering Tasks"
+    steps:
+      - action: click
+        selector: "[data-filter='completed']"
+      - action: wait
+        timeout: 800
+      - action: click
+        selector: "[data-filter='all']"
+      - action: wait
+        timeout: 500

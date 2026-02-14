@@ -4,6 +4,7 @@ meta:
     width: 1920
     height: 1080
   branding:
+    logo: "./assets/logo.png"
     colors:
       primary: "#3B82F6"
       background: "#000000"
@@ -14,9 +15,16 @@ runner:
   healthcheck: "http://localhost:3000/api/health"
   timeout: 30000
 
+redaction:
+  selectors:
+    - ".user-email"
+    - "[data-sensitive]"
+  secrets:
+    - "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z]{2,}\\b"
+
 chapters:
   - title: "Getting Started"
-    narration: "Let's walk through a simple hello world example."
+    narration: "Let's walk through the setup process."
     steps:
       - action: navigate
         url: "/"
@@ -24,9 +32,9 @@ chapters:
         selector: "#get-started"
         narration: "Click the get started button."
       - action: type
-        selector: "#name-input"
-        text: "Demo User"
-        narration: "Enter your name."
+        selector: "#email-input"
+        text: "demo@example.com"
+        narration: "Enter your email address."
       - action: wait
         timeout: 1000
       - action: assert

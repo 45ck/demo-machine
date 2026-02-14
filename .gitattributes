@@ -1,0 +1,16 @@
+# Normalize line endings to LF in the repo
+* text=auto eol=lf
+
+# Binary files
+*.mp4 binary
+*.webm binary
+*.wav binary
+*.mp3 binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary

@@ -24,14 +24,12 @@ export function spawnProcess(command: string, args: string[], options?: SpawnOpt
 }
 
 export async function killProcessTree(pid: number): Promise<void> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     treeKill(pid, "SIGTERM", (err) => {
       if (err) {
         logger.warn(`Failed to kill process tree ${String(pid)}: ${String(err)}`);
-        reject(err);
-      } else {
-        resolve();
       }
+      resolve();
     });
   });
 }

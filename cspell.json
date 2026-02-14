@@ -24,12 +24,17 @@
     "filtergraph",
     "drawtext",
     "noEmit",
-    "esModuleInterop"
+    "esModuleInterop",
+    "libx",
+    "AITTS",
+    "lessac",
+    "millis",
+    "WEBVTT",
+    "AKIA",
+    "vout",
+    "boxcolor",
+    "boxborderw",
+    "reinject"
   ],
-  "ignorePaths": [
-    "node_modules",
-    "dist",
-    "pnpm-lock.yaml",
-    "*.json"
-  ]
+  "ignorePaths": ["node_modules", "dist", "pnpm-lock.yaml", "*.json"]
 }
