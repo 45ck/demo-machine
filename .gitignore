@@ -1,0 +1,13 @@
+node_modules/
+dist/
+output/
+*.tsbuildinfo
+.eslintcache
+coverage/
+.stryker-tmp/
+reports/
+*.mp4
+*.webm
+*.wav
+*.mp3
+trace.zip

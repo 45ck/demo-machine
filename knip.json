@@ -1,0 +1,10 @@
+{
+  "entry": ["src/cli.ts", "src/index.ts"],
+  "project": ["src/**/*.ts"],
+  "ignore": ["**/*.test.ts"],
+  "ignoreDependencies": [
+    "@stryker-mutator/core",
+    "@stryker-mutator/typescript-checker",
+    "@stryker-mutator/vitest-runner"
+  ]
+}

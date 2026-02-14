@@ -1,0 +1,4 @@
+pnpm test
+pnpm test:coverage
+pnpm knip
+pnpm dep-check

@@ -1,0 +1,34 @@
+meta:
+  title: "Hello World Demo"
+  resolution:
+    width: 1920
+    height: 1080
+  branding:
+    colors:
+      primary: "#3B82F6"
+      background: "#000000"
+
+runner:
+  command: "pnpm dev"
+  url: "http://localhost:3000"
+  healthcheck: "http://localhost:3000/api/health"
+  timeout: 30000
+
+chapters:
+  - title: "Getting Started"
+    narration: "Let's walk through a simple hello world example."
+    steps:
+      - action: navigate
+        url: "/"
+      - action: click
+        selector: "#get-started"
+        narration: "Click the get started button."
+      - action: type
+        selector: "#name-input"
+        text: "Demo User"
+        narration: "Enter your name."
+      - action: wait
+        timeout: 1000
+      - action: assert
+        selector: ".welcome-message"
+        visible: true

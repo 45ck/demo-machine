@@ -1,0 +1,35 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "demo-machine",
+    "demomachine",
+    "vitest",
+    "tsconfig",
+    "knip",
+    "sonarjs",
+    "healthcheck",
+    "remotion",
+    "ffmpeg",
+    "elevenlabs",
+    "piper",
+    "subtitles",
+    "callout",
+    "callouts",
+    "playback",
+    "outro",
+    "narration",
+    "redaction",
+    "bbox",
+    "filtergraph",
+    "drawtext",
+    "noEmit",
+    "esModuleInterop"
+  ],
+  "ignorePaths": [
+    "node_modules",
+    "dist",
+    "pnpm-lock.yaml",
+    "*.json"
+  ]
+}

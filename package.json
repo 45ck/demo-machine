@@ -1,0 +1,67 @@
+{
+  "name": "demo-machine",
+  "version": "0.1.0",
+  "description": "Demo as code — automate polished product demo videos from YAML specs",
+  "type": "module",
+  "bin": {
+    "demo-machine": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src --max-warnings=0 --cache",
+    "format": "prettier --check --cache .",
+    "format:fix": "prettier --write --cache .",
+    "typecheck": "tsc --noEmit",
+    "spell": "cspell --no-progress \"src/**/*.ts\" \"tests/**/*.ts\" \"docs/**/*.md\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "knip": "knip",
+    "dep-check": "dependency-cruiser src --config",
+    "mutation": "stryker run",
+    "prepare": "husky",
+    "validate": "pnpm lint && pnpm format && pnpm spell && pnpm typecheck && pnpm test && pnpm knip && pnpm dep-check"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "tree-kill": "^1.2.2",
+    "yaml": "^2.7.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@stryker-mutator/core": "^8.7.1",
+    "@stryker-mutator/typescript-checker": "^8.7.1",
+    "@stryker-mutator/vitest-runner": "^8.7.1",
+    "@types/node": "^22.13.4",
+    "@typescript-eslint/eslint-plugin": "^8.24.1",
+    "@typescript-eslint/parser": "^8.24.1",
+    "@vitest/coverage-v8": "^3.0.5",
+    "cspell": "^8.17.3",
+    "dependency-cruiser": "^16.9.0",
+    "eslint": "^8.57.1",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-sonarjs": "^3.0.2",
+    "eslint-plugin-unused-imports": "^4.1.4",
+    "husky": "^9.1.7",
+    "knip": "^5.44.0",
+    "lint-staged": "^15.4.3",
+    "prettier": "^3.5.2",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "prettier --check",
+      "eslint --max-warnings=0 --cache"
+    ],
+    "*.{json,md,yaml,yml}": [
+      "prettier --check"
+    ]
+  }
+}
