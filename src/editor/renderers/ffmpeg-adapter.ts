@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { createLogger } from "../../utils/logger.js";
-import type { ActionEvent } from "../../playback/types.js";
+import type { ActionEvent } from "../../capture/types.js";
 import type { Renderer, RenderArgs, RenderResult } from "../renderer-types.js";
 import { buildTimeline } from "../timeline.js";
 import { FfmpegRenderer } from "./ffmpeg.js";
