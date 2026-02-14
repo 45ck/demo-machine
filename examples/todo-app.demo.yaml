@@ -14,6 +14,7 @@ chapters:
     steps:
       - action: navigate
         url: "http://localhost:4567"
+        narration: "Welcome to TaskFlow, a simple and elegant task manager."
       - action: wait
         timeout: 1000
 
@@ -21,6 +22,7 @@ chapters:
     steps:
       - action: click
         selector: "#get-started"
+        narration: "Let's click Get Started to begin managing our tasks."
       - action: wait
         timeout: 800
 
@@ -31,6 +33,7 @@ chapters:
       - action: type
         selector: "#task-input"
         text: "Design new landing page"
+        narration: "We'll type in our first task — designing a new landing page."
       - action: click
         selector: "#add-btn"
       - action: wait
@@ -38,6 +41,7 @@ chapters:
       - action: type
         selector: "#task-input"
         text: "Review pull requests"
+        narration: "Next, let's add a task to review pull requests."
       - action: click
         selector: "#add-btn"
       - action: wait
@@ -45,6 +49,7 @@ chapters:
       - action: type
         selector: "#task-input"
         text: "Write unit tests"
+        narration: "And one more — writing unit tests."
       - action: click
         selector: "#add-btn"
       - action: wait
@@ -54,6 +59,7 @@ chapters:
     steps:
       - action: click
         selector: ".task-checkbox"
+        narration: "To mark a task as done, just click the checkbox."
       - action: wait
         timeout: 800
 
@@ -61,9 +67,11 @@ chapters:
     steps:
       - action: click
         selector: "[data-filter='completed']"
+        narration: "We can filter to see only completed tasks."
       - action: wait
         timeout: 800
       - action: click
         selector: "[data-filter='all']"
+        narration: "Or switch back to view all tasks at once."
       - action: wait
         timeout: 500

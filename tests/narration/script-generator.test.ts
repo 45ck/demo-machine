@@ -137,4 +137,29 @@ describe("generateScript", () => {
     const segments = generateScript([], []);
     expect(segments).toHaveLength(0);
   });
+
+  it("uses relative timestamps when events have non-zero t0", () => {
+    const t0 = 1700000000000; // epoch ms
+    const chapters = [
+      makeChapter([
+        { action: "navigate", url: "/", narration: "Open the app" },
+        { action: "click", selector: "#btn", narration: "Click button" },
+      ]),
+    ];
+    const events = [makeEvent("navigate", t0, 1000), makeEvent("click", t0 + 2000, 500)];
+
+    const segments = generateScript(chapters, events);
+
+    expect(segments).toHaveLength(2);
+    expect(segments[0]).toEqual({
+      text: "Open the app",
+      startMs: 0,
+      endMs: 1000,
+    });
+    expect(segments[1]).toEqual({
+      text: "Click button",
+      startMs: 2000,
+      endMs: 2500,
+    });
+  });
 });

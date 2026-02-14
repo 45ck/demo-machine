@@ -34,7 +34,14 @@
     "vout",
     "boxcolor",
     "boxborderw",
-    "reinject"
+    "reinject",
+    "adelay",
+    "amix",
+    "kokoro",
+    "pretrained",
+    "onnx",
+    "ONNX",
+    "dtype"
   ],
   "ignorePaths": ["node_modules", "dist", "pnpm-lock.yaml", "*.json"]
 }

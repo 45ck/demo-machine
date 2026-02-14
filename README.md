@@ -117,17 +117,17 @@ Tools like Screen Studio and Arcade require manual recording sessions. Every tim
 
 ## Features
 
-| Feature                   | Description                                                  |
-| ------------------------- | ------------------------------------------------------------ |
-| **Smooth cursor**         | Cubic-bezier eased movement with click pulse feedback        |
-| **Natural typing**        | Character-by-character keystroke simulation                  |
-| **Configurable pacing**   | Global + per-step delays for clicks, typing, navigation      |
-| **Polished overlays**     | Intro/outro cards, chapter titles with fades and backgrounds |
-| **Auto app lifecycle**    | Spawns your dev server, healthchecks, tears down after       |
-| **Redaction**             | Blur sensitive selectors, scan for secret patterns           |
-| **Narration**             | TTS via OpenAI, ElevenLabs, or Piper with VTT/SRT subtitles  |
-| **Dead-time compression** | Long pauses automatically sped up                            |
-| **Callout zoom**          | Click targets highlighted with zoom regions                  |
+| Feature                   | Description                                                                 |
+| ------------------------- | --------------------------------------------------------------------------- |
+| **Smooth cursor**         | Cubic-bezier eased movement with click pulse feedback                       |
+| **Natural typing**        | Character-by-character keystroke simulation                                 |
+| **Configurable pacing**   | Global + per-step delays for clicks, typing, navigation                     |
+| **Polished overlays**     | Intro/outro cards, chapter titles with fades and backgrounds                |
+| **Auto app lifecycle**    | Spawns your dev server, healthchecks, tears down after                      |
+| **Redaction**             | Blur sensitive selectors, scan for secret patterns                          |
+| **Narration**             | Local TTS via Kokoro, or cloud via OpenAI/ElevenLabs with VTT/SRT subtitles |
+| **Dead-time compression** | Long pauses automatically sped up                                           |
+| **Callout zoom**          | Click targets highlighted with zoom regions                                 |
 
 ## Quick Start
 
@@ -183,15 +183,15 @@ demo-machine edit <events.json>
 
 ### Options
 
-| Flag                    | Default    | Description                      |
-| ----------------------- | ---------- | -------------------------------- |
-| `-o, --output <dir>`    | `./output` | Output directory                 |
-| `--no-narration`        | —          | Skip TTS narration               |
-| `--no-edit`             | —          | Raw capture only, skip rendering |
-| `--no-headless`         | —          | Show the browser window          |
-| `--renderer <name>`     | `ffmpeg`   | Video renderer                   |
-| `--tts-provider <name>` | `openai`   | TTS: openai, elevenlabs, piper   |
-| `--verbose`             | —          | Debug logging                    |
+| Flag                    | Default    | Description                                    |
+| ----------------------- | ---------- | ---------------------------------------------- |
+| `-o, --output <dir>`    | `./output` | Output directory                               |
+| `--no-narration`        | —          | Skip TTS narration                             |
+| `--no-edit`             | —          | Raw capture only, skip rendering               |
+| `--no-headless`         | —          | Show the browser window                        |
+| `--renderer <name>`     | `ffmpeg`   | Video renderer                                 |
+| `--tts-provider <name>` | `kokoro`   | TTS: kokoro (local), openai, elevenlabs, piper |
+| `--verbose`             | —          | Debug logging                                  |
 
 ## Spec Format
 
