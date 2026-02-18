@@ -1,7 +1,7 @@
 import type { Step } from "../spec/types.js";
 import type { PlaywrightLocator, PlaywrightPage } from "./playwright.js";
 
-type Target =
+export type Target =
   | { by: "css"; selector: string }
   | { by: "text"; text: string; exact?: boolean }
   | { by: "role"; role: string; name?: string; exact?: boolean }
@@ -12,6 +12,12 @@ type Target =
   | { by: "title"; text: string; exact?: boolean };
 
 type TextTarget = Extract<Target, { by: "text" | "label" | "placeholder" | "altText" | "title" }>;
+
+interface LocatorInput {
+  selector?: string | undefined;
+  target?: Target | undefined;
+  nth?: number | undefined;
+}
 
 function isNonEmptyString(v: unknown): v is string {
   return typeof v === "string" && v.length > 0;
@@ -45,13 +51,24 @@ function stringifyTarget(target: Target): string {
   }
 }
 
-function selectorFromUnknown(step: Step): string | undefined {
-  const s = (step as unknown as { selector?: unknown }).selector;
+function formatNth(nth: number | undefined): string {
+  if (nth === undefined) return "";
+  return `[nth=${String(nth)}]`;
+}
+
+function nthFromUnknown(obj: unknown): number | undefined {
+  const v = (obj as Record<string, unknown> | null | undefined)?.["nth"];
+  if (typeof v === "number" && Number.isFinite(v) && v >= 0 && Number.isInteger(v)) return v;
+  return undefined;
+}
+
+function selectorFromUnknown(obj: unknown): string | undefined {
+  const s = (obj as Record<string, unknown> | null | undefined)?.["selector"];
   return isNonEmptyString(s) ? s : undefined;
 }
 
-function targetFromUnknown(step: Step): Target | undefined {
-  const t = (step as unknown as { target?: unknown }).target;
+function targetFromUnknown(obj: unknown): Target | undefined {
+  const t = (obj as Record<string, unknown> | null | undefined)?.["target"];
   return isTarget(t) ? t : undefined;
 }
 
@@ -76,40 +93,74 @@ function locatorFromTextTarget(page: PlaywrightPage, t: TextTarget): PlaywrightL
 }
 
 export function selectorForEvent(step: Step): string {
-  const s = selectorFromUnknown(step);
-  if (s) return s;
+  return selectorForEventFromInput(
+    {
+      selector: selectorFromUnknown(step),
+      target: targetFromUnknown(step),
+      nth: nthFromUnknown(step),
+    },
+    `action(${step.action})`,
+  );
+}
 
-  const t = targetFromUnknown(step);
-  if (t) return `target(${stringifyTarget(t)})`;
+function applyNth(locator: PlaywrightLocator, nth: number | undefined): PlaywrightLocator {
+  if (nth === undefined) return locator;
+  return locator.nth(nth);
+}
 
-  return `action(${step.action})`;
+export function selectorForEventFromInput(input: LocatorInput, fallback: string): string {
+  if (input.selector) return `${input.selector}${formatNth(input.nth)}`;
+  if (input.target) return `target(${stringifyTarget(input.target)})${formatNth(input.nth)}`;
+  return fallback;
+}
+
+export function resolveLocatorFromInput(
+  page: PlaywrightPage,
+  input: LocatorInput,
+  labelForErrors: string,
+): { locator: PlaywrightLocator; selectorForEvent: string } {
+  const nth = input.nth;
+  const s = input.selector;
+  if (s)
+    return { locator: applyNth(page.locator(s), nth), selectorForEvent: `${s}${formatNth(nth)}` };
+
+  const t = input.target;
+  if (!t) {
+    throw new Error(`${labelForErrors} requires "selector" or supported "target"`);
+  }
+
+  const selectorForEvent = `target(${stringifyTarget(t)})${formatNth(nth)}`;
+
+  if (t.by === "css") return { locator: applyNth(page.locator(t.selector), nth), selectorForEvent };
+  if (t.by === "testId")
+    return { locator: applyNth(page.getByTestId(t.testId), nth), selectorForEvent };
+  if (t.by === "role") {
+    return {
+      locator: applyNth(
+        page.getByRole(t.role, {
+          ...(t.name !== undefined ? { name: t.name } : {}),
+          ...(t.exact !== undefined ? { exact: t.exact } : {}),
+        }),
+        nth,
+      ),
+      selectorForEvent,
+    };
+  }
+
+  return { locator: applyNth(locatorFromTextTarget(page, t), nth), selectorForEvent };
 }
 
 export function resolveStepLocator(
   page: PlaywrightPage,
   step: Step,
 ): { locator: PlaywrightLocator; selectorForEvent: string } {
-  const s = selectorFromUnknown(step);
-  if (s) return { locator: page.locator(s), selectorForEvent: s };
-
-  const t = targetFromUnknown(step);
-  if (!t) {
-    throw new Error(`Step "${step.action}" requires "selector" or supported "target"`);
-  }
-
-  const selectorForEvent = `target(${stringifyTarget(t)})`;
-
-  if (t.by === "css") return { locator: page.locator(t.selector), selectorForEvent };
-  if (t.by === "testId") return { locator: page.getByTestId(t.testId), selectorForEvent };
-  if (t.by === "role") {
-    return {
-      locator: page.getByRole(t.role, {
-        ...(t.name !== undefined ? { name: t.name } : {}),
-        ...(t.exact !== undefined ? { exact: t.exact } : {}),
-      }),
-      selectorForEvent,
-    };
-  }
-
-  return { locator: locatorFromTextTarget(page, t), selectorForEvent };
+  return resolveLocatorFromInput(
+    page,
+    {
+      selector: selectorFromUnknown(step),
+      target: targetFromUnknown(step),
+      nth: nthFromUnknown(step),
+    },
+    `Step "${step.action}"`,
+  );
 }

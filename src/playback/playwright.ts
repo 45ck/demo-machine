@@ -1,9 +1,20 @@
 import type { BoundingBox } from "./types.js";
 
 export interface PlaywrightLocator {
+  nth(index: number): PlaywrightLocator;
   click(options?: { timeout?: number }): Promise<void>;
   hover(options?: { timeout?: number }): Promise<void>;
   fill(value: string, options?: { timeout?: number }): Promise<void>;
+  setChecked(checked: boolean, options?: { timeout?: number }): Promise<void>;
+  selectOption(
+    values:
+      | string
+      | { value?: string; label?: string; index?: number }
+      | Array<string | { value?: string; label?: string; index?: number }>,
+    options?: { timeout?: number },
+  ): Promise<void>;
+  setInputFiles(files: string | string[], options?: { timeout?: number }): Promise<void>;
+  dragTo(target: PlaywrightLocator, options?: { timeout?: number }): Promise<void>;
   isVisible(): Promise<boolean>;
   textContent(): Promise<string | null>;
   boundingBox(): Promise<BoundingBox | null>;
@@ -23,6 +34,8 @@ export interface PlaywrightPage {
       timeout?: number;
     },
   ): Promise<void>;
+  goBack(options?: { timeout?: number }): Promise<unknown>;
+  goForward(options?: { timeout?: number }): Promise<unknown>;
   keyboard: {
     press(key: string): Promise<void>;
     type(text: string, options?: { delay?: number | undefined }): Promise<void>;

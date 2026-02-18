@@ -25,10 +25,15 @@ const TEST_PACING: Pacing = {
 };
 
 function createMockLocator() {
-  return {
+  const locator: Record<string, unknown> = {
+    nth: vi.fn().mockImplementation(() => locator),
     click: vi.fn().mockResolvedValue(undefined),
     hover: vi.fn().mockResolvedValue(undefined),
     fill: vi.fn().mockResolvedValue(undefined),
+    setChecked: vi.fn().mockResolvedValue(undefined),
+    selectOption: vi.fn().mockResolvedValue(undefined),
+    setInputFiles: vi.fn().mockResolvedValue(undefined),
+    dragTo: vi.fn().mockResolvedValue(undefined),
     isVisible: vi.fn().mockResolvedValue(true),
     textContent: vi.fn().mockResolvedValue("hello world"),
     boundingBox: vi.fn().mockResolvedValue({ x: 0, y: 0, width: 100, height: 50 }),
@@ -36,6 +41,7 @@ function createMockLocator() {
     waitFor: vi.fn().mockResolvedValue(undefined),
     evaluate: vi.fn().mockResolvedValue(undefined),
   };
+  return locator as unknown as ReturnType<PlaywrightPage["locator"]>;
 }
 
 function createMockPage(): PlaywrightPage {
@@ -44,6 +50,10 @@ function createMockPage(): PlaywrightPage {
     goto: vi
       .fn<(url: string, options?: Record<string, unknown>) => Promise<void>>()
       .mockResolvedValue(undefined),
+    goBack: vi.fn<(options?: { timeout?: number }) => Promise<unknown>>().mockResolvedValue(null),
+    goForward: vi
+      .fn<(options?: { timeout?: number }) => Promise<unknown>>()
+      .mockResolvedValue(null),
     keyboard: {
       press: vi.fn<(k: string) => Promise<void>>().mockResolvedValue(undefined),
       type: vi
@@ -85,6 +95,8 @@ function createMockContext(page?: PlaywrightPage): PlaybackContext {
           case "hover":
           case "scroll":
           case "press":
+          case "back":
+          case "forward":
             delay = (step as { delay?: number | undefined }).delay ?? TEST_PACING.postClickDelayMs;
             break;
           case "type":
@@ -211,6 +223,76 @@ describe("actionHandlers", () => {
     await actionHandlers["press"]!(ctx, step, events, 0);
     expect(ctx.page.keyboard.press).toHaveBeenCalledWith("Enter");
     expect(events).toHaveLength(1);
+  });
+
+  it("handles back action", async () => {
+    const step = { action: "back" as const };
+    await actionHandlers["back"]!(ctx, step, events, 0);
+    expect(ctx.page.goBack).toHaveBeenCalledWith(expect.objectContaining({ timeout: 15000 }));
+    expect(events).toHaveLength(1);
+    expect(events[0]!.action).toBe("back");
+  });
+
+  it("handles forward action", async () => {
+    const step = { action: "forward" as const };
+    await actionHandlers["forward"]!(ctx, step, events, 0);
+    expect(ctx.page.goForward).toHaveBeenCalledWith(expect.objectContaining({ timeout: 15000 }));
+    expect(events).toHaveLength(1);
+    expect(events[0]!.action).toBe("forward");
+  });
+
+  it("handles check action", async () => {
+    const step = { action: "check" as const, selector: "#cb" };
+    await actionHandlers["check"]!(ctx, step, events, 0);
+    const loc = (ctx.page.locator as unknown as ReturnType<typeof vi.fn>).mock.results[0]!.value;
+    expect(loc.setChecked).toHaveBeenCalledWith(true, expect.anything());
+    expect(events).toHaveLength(1);
+    expect(events[0]!.action).toBe("check");
+  });
+
+  it("handles uncheck action", async () => {
+    const step = { action: "uncheck" as const, selector: "#cb" };
+    await actionHandlers["uncheck"]!(ctx, step, events, 0);
+    const loc = (ctx.page.locator as unknown as ReturnType<typeof vi.fn>).mock.results[0]!.value;
+    expect(loc.setChecked).toHaveBeenCalledWith(false, expect.anything());
+    expect(events).toHaveLength(1);
+    expect(events[0]!.action).toBe("uncheck");
+  });
+
+  it("handles select action", async () => {
+    const step = { action: "select" as const, selector: "#plan", option: { value: "pro" } };
+    await actionHandlers["select"]!(ctx, step, events, 0);
+    const loc = (ctx.page.locator as unknown as ReturnType<typeof vi.fn>).mock.results[0]!.value;
+    expect(loc.selectOption).toHaveBeenCalledWith({ value: "pro" }, expect.anything());
+    expect(events).toHaveLength(1);
+    expect(events[0]!.action).toBe("select");
+  });
+
+  it("handles upload action (resolves relative paths using specDir when provided)", async () => {
+    ctx = { ...ctx, specDir: "C:\\demo" };
+    const step = { action: "upload" as const, selector: "#file", file: "assets\\a.txt" };
+    await actionHandlers["upload"]!(ctx, step, events, 0);
+    const loc = (ctx.page.locator as unknown as ReturnType<typeof vi.fn>).mock.results[0]!.value;
+    expect(loc.setInputFiles).toHaveBeenCalledWith(["C:\\demo\\assets\\a.txt"], expect.anything());
+    expect(events).toHaveLength(1);
+    expect(events[0]!.action).toBe("upload");
+  });
+
+  it("handles dragAndDrop action", async () => {
+    const step = {
+      action: "dragAndDrop" as const,
+      from: { selector: "#a" },
+      to: { selector: "#b" },
+    };
+    await actionHandlers["dragAndDrop"]!(ctx, step, events, 0);
+    expect(ctx.page.locator).toHaveBeenCalledWith("#a");
+    expect(ctx.page.locator).toHaveBeenCalledWith("#b");
+    const loc = (ctx.page.locator as unknown as ReturnType<typeof vi.fn>).mock.results[0]!.value;
+    expect(loc.dragTo).toHaveBeenCalled();
+    expect(events).toHaveLength(1);
+    expect(events[0]!.action).toBe("dragAndDrop");
+    expect(events[0]!.selector).toContain("#a");
+    expect(events[0]!.selector).toContain("#b");
   });
 
   it("applies post-action delay using step.delay override", async () => {

@@ -52,7 +52,9 @@
     "tpad",
     "multilingual",
     "statfs",
-    "bavail"
+    "bavail",
+    "Fagan",
+    "embedders"
   ],
   "ignorePaths": ["node_modules", "dist", "pnpm-lock.yaml", "*.json"]
 }

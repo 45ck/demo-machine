@@ -52,6 +52,25 @@ export function getCursorCSS(): string {
   will-change: transform, opacity;
 }
 
+/* Spotlight overlay to strongly "select" targets (non-interactive). */
+#dm-spotlight {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  z-index: ${CURSOR_Z_INDEX - 3};
+  opacity: 0;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 0 0 9999px rgba(2, 6, 23, 0.22);
+  transition:
+    opacity 0.14s ease,
+    transform 0.14s ease;
+  will-change: transform, opacity;
+}
+
 /* Click ripple for extra "polish" */
 .dm-ripple {
   position: fixed;

@@ -88,6 +88,7 @@ const clickStepSchema = z.object({
   action: z.literal("click"),
   selector: z.string().optional(),
   target: targetSchema.optional(),
+  nth: z.number().int().nonnegative().optional(),
   timeoutMs: z.number().int().positive().optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
@@ -97,6 +98,7 @@ const typeStepSchema = z.object({
   action: z.literal("type"),
   selector: z.string().optional(),
   target: targetSchema.optional(),
+  nth: z.number().int().nonnegative().optional(),
   text: z.string(),
   clear: z.boolean().optional(),
   timeoutMs: z.number().int().positive().optional(),
@@ -108,6 +110,7 @@ const hoverStepSchema = z.object({
   action: z.literal("hover"),
   selector: z.string().optional(),
   target: targetSchema.optional(),
+  nth: z.number().int().nonnegative().optional(),
   timeoutMs: z.number().int().positive().optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
@@ -117,8 +120,11 @@ const scrollStepSchema = z.object({
   action: z.literal("scroll"),
   selector: z.string().optional(),
   target: targetSchema.optional(),
+  nth: z.number().int().nonnegative().optional(),
   x: z.number().optional().default(0),
-  y: z.number().optional().default(0),
+  // Default to a meaningful downward scroll so specs can omit y for common cases
+  // like "scroll a list to load more".
+  y: z.number().optional().default(800),
   timeoutMs: z.number().int().positive().optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
@@ -134,9 +140,74 @@ const assertStepSchema = z.object({
   action: z.literal("assert"),
   selector: z.string().optional(),
   target: targetSchema.optional(),
+  nth: z.number().int().nonnegative().optional(),
   visible: z.boolean().optional(),
   text: z.string().optional(),
   timeoutMs: z.number().int().positive().optional(),
+  narration: z.string().optional(),
+});
+
+const checkStepSchema = z.object({
+  action: z.literal("check"),
+  selector: z.string().optional(),
+  target: targetSchema.optional(),
+  nth: z.number().int().nonnegative().optional(),
+  timeoutMs: z.number().int().positive().optional(),
+  delay: z.number().int().positive().optional(),
+  narration: z.string().optional(),
+});
+
+const uncheckStepSchema = z.object({
+  action: z.literal("uncheck"),
+  selector: z.string().optional(),
+  target: targetSchema.optional(),
+  nth: z.number().int().nonnegative().optional(),
+  timeoutMs: z.number().int().positive().optional(),
+  delay: z.number().int().positive().optional(),
+  narration: z.string().optional(),
+});
+
+const selectOptionSchema = z.union([
+  z.object({ value: z.string().min(1) }),
+  z.object({ label: z.string().min(1) }),
+  z.object({ index: z.number().int().nonnegative() }),
+]);
+
+const selectStepSchema = z.object({
+  action: z.literal("select"),
+  selector: z.string().optional(),
+  target: targetSchema.optional(),
+  nth: z.number().int().nonnegative().optional(),
+  option: selectOptionSchema,
+  timeoutMs: z.number().int().positive().optional(),
+  delay: z.number().int().positive().optional(),
+  narration: z.string().optional(),
+});
+
+const uploadStepSchema = z.object({
+  action: z.literal("upload"),
+  selector: z.string().optional(),
+  target: targetSchema.optional(),
+  nth: z.number().int().nonnegative().optional(),
+  file: z.string().min(1).optional(),
+  files: z.array(z.string().min(1)).min(1).optional(),
+  timeoutMs: z.number().int().positive().optional(),
+  delay: z.number().int().positive().optional(),
+  narration: z.string().optional(),
+});
+
+const dragEndpointSchema = z.object({
+  selector: z.string().optional(),
+  target: targetSchema.optional(),
+  nth: z.number().int().nonnegative().optional(),
+});
+
+const dragAndDropStepSchema = z.object({
+  action: z.literal("dragAndDrop"),
+  from: dragEndpointSchema,
+  to: dragEndpointSchema,
+  timeoutMs: z.number().int().positive().optional(),
+  delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
 });
 
@@ -153,6 +224,20 @@ const pressStepSchema = z.object({
   narration: z.string().optional(),
 });
 
+const backStepSchema = z.object({
+  action: z.literal("back"),
+  timeoutMs: z.number().int().positive().optional(),
+  delay: z.number().int().positive().optional(),
+  narration: z.string().optional(),
+});
+
+const forwardStepSchema = z.object({
+  action: z.literal("forward"),
+  timeoutMs: z.number().int().positive().optional(),
+  delay: z.number().int().positive().optional(),
+  narration: z.string().optional(),
+});
+
 const clickStepSchemaValidated = clickStepSchema.refine((v) => v.selector || v.target, {
   message: "click requires selector or target",
 });
@@ -165,6 +250,25 @@ const hoverStepSchemaValidated = hoverStepSchema.refine((v) => v.selector || v.t
 const assertStepSchemaValidated = assertStepSchema.refine((v) => v.selector || v.target, {
   message: "assert requires selector or target",
 });
+const checkStepSchemaValidated = checkStepSchema.refine((v) => v.selector || v.target, {
+  message: "check requires selector or target",
+});
+const uncheckStepSchemaValidated = uncheckStepSchema.refine((v) => v.selector || v.target, {
+  message: "uncheck requires selector or target",
+});
+const selectStepSchemaValidated = selectStepSchema.refine((v) => v.selector || v.target, {
+  message: "select requires selector or target",
+});
+const uploadStepSchemaValidated = uploadStepSchema
+  .refine((v) => v.selector || v.target, { message: "upload requires selector or target" })
+  .refine((v) => v.file || v.files, { message: "upload requires file or files" });
+const dragAndDropStepSchemaValidated = dragAndDropStepSchema
+  .refine((v) => v.from.selector || v.from.target, {
+    message: "dragAndDrop.from requires selector or target",
+  })
+  .refine((v) => v.to.selector || v.to.target, {
+    message: "dragAndDrop.to requires selector or target",
+  });
 
 const stepSchema = z.union([
   navigateStepSchema,
@@ -176,6 +280,13 @@ const stepSchema = z.union([
   assertStepSchemaValidated,
   screenshotStepSchema,
   pressStepSchema,
+  backStepSchema,
+  forwardStepSchema,
+  checkStepSchemaValidated,
+  uncheckStepSchemaValidated,
+  selectStepSchemaValidated,
+  uploadStepSchemaValidated,
+  dragAndDropStepSchemaValidated,
 ]);
 
 const chapterSchema = z.object({

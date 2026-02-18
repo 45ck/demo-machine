@@ -248,17 +248,24 @@ chapters:
 
 ### Action Types
 
-| Action       | Required Fields                | Description                                                                |
-| ------------ | ------------------------------ | -------------------------------------------------------------------------- |
-| `navigate`   | `url`                          | Go to a URL                                                                |
-| `click`      | `selector` or `target`         | Click an element                                                           |
-| `type`       | `selector` or `target`, `text` | Type text character-by-character                                           |
-| `hover`      | `selector` or `target`         | Hover over an element                                                      |
-| `scroll`     | —                              | Scroll the page or a container (`selector` or `target`, `x`, `y` optional) |
-| `wait`       | `timeout`                      | Pause for milliseconds                                                     |
-| `press`      | `key`                          | Press a keyboard key                                                       |
-| `assert`     | `selector` or `target`         | Assert visibility or text content                                          |
-| `screenshot` | —                              | Take a screenshot (`name` optional)                                        |
+| Action        | Required Fields                           | Description                                                                |
+| ------------- | ----------------------------------------- | -------------------------------------------------------------------------- |
+| `navigate`    | `url`                                     | Go to a URL                                                                |
+| `click`       | `selector` or `target`                    | Click an element                                                           |
+| `check`       | `selector` or `target`                    | Check a checkbox/toggle                                                    |
+| `uncheck`     | `selector` or `target`                    | Uncheck a checkbox/toggle                                                  |
+| `type`        | `selector` or `target`, `text`            | Type text character-by-character                                           |
+| `select`      | `selector` or `target`, `option`          | Select an option in a `<select>`                                           |
+| `upload`      | `selector` or `target`, `file` or `files` | Upload files into an `<input type="file">`                                 |
+| `hover`       | `selector` or `target`                    | Hover over an element                                                      |
+| `scroll`      | —                                         | Scroll the page or a container (`selector` or `target`, `x`, `y` optional) |
+| `wait`        | `timeout`                                 | Pause for milliseconds                                                     |
+| `press`       | `key`                                     | Press a keyboard key                                                       |
+| `back`        | —                                         | Go back in browser history                                                 |
+| `forward`     | —                                         | Go forward in browser history                                              |
+| `assert`      | `selector` or `target`                    | Assert visibility or text content                                          |
+| `screenshot`  | —                                         | Take a screenshot (`name` optional)                                        |
+| `dragAndDrop` | `from`, `to`                              | Drag from one target to another                                            |
 
 Every action supports an optional `narration` field for TTS and most support `delay` to override the default post-action pause.
 
@@ -286,6 +293,16 @@ Supported strategies:
 - `title`: `{ by: title, text: "Open menu", exact: true }`
 
 This makes specs more resilient across UI refactors (class name changes, DOM reshuffles) and aligns with accessibility.
+
+### Disambiguation (`nth`)
+
+When a selector/target matches multiple elements, you can pick the Nth match (0-based):
+
+```yaml
+- action: click
+  selector: "button"
+  nth: 1
+```
 
 ### Pacing
 

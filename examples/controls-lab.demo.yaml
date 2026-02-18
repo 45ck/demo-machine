@@ -1,0 +1,55 @@
+meta:
+  title: "ControlRoom - Inputs Demo"
+
+runner:
+  command: "node examples/controls-lab/serve.mjs"
+  url: "http://localhost:4571"
+  timeout: 10000
+
+chapters:
+  - title: "Inputs"
+    steps:
+      - action: navigate
+        url: "/"
+      - action: assert
+        target:
+          by: testId
+          testId: "title"
+        visible: true
+      - action: check
+        target:
+          by: label
+          text: "Enable alerts"
+      - action: select
+        target:
+          by: label
+          text: "Plan"
+        option:
+          label: "Pro"
+      - action: upload
+        target:
+          by: label
+          text: "Upload logo"
+        file: "./controls-lab/assets/sample.txt"
+      - action: assert
+        target:
+          by: testId
+          testId: "status-text"
+        text: "Uploaded: sample.txt"
+
+  - title: "Drag And Drop"
+    steps:
+      - action: dragAndDrop
+        from:
+          target:
+            by: testId
+            testId: "card-alpha"
+        to:
+          target:
+            by: testId
+            testId: "drop-zone"
+      - action: assert
+        target:
+          by: testId
+          testId: "drop-hint"
+        text: "Alpha card"

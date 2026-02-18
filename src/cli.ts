@@ -52,7 +52,7 @@ program
       const spec = await loadSpec(specPath);
       logger.info(`Spec valid: "${spec.meta.title}" (${String(spec.chapters.length)} chapters)`);
     } catch (err) {
-      logger.error(String(err));
+      logger.error(err instanceof Error ? (err.stack ?? err.message) : String(err));
       process.exitCode = 1;
     }
   });
@@ -80,10 +80,10 @@ program
         opts,
         getOptionSource: (name) => program.getOptionValueSource(name),
       });
-      const bundle = await captureFromSpec({ spec, opts, settings });
+      const bundle = await captureFromSpec({ spec, specPath, opts, settings });
       logger.info(`Capture complete: ${bundle.videoPath}`);
     } catch (err) {
-      logger.error(String(err));
+      logger.error(err instanceof Error ? (err.stack ?? err.message) : String(err));
       process.exitCode = 1;
     }
   });
@@ -101,9 +101,9 @@ program
         opts,
         getOptionSource: (name) => program.getOptionValueSource(name),
       });
-      await runFullPipeline({ spec, opts, settings });
+      await runFullPipeline({ spec, specPath, opts, settings });
     } catch (err) {
-      logger.error(String(err));
+      logger.error(err instanceof Error ? (err.stack ?? err.message) : String(err));
       process.exitCode = 1;
     }
   });
@@ -132,7 +132,7 @@ program
         process.stdout.write(output);
       }
     } catch (err) {
-      logger.error(String(err));
+      logger.error(err instanceof Error ? (err.stack ?? err.message) : String(err));
       process.exitCode = 1;
     }
   });
@@ -146,7 +146,7 @@ program
     try {
       await runEditPipeline(eventsPath, opts);
     } catch (err) {
-      logger.error(String(err));
+      logger.error(err instanceof Error ? (err.stack ?? err.message) : String(err));
       process.exitCode = 1;
     }
   });

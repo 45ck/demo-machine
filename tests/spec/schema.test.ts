@@ -71,6 +71,16 @@ function fullSpec() {
           },
           { action: "screenshot", name: "final", narration: "Capture" },
           { action: "press", key: "Enter", narration: "Submit" },
+          { action: "check", selector: "#cb", narration: "Check" },
+          { action: "uncheck", selector: "#cb", narration: "Uncheck" },
+          { action: "select", selector: "#sel", option: { value: "pro" }, narration: "Select" },
+          { action: "upload", selector: "#file", file: "./a.txt", narration: "Upload" },
+          {
+            action: "dragAndDrop",
+            from: { selector: "#from" },
+            to: { selector: "#to" },
+            narration: "Drag",
+          },
         ],
       },
     ],
@@ -106,12 +116,12 @@ describe("demoSpecSchema", () => {
     expect(result.runner.timeout).toBe(30000);
   });
 
-  it("applies default scroll x=0, y=0", () => {
+  it("applies default scroll x=0, y=800", () => {
     const spec = minimalSpec();
     spec.chapters[0]!.steps = [{ action: "scroll" as const }];
     const result = demoSpecSchema.parse(spec);
     const step = result.chapters[0]!.steps[0]!;
-    expect(step).toMatchObject({ action: "scroll", x: 0, y: 0 });
+    expect(step).toMatchObject({ action: "scroll", x: 0, y: 800 });
   });
 
   /* ---------- Each action type validates -------------------------- */
@@ -133,6 +143,16 @@ describe("demoSpecSchema", () => {
       },
       { action: "screenshot", step: { action: "screenshot" } },
       { action: "press", step: { action: "press", key: "Escape" } },
+      { action: "back", step: { action: "back" } },
+      { action: "forward", step: { action: "forward" } },
+      { action: "check", step: { action: "check", selector: "#cb" } },
+      { action: "uncheck", step: { action: "uncheck", selector: "#cb" } },
+      { action: "select", step: { action: "select", selector: "#sel", option: { label: "Pro" } } },
+      { action: "upload", step: { action: "upload", selector: "#file", files: ["./a.txt"] } },
+      {
+        action: "dragAndDrop",
+        step: { action: "dragAndDrop", from: { selector: "#a" }, to: { selector: "#b" } },
+      },
     ];
 
     for (const { action, step } of cases) {
@@ -432,7 +452,7 @@ describe("demoSpecSchema", () => {
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.chapters).toHaveLength(2);
-      expect(result.data.chapters[0]!.steps).toHaveLength(9);
+      expect(result.data.chapters[0]!.steps).toHaveLength(14);
     }
   });
 });

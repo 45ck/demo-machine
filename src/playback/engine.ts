@@ -1,11 +1,12 @@
 import type { Chapter } from "../spec/types.js";
-import { generateBlurStyles } from "../redaction/mask.js";
-import { scanForSecrets } from "../redaction/secrets.js";
 import { createLogger } from "../utils/logger.js";
 import type { PlaywrightPage, PlaybackContext } from "./actions.js";
 import { actionHandlers } from "./actions.js";
-import { getCursorCSS } from "./cursor.js";
+import { PlaybackStepError } from "./errors.js";
 import type { ActionEvent, BoundingBox, Pacing, PlaybackOptions, PlaybackResult } from "./types.js";
+import { selectorForEvent, selectorForEventFromInput, type Target } from "./selector.js";
+import { createNarrationWaiter } from "./narration-waiter.js";
+import { applyRedaction, checkSecrets, injectCursor } from "./overlays.js";
 
 const logger = createLogger("playback");
 
@@ -17,76 +18,6 @@ const NO_PACING: Pacing = {
   postNavigateDelayMs: 0,
   settleDelayMs: 0,
 };
-
-function baseDelayAfterStep(step: Chapter["steps"][number], pacing: Pacing): number {
-  switch (step.action) {
-    case "navigate":
-      return pacing.postNavigateDelayMs;
-    case "click":
-    case "hover":
-    case "scroll":
-    case "press":
-      return step.delay ?? pacing.postClickDelayMs;
-    case "type":
-      return step.delay ?? pacing.postTypeDelayMs;
-    default:
-      return 0;
-  }
-}
-
-function computeAutoSyncWait(params: {
-  mode: import("../utils/narration-sync-types.js").NarrationSyncMode;
-  baseDelayMs: number;
-  settleMs: number;
-  nextLeadInMs: number;
-}): { delayMs: number; extraMs: number; baseAvailableMs: number; shouldWarn: boolean } {
-  const baseAvailableMs = params.baseDelayMs + params.settleMs;
-  const shouldWarn =
-    params.mode === "warn-only" && params.nextLeadInMs > 0 && baseAvailableMs < params.nextLeadInMs;
-  const extraMs =
-    params.mode === "auto-sync" && params.nextLeadInMs > 0
-      ? Math.max(0, params.nextLeadInMs - baseAvailableMs)
-      : 0;
-  return {
-    delayMs: params.baseDelayMs + extraMs,
-    extraMs,
-    baseAvailableMs,
-    shouldWarn,
-  };
-}
-
-async function applyRedaction(page: PlaywrightPage, selectors: string[]): Promise<void> {
-  if (selectors.length === 0) return;
-  const css = generateBlurStyles(selectors);
-  await page.addStyleTag({ content: css });
-  logger.info(`Applied redaction to ${String(selectors.length)} selectors`);
-}
-
-async function injectCursor(page: PlaywrightPage): Promise<void> {
-  const css = getCursorCSS();
-  await page.addStyleTag({ content: css });
-  await page.evaluate((() => {
-    if (!document.getElementById("dm-cursor")) {
-      const cursor = document.createElement("div");
-      cursor.id = "dm-cursor";
-      cursor.style.left = "0px";
-      cursor.style.top = "0px";
-      document.body.appendChild(cursor);
-    }
-  }) as (...args: unknown[]) => unknown);
-  logger.info("Injected cursor CSS and element");
-}
-
-async function checkSecrets(page: PlaywrightPage, patterns: string[]): Promise<void> {
-  if (patterns.length === 0) return;
-  const text = (await page.evaluate(
-    (() => document.body.innerText) as (...args: unknown[]) => unknown,
-  )) as string;
-  const matches = scanForSecrets(text, patterns);
-  for (const match of matches) {
-    logger.warn(`Secret detected: pattern="${match.pattern}" text="${match.text}"`);
-  }
-}
 
 async function executeStep(
   ctx: PlaybackContext,
@@ -103,88 +34,154 @@ async function executeStep(
   }
 }
 
-function createNarrationWaiter(params: {
-  page: PlaywrightPage;
-  pacing: Pacing;
-  totalSteps: number;
-  narration: PlaybackOptions["narration"];
-}): {
-  maybeWaitBeforeFirstStep(): Promise<void>;
-  waitAfterStep(stepIndex: number, step: Chapter["steps"][number]): Promise<void>;
-} {
-  const narrationMode = params.narration?.mode ?? "manual";
-  const narrationBufferMs = params.narration?.bufferMs ?? 0;
-  const narrationTiming = params.narration?.timing;
+function selectorForError(step: Chapter["steps"][number]): string {
+  if (step.action !== "dragAndDrop") return selectorForEvent(step);
+  const from = selectorForEventFromInput(
+    {
+      selector: step.from.selector,
+      target: step.from.target as unknown as Target,
+      nth: step.from.nth,
+    },
+    "from(?)",
+  );
+  const to = selectorForEventFromInput(
+    {
+      selector: step.to.selector,
+      target: step.to.target as unknown as Target,
+      nth: step.to.nth,
+    },
+    "to(?)",
+  );
+  return `${from} -> ${to}`;
+}
 
-  const requiredLeadInMs = (stepIndex: number): number => {
-    if (!narrationTiming) return 0;
-    if (narrationMode === "manual") return 0;
-    const entry = narrationTiming.get(stepIndex);
-    if (!entry) return 0;
-    return entry.durationMs + narrationBufferMs;
-  };
+function raisePlaybackStepError(params: {
+  stepIndex: number;
+  chapterTitle: string;
+  step: Chapter["steps"][number];
+  selector: string;
+  events: ActionEvent[];
+  startTimestamp: number;
+  cause: unknown;
+}): never {
+  throw new PlaybackStepError({
+    stepIndex: params.stepIndex,
+    chapterTitle: params.chapterTitle,
+    step: params.step,
+    selectorForEvent: params.selector,
+    events: [...params.events],
+    startTimestamp: params.startTimestamp,
+    cause: params.cause,
+  });
+}
 
-  const basePostDelayMs = (step: Chapter["steps"][number]): number => {
-    return baseDelayAfterStep(step, params.pacing);
-  };
-
-  const maybeWaitBeforeFirstStep = async (): Promise<void> => {
-    const firstLeadIn = requiredLeadInMs(0);
-    if (firstLeadIn <= 0) return;
-
-    if (narrationMode === "auto-sync") {
-      logger.info(`Auto-sync: waiting ${String(firstLeadIn)}ms before first step for narration`);
-      await params.page.waitForTimeout(firstLeadIn);
-      return;
-    }
-
-    if (narrationMode === "warn-only") {
-      logger.warn(
-        `Narration timing warning: step 0 needs ${String(
-          firstLeadIn,
-        )}ms lead-in but there is no pre-step delay in warn-only mode`,
-      );
-    }
-  };
-
-  const waitAfterStep = async (
-    stepIndex: number,
-    step: Chapter["steps"][number],
-  ): Promise<void> => {
-    const baseDelay = basePostDelayMs(step);
-    const nextIndex = stepIndex + 1;
-    const nextLeadIn = nextIndex < params.totalSteps ? requiredLeadInMs(nextIndex) : 0;
-
-    const settleMs = params.pacing.settleDelayMs;
-    const calc = computeAutoSyncWait({
-      mode: narrationMode,
-      baseDelayMs: baseDelay,
-      settleMs,
-      nextLeadInMs: nextLeadIn,
+async function executeStepOrRaise(params: {
+  ctx: PlaybackContext;
+  step: Chapter["steps"][number];
+  events: ActionEvent[];
+  secretPatterns: string[];
+  stepIndex: number;
+  chapterTitle: string;
+  selector: string;
+  startTimestamp: number;
+}): Promise<void> {
+  try {
+    await executeStep(params.ctx, params.step, {
+      events: params.events,
+      secretPatterns: params.secretPatterns,
+      stepIndex: params.stepIndex,
     });
+  } catch (err) {
+    raisePlaybackStepError({
+      stepIndex: params.stepIndex,
+      chapterTitle: params.chapterTitle,
+      step: params.step,
+      selector: params.selector,
+      events: params.events,
+      startTimestamp: params.startTimestamp,
+      cause: err,
+    });
+  }
+}
 
-    if (calc.shouldWarn) {
-      logger.warn(
-        `Narration timing warning: next step ${String(nextIndex)} needs ${String(
-          nextLeadIn,
-        )}ms lead-in but current delay is ${String(calc.baseAvailableMs)}ms`,
-      );
+async function settleOrRaise(params: {
+  page: PlaywrightPage;
+  settleDelayMs: number;
+  stepIndex: number;
+  chapterTitle: string;
+  step: Chapter["steps"][number];
+  selector: string;
+  events: ActionEvent[];
+  startTimestamp: number;
+}): Promise<void> {
+  if (params.settleDelayMs <= 0) return;
+  try {
+    await params.page.waitForTimeout(params.settleDelayMs);
+  } catch (err) {
+    raisePlaybackStepError({
+      stepIndex: params.stepIndex,
+      chapterTitle: params.chapterTitle,
+      step: params.step,
+      selector: params.selector,
+      events: params.events,
+      startTimestamp: params.startTimestamp,
+      cause: err,
+    });
+  }
+}
+
+async function onStepCompleteMaybe(params: {
+  onStepComplete?: ((event: ActionEvent) => Promise<void>) | undefined;
+  events: ActionEvent[];
+}): Promise<void> {
+  if (!params.onStepComplete) return;
+  if (params.events.length === 0) return;
+  await params.onStepComplete(params.events[params.events.length - 1]!);
+}
+
+async function runChapters(params: {
+  chapters: Chapter[];
+  ctx: PlaybackContext;
+  page: PlaywrightPage;
+  secretPatterns: string[];
+  settleDelayMs: number;
+  onStepComplete?: ((event: ActionEvent) => Promise<void>) | undefined;
+  events: ActionEvent[];
+  startTimestamp: number;
+}): Promise<void> {
+  let stepIndex = 0;
+  for (const chapter of params.chapters) {
+    logger.info(`Starting chapter: ${chapter.title}`);
+    for (const step of chapter.steps) {
+      const selector = selectorForError(step);
+      await executeStepOrRaise({
+        ctx: params.ctx,
+        step,
+        events: params.events,
+        secretPatterns: params.secretPatterns,
+        stepIndex,
+        chapterTitle: chapter.title,
+        selector,
+        startTimestamp: params.startTimestamp,
+      });
+
+      // User callback errors should propagate as-is (caller-owned failure mode).
+      await onStepCompleteMaybe({ onStepComplete: params.onStepComplete, events: params.events });
+
+      await settleOrRaise({
+        page: params.page,
+        settleDelayMs: params.settleDelayMs,
+        stepIndex,
+        chapterTitle: chapter.title,
+        step,
+        selector,
+        events: params.events,
+        startTimestamp: params.startTimestamp,
+      });
+
+      stepIndex++;
     }
-
-    if (narrationMode === "auto-sync" && calc.extraMs > 0) {
-      logger.info(
-        `Auto-sync: extended delay after step ${String(stepIndex)} to ${String(calc.delayMs)}ms (min ${String(
-          baseDelay,
-        )}ms + settle ${String(settleMs)}ms, next narration needs ${String(nextLeadIn)}ms)`,
-      );
-    }
-
-    if (calc.delayMs > 0) {
-      await params.page.waitForTimeout(calc.delayMs);
-    }
-  };
-
-  return { maybeWaitBeforeFirstStep, waitAfterStep };
+  }
 }
 
 export class PlaybackEngine {
@@ -278,30 +275,23 @@ export class PlaybackEngine {
     const ctx: PlaybackContext = {
       page: this.page,
       baseUrl: this.options.baseUrl,
+      specDir: this.options.specDir,
       pacing,
       moveCursorTo: (box) => this.moveCursorTo(box),
       reinjectCursor: () => this.reinjectOverlays(),
       waitAfterStep: (stepIndex, step) => narrationWaiter.waitAfterStep(stepIndex, step),
     };
 
-    let stepIndex = 0;
-    for (const chapter of chapters) {
-      logger.info(`Starting chapter: ${chapter.title}`);
-      for (const step of chapter.steps) {
-        await executeStep(ctx, step, {
-          events,
-          secretPatterns: this.options.secretPatterns ?? [],
-          stepIndex,
-        });
-        if (this.options.onStepComplete && events.length > 0) {
-          await this.options.onStepComplete(events[events.length - 1]!);
-        }
-        if (pacing.settleDelayMs > 0) {
-          await this.page.waitForTimeout(pacing.settleDelayMs);
-        }
-        stepIndex++;
-      }
-    }
+    await runChapters({
+      chapters,
+      ctx,
+      page: this.page,
+      secretPatterns: this.options.secretPatterns ?? [],
+      settleDelayMs: pacing.settleDelayMs,
+      onStepComplete: this.options.onStepComplete,
+      events,
+      startTimestamp,
+    });
 
     return {
       events,

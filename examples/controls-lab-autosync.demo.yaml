@@ -1,0 +1,62 @@
+meta:
+  title: "ControlRoom - Inputs Demo (Auto-Sync)"
+
+runner:
+  command: "node examples/controls-lab/serve.mjs"
+  url: "http://localhost:4571"
+  timeout: 10000
+
+narration:
+  enabled: true
+  sync:
+    mode: auto-sync
+
+chapters:
+  - title: "Inputs"
+    steps:
+      - action: navigate
+        url: "/"
+        narration: "Welcome to ControlRoom. We'll validate that demo machine can drive common UI controls."
+      - action: check
+        target:
+          by: label
+          text: "Enable alerts"
+        narration: "First, we toggle a checkbox using its accessible label."
+      - action: select
+        target:
+          by: label
+          text: "Plan"
+        option:
+          label: "Pro"
+        narration: "Next, we select a plan from a dropdown."
+      - action: upload
+        target:
+          by: label
+          text: "Upload logo"
+        file: "./controls-lab/assets/sample.txt"
+        narration: "Now we upload a file, resolving paths relative to the spec."
+      - action: assert
+        target:
+          by: testId
+          testId: "status-text"
+        text: "Uploaded: sample.txt"
+        narration: "And we assert that the UI reflects the uploaded file."
+
+  - title: "Drag And Drop"
+    steps:
+      - action: dragAndDrop
+        from:
+          target:
+            by: testId
+            testId: "card-alpha"
+        to:
+          target:
+            by: testId
+            testId: "drop-zone"
+        narration: "Finally, we demonstrate drag and drop between two regions."
+      - action: assert
+        target:
+          by: testId
+          testId: "drop-hint"
+        text: "Alpha card"
+        narration: "The drop zone updates to confirm the action."

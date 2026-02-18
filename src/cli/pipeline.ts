@@ -23,11 +23,13 @@ function extractBranding(
 
 export async function runFullPipeline(params: {
   spec: DemoSpec;
+  specPath?: string;
   opts: GlobalOptions;
   settings: NarrationSettings;
 }): Promise<void> {
   const capture = await captureFromSpec({
     spec: params.spec,
+    ...(params.specPath ? { specPath: params.specPath } : {}),
     opts: params.opts,
     settings: params.settings,
   });

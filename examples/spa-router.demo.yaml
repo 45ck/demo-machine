@@ -9,6 +9,10 @@ runner:
   url: "http://localhost:4569"
   timeout: 10000
 
+pacing:
+  # This demo asserts on a brief loading indicator; shorten the post-click delay so we can catch it.
+  postClickDelayMs: 150
+
 chapters:
   - title: "Home"
     steps:
@@ -45,16 +49,14 @@ chapters:
 
   - title: "Back and Forward"
     steps:
-      - action: press
-        key: "Alt+Left"
+      - action: back
         narration: "We can even drive browser history."
       - action: wait
         timeout: 650
       - action: assert
         selector: "[data-testid='route-title']"
         text: "Pricing"
-      - action: press
-        key: "Alt+Right"
+      - action: forward
       - action: wait
         timeout: 650
       - action: assert

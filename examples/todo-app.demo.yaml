@@ -59,6 +59,7 @@ chapters:
     steps:
       - action: click
         selector: ".task-checkbox"
+        nth: 0
         narration: "To mark a task as done, just click the checkbox."
       - action: wait
         timeout: 800

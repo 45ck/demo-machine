@@ -30,8 +30,9 @@ chapters:
         timeout: 700
       - action: scroll
         selector: "[data-testid='list']"
+        narration: "Scrolling again loads the next page of items."
       - action: wait
         timeout: 700
       - action: assert
         selector: "[data-testid='count']"
-        text: "items: 30"
+        text: "items: 40"
