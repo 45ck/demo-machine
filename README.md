@@ -244,21 +244,48 @@ chapters:
         selector: "#btn"
 ```
 
+`navigate.url` can be absolute (`https://...`) or relative (`/`). Relative URLs are resolved against `runner.url`.
+
 ### Action Types
 
-| Action       | Required Fields    | Description                                     |
-| ------------ | ------------------ | ----------------------------------------------- |
-| `navigate`   | `url`              | Go to a URL                                     |
-| `click`      | `selector`         | Click an element                                |
-| `type`       | `selector`, `text` | Type text character-by-character                |
-| `hover`      | `selector`         | Hover over an element                           |
-| `scroll`     | —                  | Scroll the page (`selector`, `x`, `y` optional) |
-| `wait`       | `timeout`          | Pause for milliseconds                          |
-| `press`      | `key`              | Press a keyboard key                            |
-| `assert`     | `selector`         | Assert visibility or text content               |
-| `screenshot` | —                  | Take a screenshot (`name` optional)             |
+| Action       | Required Fields                | Description                                                                |
+| ------------ | ------------------------------ | -------------------------------------------------------------------------- |
+| `navigate`   | `url`                          | Go to a URL                                                                |
+| `click`      | `selector` or `target`         | Click an element                                                           |
+| `type`       | `selector` or `target`, `text` | Type text character-by-character                                           |
+| `hover`      | `selector` or `target`         | Hover over an element                                                      |
+| `scroll`     | —                              | Scroll the page or a container (`selector` or `target`, `x`, `y` optional) |
+| `wait`       | `timeout`                      | Pause for milliseconds                                                     |
+| `press`      | `key`                          | Press a keyboard key                                                       |
+| `assert`     | `selector` or `target`         | Assert visibility or text content                                          |
+| `screenshot` | —                              | Take a screenshot (`name` optional)                                        |
 
 Every action supports an optional `narration` field for TTS and most support `delay` to override the default post-action pause.
+
+### Targeting (Selector-Free)
+
+For `click`, `type`, `hover`, `scroll` (container scroll), and `assert`, you can use a structured `target` instead of a raw CSS selector:
+
+```yaml
+- action: click
+  target:
+    by: role
+    role: button
+    name: "Next"
+```
+
+Supported strategies:
+
+- `css`: `{ by: css, selector: ".my-class" }`
+- `testId`: `{ by: testId, testId: "save-button" }` (uses `data-testid`)
+- `role`: `{ by: role, role: "button", name: "Save", exact: true }`
+- `text`: `{ by: text, text: "Settings", exact: true }`
+- `label`: `{ by: label, text: "Email", exact: true }`
+- `placeholder`: `{ by: placeholder, text: "Search", exact: true }`
+- `altText`: `{ by: altText, text: "Company logo", exact: true }`
+- `title`: `{ by: title, text: "Open menu", exact: true }`
+
+This makes specs more resilient across UI refactors (class name changes, DOM reshuffles) and aligns with accessibility.
 
 ### Pacing
 

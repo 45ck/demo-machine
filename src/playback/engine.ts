@@ -197,6 +197,13 @@ export class PlaybackEngine {
     this.options = options;
   }
 
+  private async reinjectOverlays(): Promise<void> {
+    await applyRedaction(this.page, this.options.redactionSelectors ?? []);
+    if (this.options.pacing) {
+      await injectCursor(this.page);
+    }
+  }
+
   private async moveCursorTo(box: BoundingBox | null): Promise<void> {
     if (!box) return;
     const pacing = this.options.pacing ?? NO_PACING;
@@ -264,19 +271,16 @@ export class PlaybackEngine {
       narration: this.options.narration,
     });
 
-    await applyRedaction(this.page, this.options.redactionSelectors ?? []);
-
-    if (this.options.pacing) {
-      await injectCursor(this.page);
-    }
+    await this.reinjectOverlays();
 
     await narrationWaiter.maybeWaitBeforeFirstStep();
 
     const ctx: PlaybackContext = {
       page: this.page,
+      baseUrl: this.options.baseUrl,
       pacing,
       moveCursorTo: (box) => this.moveCursorTo(box),
-      reinjectCursor: () => (this.options.pacing ? injectCursor(this.page) : Promise.resolve()),
+      reinjectCursor: () => this.reinjectOverlays(),
       waitAfterStep: (stepIndex, step) => narrationWaiter.waitAfterStep(stepIndex, step),
     };
 

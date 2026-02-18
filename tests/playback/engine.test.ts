@@ -24,12 +24,26 @@ const TEST_PACING: Pacing = {
   settleDelayMs: 200,
 };
 
-function createMockPage(): PlaywrightPage {
+function createMockLocator() {
   return {
-    goto: vi.fn<(url: string) => Promise<void>>().mockResolvedValue(undefined),
-    click: vi.fn<(s: string) => Promise<void>>().mockResolvedValue(undefined),
-    fill: vi.fn<(s: string, v: string) => Promise<void>>().mockResolvedValue(undefined),
-    hover: vi.fn<(s: string) => Promise<void>>().mockResolvedValue(undefined),
+    click: vi.fn().mockResolvedValue(undefined),
+    hover: vi.fn().mockResolvedValue(undefined),
+    fill: vi.fn().mockResolvedValue(undefined),
+    isVisible: vi.fn().mockResolvedValue(true),
+    textContent: vi.fn().mockResolvedValue("hello world"),
+    boundingBox: vi.fn().mockResolvedValue({ x: 0, y: 0, width: 100, height: 50 }),
+    scrollIntoViewIfNeeded: vi.fn().mockResolvedValue(undefined),
+    waitFor: vi.fn().mockResolvedValue(undefined),
+    evaluate: vi.fn().mockResolvedValue(undefined),
+  };
+}
+
+function createMockPage(): PlaywrightPage {
+  const locator = createMockLocator();
+  return {
+    goto: vi
+      .fn<(url: string, options?: Record<string, unknown>) => Promise<void>>()
+      .mockResolvedValue(undefined),
     keyboard: {
       press: vi.fn<(k: string) => Promise<void>>().mockResolvedValue(undefined),
       type: vi
@@ -37,11 +51,14 @@ function createMockPage(): PlaywrightPage {
         .mockResolvedValue(undefined),
     },
     waitForTimeout: vi.fn<(ms: number) => Promise<void>>().mockResolvedValue(undefined),
-    locator: vi.fn().mockReturnValue({
-      isVisible: vi.fn().mockResolvedValue(true),
-      textContent: vi.fn().mockResolvedValue("hello world"),
-      boundingBox: vi.fn().mockResolvedValue({ x: 0, y: 0, width: 100, height: 50 }),
-    }),
+    locator: vi.fn().mockReturnValue(locator),
+    getByRole: vi.fn().mockReturnValue(locator),
+    getByText: vi.fn().mockReturnValue(locator),
+    getByTestId: vi.fn().mockReturnValue(locator),
+    getByLabel: vi.fn().mockReturnValue(locator),
+    getByPlaceholder: vi.fn().mockReturnValue(locator),
+    getByAltText: vi.fn().mockReturnValue(locator),
+    getByTitle: vi.fn().mockReturnValue(locator),
     evaluate: vi.fn().mockResolvedValue("page text content"),
     screenshot: vi.fn().mockResolvedValue(Buffer.from("")),
     addStyleTag: vi.fn<(o: { content: string }) => Promise<void>>().mockResolvedValue(undefined),
@@ -52,6 +69,7 @@ function createMockContext(page?: PlaywrightPage): PlaybackContext {
   const p = page ?? createMockPage();
   return {
     page: p,
+    baseUrl: "https://example.com",
     pacing: TEST_PACING,
     moveCursorTo: vi.fn<(box: BoundingBox | null) => Promise<void>>().mockResolvedValue(undefined),
     reinjectCursor: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
@@ -92,7 +110,10 @@ describe("actionHandlers", () => {
   it("handles navigate action", async () => {
     const step = { action: "navigate" as const, url: "https://example.com" };
     await actionHandlers["navigate"]!(ctx, step, events, 0);
-    expect(ctx.page.goto).toHaveBeenCalledWith("https://example.com");
+    expect(ctx.page.goto).toHaveBeenCalledWith(
+      expect.stringMatching(/^https:\/\/example\.com\/?$/),
+      expect.objectContaining({ waitUntil: "domcontentloaded", timeout: 15000 }),
+    );
     expect(events).toHaveLength(1);
     expect(events[0]!.action).toBe("navigate");
   });
@@ -107,7 +128,9 @@ describe("actionHandlers", () => {
     const step = { action: "click" as const, selector: "#btn" };
     await actionHandlers["click"]!(ctx, step, events, 0);
     expect(ctx.moveCursorTo).toHaveBeenCalled();
-    expect(ctx.page.click).toHaveBeenCalledWith("#btn");
+    expect(ctx.page.locator).toHaveBeenCalledWith("#btn");
+    const loc = (ctx.page.locator as unknown as ReturnType<typeof vi.fn>).mock.results[0]!.value;
+    expect(loc.click).toHaveBeenCalled();
     expect(events).toHaveLength(1);
     expect(events[0]!.action).toBe("click");
     expect(events[0]!.selector).toBe("#btn");
@@ -118,7 +141,9 @@ describe("actionHandlers", () => {
     const step = { action: "type" as const, selector: "#input", text: "hello" };
     await actionHandlers["type"]!(ctx, step, events, 0);
     expect(ctx.moveCursorTo).toHaveBeenCalled();
-    expect(ctx.page.click).toHaveBeenCalledWith("#input");
+    expect(ctx.page.locator).toHaveBeenCalledWith("#input");
+    const loc = (ctx.page.locator as unknown as ReturnType<typeof vi.fn>).mock.results[0]!.value;
+    expect(loc.click).toHaveBeenCalled();
     expect(ctx.page.keyboard.type).toHaveBeenCalledWith("hello", { delay: 50 });
     expect(events).toHaveLength(1);
     expect(events[0]!.action).toBe("type");
@@ -128,14 +153,18 @@ describe("actionHandlers", () => {
     const step = { action: "hover" as const, selector: ".menu" };
     await actionHandlers["hover"]!(ctx, step, events, 0);
     expect(ctx.moveCursorTo).toHaveBeenCalled();
-    expect(ctx.page.hover).toHaveBeenCalledWith(".menu");
+    expect(ctx.page.locator).toHaveBeenCalledWith(".menu");
+    const loc = (ctx.page.locator as unknown as ReturnType<typeof vi.fn>).mock.results[0]!.value;
+    expect(loc.hover).toHaveBeenCalled();
     expect(events).toHaveLength(1);
   });
 
   it("handles scroll action with selector", async () => {
     const step = { action: "scroll" as const, selector: "#section", x: 0, y: 0 };
     await actionHandlers["scroll"]!(ctx, step, events, 0);
-    expect(ctx.page.evaluate).toHaveBeenCalled();
+    expect(ctx.page.locator).toHaveBeenCalledWith("#section");
+    const loc = (ctx.page.locator as unknown as ReturnType<typeof vi.fn>).mock.results[0]!.value;
+    expect(loc.evaluate).toHaveBeenCalled();
     expect(events).toHaveLength(1);
     expect(events[0]!.action).toBe("scroll");
   });
@@ -163,14 +192,11 @@ describe("actionHandlers", () => {
 
   it("throws on failed visibility assertion", async () => {
     ctx.page.locator = vi.fn().mockReturnValue({
-      isVisible: vi.fn().mockResolvedValue(false),
-      textContent: vi.fn().mockResolvedValue(null),
-      boundingBox: vi.fn().mockResolvedValue(null),
+      ...createMockLocator(),
+      waitFor: vi.fn().mockRejectedValue(new Error("Timeout")),
     });
     const step = { action: "assert" as const, selector: "#el", visible: true };
-    await expect(actionHandlers["assert"]!(ctx, step, events, 0)).rejects.toThrow(
-      "Assertion failed",
-    );
+    await expect(actionHandlers["assert"]!(ctx, step, events, 0)).rejects.toThrow("Timeout");
   });
 
   it("handles screenshot action", async () => {

@@ -58,18 +58,29 @@ const narrationSchema = z.object({
 
 const targetSchema = z.discriminatedUnion("by", [
   z.object({ by: z.literal("css"), selector: z.string().min(1) }),
-  z.object({ by: z.literal("text"), text: z.string().min(1) }),
+  z.object({ by: z.literal("text"), text: z.string().min(1), exact: z.boolean().optional() }),
   z.object({
     by: z.literal("role"),
     role: z.string().min(1),
     name: z.string().optional(),
+    exact: z.boolean().optional(),
   }),
   z.object({ by: z.literal("testId"), testId: z.string().min(1) }),
+  z.object({ by: z.literal("label"), text: z.string().min(1), exact: z.boolean().optional() }),
+  z.object({
+    by: z.literal("placeholder"),
+    text: z.string().min(1),
+    exact: z.boolean().optional(),
+  }),
+  z.object({ by: z.literal("altText"), text: z.string().min(1), exact: z.boolean().optional() }),
+  z.object({ by: z.literal("title"), text: z.string().min(1), exact: z.boolean().optional() }),
 ]);
 
 const navigateStepSchema = z.object({
   action: z.literal("navigate"),
   url: z.string(),
+  waitUntil: z.enum(["load", "domcontentloaded", "networkidle"]).optional(),
+  timeoutMs: z.number().int().positive().optional(),
   narration: z.string().optional(),
 });
 
@@ -77,6 +88,7 @@ const clickStepSchema = z.object({
   action: z.literal("click"),
   selector: z.string().optional(),
   target: targetSchema.optional(),
+  timeoutMs: z.number().int().positive().optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
 });
@@ -86,6 +98,8 @@ const typeStepSchema = z.object({
   selector: z.string().optional(),
   target: targetSchema.optional(),
   text: z.string(),
+  clear: z.boolean().optional(),
+  timeoutMs: z.number().int().positive().optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
 });
@@ -94,6 +108,7 @@ const hoverStepSchema = z.object({
   action: z.literal("hover"),
   selector: z.string().optional(),
   target: targetSchema.optional(),
+  timeoutMs: z.number().int().positive().optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
 });
@@ -101,8 +116,10 @@ const hoverStepSchema = z.object({
 const scrollStepSchema = z.object({
   action: z.literal("scroll"),
   selector: z.string().optional(),
+  target: targetSchema.optional(),
   x: z.number().optional().default(0),
   y: z.number().optional().default(0),
+  timeoutMs: z.number().int().positive().optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
 });
@@ -119,6 +136,7 @@ const assertStepSchema = z.object({
   target: targetSchema.optional(),
   visible: z.boolean().optional(),
   text: z.string().optional(),
+  timeoutMs: z.number().int().positive().optional(),
   narration: z.string().optional(),
 });
 
