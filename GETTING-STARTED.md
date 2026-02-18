@@ -47,7 +47,7 @@ narration:
   provider: kokoro # or openai, elevenlabs, piper
   sync:
     mode: auto-sync
-    bufferMs: 500 # Pause after narration (optional, default: 500)
+    bufferMs: 500 # Lead-in pause between narration end and the action (optional, default: 500)
 
 pacing:
   # These are MINIMUM delays - auto-sync will extend if needed
@@ -231,7 +231,7 @@ narration:
   voice: string # Voice ID (provider-specific)
   sync:
     mode: string # auto-sync, manual, warn-only
-    bufferMs: number # Pause after narration (ms, default: 500)
+    bufferMs: number # Lead-in pause between narration end and the action (ms, default: 500)
 ```
 
 ## Troubleshooting

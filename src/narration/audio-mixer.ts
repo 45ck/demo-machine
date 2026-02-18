@@ -39,11 +39,20 @@ function probeAudioDurationMs(filePath: string): Promise<number> {
   });
 }
 
+async function mixSegmentFiles(segmentFiles: TimedSegment[], audioPath: string): Promise<void> {
+  if (segmentFiles.length === 1) {
+    await copyFile(segmentFiles[0]!.path, audioPath);
+    return;
+  }
+  await mixWithFfmpeg(segmentFiles, audioPath);
+}
+
 // eslint-disable-next-line max-lines-per-function
 export async function mixNarrationAudio(
   segments: NarrationSegment[],
   provider: TTSProvider,
   outputDir: string,
+  leadInBufferMs = 0,
 ): Promise<NarrationMixResult | undefined> {
   if (segments.length === 0) {
     logger.info("No narration segments found, skipping TTS");
@@ -68,15 +77,11 @@ export async function mixNarrationAudio(
       segmentFiles.push({ path: segPath, startMs: segment.startMs, durationMs });
     }
 
-    adjustTiming(segmentFiles);
+    adjustTiming(segmentFiles, leadInBufferMs);
 
     const audioPath = join(outputDir, "narration.wav");
 
-    if (segmentFiles.length === 1) {
-      await copyFile(segmentFiles[0]!.path, audioPath);
-    } else {
-      await mixWithFfmpeg(segmentFiles, audioPath);
-    }
+    await mixSegmentFiles(segmentFiles, audioPath);
 
     const totalDurationMs = computeNarrationDuration(segmentFiles);
 
@@ -93,6 +98,36 @@ export async function mixNarrationAudio(
   } finally {
     await rm(tmpDir, { recursive: true, force: true });
   }
+}
+
+export async function mixPreSynthesizedNarrationAudio(
+  segments: Array<{ text: string; actionMs: number; durationMs: number; audioPath: string }>,
+  outputDir: string,
+  leadInBufferMs = 0,
+): Promise<NarrationMixResult | undefined> {
+  if (segments.length === 0) return undefined;
+
+  const segmentFiles: TimedSegment[] = segments.map((s) => ({
+    path: s.audioPath,
+    startMs: s.actionMs,
+    durationMs: s.durationMs,
+  }));
+
+  adjustTiming(segmentFiles, leadInBufferMs);
+
+  const audioPath = join(outputDir, "narration.wav");
+  await mixSegmentFiles(segmentFiles, audioPath);
+
+  const totalDurationMs = computeNarrationDuration(segmentFiles);
+  return {
+    audioPath,
+    segments: segmentFiles.map((sf, i) => ({
+      text: segments[i]!.text,
+      startMs: sf.startMs,
+      durationMs: sf.durationMs,
+    })),
+    totalDurationMs,
+  };
 }
 
 function mixWithFfmpeg(segmentFiles: TimedSegment[], audioPath: string): Promise<void> {

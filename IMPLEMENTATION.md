@@ -14,14 +14,12 @@ This implementation adds **automatic narration synchronization** to demo-machine
 - Synthesizes each segment using TTS provider (Kokoro by default)
 - Measures exact audio duration using ffprobe
 - Builds timing map: action index → narration timing
-- Mock implementation uses silent audio for testing (real TTS integration pending)
 
 **Key Functions**:
 
-- `extractNarrationSegments(spec)` - Parses YAML to find all narration text
-- `preSynthesizeNarration(spec, options, outputDir)` - Main pre-synthesis orchestrator
-- `synthesizeWithKokoro(text, outputPath)` - TTS synthesis (mock for now)
-- `measureAudioDuration(audioPath)` - Uses ffprobe to get exact duration
+- `extractNarrationItems(spec)` - Parses YAML to find all step narration text
+- `preSynthesizeNarration(spec, provider, ttsOptions, outputDir)` - Generates per-step audio files and a timing map
+- `buildEstimatedNarrationTiming(spec)` - Fallback timing map when synthesis or ffprobe isn't available
 
 ### ✅ Phase 2: Narration-Aware Playback Engine
 
@@ -33,25 +31,19 @@ This implementation adds **automatic narration synchronization** to demo-machine
 
 **Key Changes**:
 
-- `PlaybackEngine` accepts `NarrationTimingMap` in constructor
-- `getNarrationAwareDelay(actionIndex, defaultDelay)` - Calculates adjusted delay
-  - Returns `max(defaultDelay, narrationDuration + bufferMs)`
-  - Logs timing adjustments for transparency
-- All action handlers (`click`, `type`, `navigate`, `wait`, `press`, `hover`, `scroll`) use narration-aware delays
+- `PlaybackEngine` consumes narration timing via `PlaybackOptions.narration`
+- Lead-in narration model: narration for step _i_ is scheduled to finish `bufferMs` before step _i_ executes
+- Auto-sync extends the delay after step _i-1_ so step _i_ has enough lead-in time (`durationMs + bufferMs`)
+- The first step gets an initial wait in `auto-sync` mode to ensure step 0 narration can start at t=0 and still finish before the first action
 
 ### ✅ Phase 3: CLI Orchestration
 
-**File**: `src/cli/runner.ts`
+**Files**: `src/cli.ts`, `src/cli/capture.ts`, `src/cli/narration.ts`, `src/cli/pipeline.ts`
 
 - Pre-synthesize narration BEFORE playback (if auto-sync enabled)
 - Pass timing map to PlaybackEngine
 - Execute playback with narration-aware delays
 - Mix pre-synthesized audio into final video
-
-**Key Functions**:
-
-- `runDemo(spec, options)` - Main orchestrator
-- `checkNarrationTiming(spec, narrationTiming)` - Warn-only mode helper
 
 ### ✅ Phase 4: Audio Mixer
 
@@ -68,7 +60,7 @@ This implementation adds **automatic narration synchronization** to demo-machine
 
 - Zod validation for `NarrationSyncSchema`
 - Support for `mode: 'auto-sync' | 'manual' | 'warn-only'`
-- Configurable `bufferMs` for post-narration pause
+- Configurable `bufferMs` for the lead-in pause between narration end and the action
 
 **Configuration Example**:
 
@@ -97,6 +89,13 @@ narration:
 ```
 packages/demo-machine/
 ├── src/
+│   ├── cli/
+│   │   ├── capture.ts               # Capture + pre-synthesis wiring
+│   │   ├── doctor.ts                # Environment checks
+│   │   ├── narration.ts             # Narration mixing + subtitles
+│   │   ├── options.ts               # Shared CLI option typing
+│   │   ├── pipeline.ts              # High-level run/edit pipelines
+│   │   └── voices.ts                # Voice management
 │   ├── narration/
 │   │   ├── types.ts                 # Type definitions (NEW)
 │   │   ├── pre-synthesizer.ts       # Pre-synthesis engine (NEW)
@@ -107,12 +106,8 @@ packages/demo-machine/
 │   │   └── actions.ts               # Action handlers (NEW)
 │   ├── spec/
 │   │   └── schema.ts                # Zod validation (NEW)
-│   ├── cli/
-│   │   └── runner.ts                # Main runner (NEW)
 │   ├── cli.ts                       # CLI entry point (NEW)
 │   └── index.ts                     # Public API exports (NEW)
-├── examples/
-│   └── test-autosync.demo.yaml      # Test spec (NEW)
 ├── package.json
 ├── tsconfig.json
 ├── README.md                        # Feature documentation

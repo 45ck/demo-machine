@@ -188,6 +188,15 @@ demo-machine capture <spec.yaml>
 demo-machine edit <events.json>
 ```
 
+`capture` and `run` write these artifacts into `--output`:
+
+- `video.webm` (raw recording)
+- `events.json` (event log)
+- `metadata.json` (capture timing info used for accurate timelines)
+- `trace.zip` (Playwright trace)
+
+`edit` expects `video.webm` to be in the same directory as the `events.json` you pass. If `metadata.json` exists, it will be used automatically.
+
 ### Options
 
 | Flag                    | Default    | Description                                    |

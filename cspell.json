@@ -48,7 +48,9 @@
     "toml",
     "iarna",
     "tpad",
-    "multilingual"
+    "multilingual",
+    "statfs",
+    "bavail"
   ],
   "ignorePaths": ["node_modules", "dist", "pnpm-lock.yaml", "*.json"]
 }

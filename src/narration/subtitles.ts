@@ -1,4 +1,4 @@
-import type { NarrationSegment, SubtitleEntry } from "./types.js";
+import type { NarrationSegment, SubtitleEntry, TimedNarrationSegment } from "./types.js";
 
 function padStart(value: number, length: number): string {
   return String(value).padStart(length, "0");
@@ -24,6 +24,15 @@ function toSubtitleEntries(segments: NarrationSegment[]): SubtitleEntry[] {
   }));
 }
 
+function toSubtitleEntriesFromTimed(segments: TimedNarrationSegment[]): SubtitleEntry[] {
+  return segments.map((seg, i) => ({
+    index: i + 1,
+    startMs: seg.startMs,
+    endMs: seg.startMs + seg.durationMs,
+    text: seg.text,
+  }));
+}
+
 export function generateVTT(segments: NarrationSegment[]): string {
   const entries = toSubtitleEntries(segments);
   const lines = ["WEBVTT", ""];
@@ -42,6 +51,38 @@ export function generateVTT(segments: NarrationSegment[]): string {
 
 export function generateSRT(segments: NarrationSegment[]): string {
   const entries = toSubtitleEntries(segments);
+  const lines: string[] = [];
+
+  for (const entry of entries) {
+    const start = formatTimestamp(entry.startMs, "srt");
+    const end = formatTimestamp(entry.endMs, "srt");
+    lines.push(String(entry.index));
+    lines.push(`${start} --> ${end}`);
+    lines.push(entry.text);
+    lines.push("");
+  }
+
+  return lines.join("\n");
+}
+
+export function generateVTTFromTimed(segments: TimedNarrationSegment[]): string {
+  const entries = toSubtitleEntriesFromTimed(segments);
+  const lines = ["WEBVTT", ""];
+
+  for (const entry of entries) {
+    const start = formatTimestamp(entry.startMs, "vtt");
+    const end = formatTimestamp(entry.endMs, "vtt");
+    lines.push(String(entry.index));
+    lines.push(`${start} --> ${end}`);
+    lines.push(entry.text);
+    lines.push("");
+  }
+
+  return lines.join("\n");
+}
+
+export function generateSRTFromTimed(segments: TimedNarrationSegment[]): string {
+  const entries = toSubtitleEntriesFromTimed(segments);
   const lines: string[] = [];
 
   for (const entry of entries) {

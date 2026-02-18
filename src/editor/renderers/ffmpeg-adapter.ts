@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { createLogger } from "../../utils/logger.js";
 import type { ActionEvent } from "../../capture/types.js";
+import { readCaptureMetadataMaybe } from "../../capture/metadata.js";
 import type { Renderer, RenderArgs, RenderResult } from "../renderer-types.js";
 import { buildTimeline } from "../timeline.js";
 import { FfmpegRenderer } from "./ffmpeg.js";
@@ -22,7 +23,8 @@ export class FfmpegRendererAdapter implements Renderer {
 
     log.info(`Loaded ${String(events.length)} events from ${eventsPath}`);
 
-    const timeline = buildTimeline(events, args.spec);
+    const meta = await readCaptureMetadataMaybe(join(args.assetsDir, "metadata.json"));
+    const timeline = buildTimeline(events, args.spec, meta?.startTimestamp);
     const inner = new FfmpegRenderer();
 
     const videoPath = join(args.assetsDir, "video.webm");

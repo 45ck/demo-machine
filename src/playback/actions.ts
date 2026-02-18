@@ -33,9 +33,15 @@ export interface PlaybackContext {
   pacing: Pacing;
   moveCursorTo(box: BoundingBox | null): Promise<void>;
   reinjectCursor(): Promise<void>;
+  waitAfterStep(stepIndex: number, step: Step): Promise<void>;
 }
 
-type ActionHandler = (ctx: PlaybackContext, step: Step, events: ActionEvent[]) => Promise<void>;
+type ActionHandler = (
+  ctx: PlaybackContext,
+  step: Step,
+  events: ActionEvent[],
+  stepIndex: number,
+) => Promise<void>;
 
 interface EventParams {
   action: string;
@@ -63,16 +69,16 @@ async function getBoundingBox(page: PlaywrightPage, selector: string): Promise<B
   return element.boundingBox();
 }
 
-const handleNavigate: ActionHandler = async (ctx, step, events) => {
+const handleNavigate: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "navigate") return;
   await ctx.page.goto(step.url);
   await ctx.reinjectCursor();
   events.push(buildEvent({ action: "navigate", startTime: start, narration: step.narration }));
-  await ctx.page.waitForTimeout(ctx.pacing.postNavigateDelayMs);
+  await ctx.waitAfterStep(stepIndex, step);
 };
 
-const handleClick: ActionHandler = async (ctx, step, events) => {
+const handleClick: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "click") return;
   const box = await getBoundingBox(ctx.page, step.selector);
@@ -95,10 +101,10 @@ const handleClick: ActionHandler = async (ctx, step, events) => {
       narration: step.narration,
     }),
   );
-  await ctx.page.waitForTimeout(step.delay ?? ctx.pacing.postClickDelayMs);
+  await ctx.waitAfterStep(stepIndex, step);
 };
 
-const handleType: ActionHandler = async (ctx, step, events) => {
+const handleType: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "type") return;
   const box = await getBoundingBox(ctx.page, step.selector);
@@ -114,10 +120,10 @@ const handleType: ActionHandler = async (ctx, step, events) => {
       narration: step.narration,
     }),
   );
-  await ctx.page.waitForTimeout(step.delay ?? ctx.pacing.postTypeDelayMs);
+  await ctx.waitAfterStep(stepIndex, step);
 };
 
-const handleHover: ActionHandler = async (ctx, step, events) => {
+const handleHover: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "hover") return;
   const box = await getBoundingBox(ctx.page, step.selector);
@@ -132,10 +138,10 @@ const handleHover: ActionHandler = async (ctx, step, events) => {
       narration: step.narration,
     }),
   );
-  await ctx.page.waitForTimeout(step.delay ?? ctx.pacing.postClickDelayMs);
+  await ctx.waitAfterStep(stepIndex, step);
 };
 
-const handleScroll: ActionHandler = async (ctx, step, events) => {
+const handleScroll: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "scroll") return;
   if (step.selector) {
@@ -164,17 +170,18 @@ const handleScroll: ActionHandler = async (ctx, step, events) => {
     );
     events.push(buildEvent({ action: "scroll", startTime: start, narration: step.narration }));
   }
-  await ctx.page.waitForTimeout(step.delay ?? ctx.pacing.postClickDelayMs);
+  await ctx.waitAfterStep(stepIndex, step);
 };
 
-const handleWait: ActionHandler = async (ctx, step, events) => {
+const handleWait: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "wait") return;
   await ctx.page.waitForTimeout(step.timeout);
   events.push(buildEvent({ action: "wait", startTime: start, narration: step.narration }));
+  await ctx.waitAfterStep(stepIndex, step);
 };
 
-const handleAssert: ActionHandler = async (ctx, step, events) => {
+const handleAssert: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "assert") return;
   const locator = ctx.page.locator(step.selector);
@@ -198,9 +205,10 @@ const handleAssert: ActionHandler = async (ctx, step, events) => {
       narration: step.narration,
     }),
   );
+  await ctx.waitAfterStep(stepIndex, step);
 };
 
-const handleScreenshot: ActionHandler = async (ctx, step, events) => {
+const handleScreenshot: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "screenshot") return;
   let options: { path?: string } | undefined;
@@ -213,14 +221,15 @@ const handleScreenshot: ActionHandler = async (ctx, step, events) => {
   }
   await ctx.page.screenshot(options);
   events.push(buildEvent({ action: "screenshot", startTime: start, narration: step.narration }));
+  await ctx.waitAfterStep(stepIndex, step);
 };
 
-const handlePress: ActionHandler = async (ctx, step, events) => {
+const handlePress: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "press") return;
   await ctx.page.keyboard.press(step.key);
   events.push(buildEvent({ action: "press", startTime: start, narration: step.narration }));
-  await ctx.page.waitForTimeout(step.delay ?? ctx.pacing.postClickDelayMs);
+  await ctx.waitAfterStep(stepIndex, step);
 };
 
 export const actionHandlers: Record<string, ActionHandler> = {

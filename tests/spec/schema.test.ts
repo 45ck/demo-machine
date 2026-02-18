@@ -40,6 +40,12 @@ function fullSpec() {
       selectors: [".secret"],
       secrets: ["password"],
     },
+    narration: {
+      enabled: true,
+      provider: "kokoro",
+      voice: "af_heart",
+      sync: { mode: "auto-sync", bufferMs: 500 },
+    },
     chapters: [
       {
         title: "Chapter One",
@@ -250,6 +256,13 @@ describe("demoSpecSchema", () => {
     it("rejects wait step with non-positive timeout", () => {
       const spec = minimalSpec();
       spec.chapters[0]!.steps = [{ action: "wait" as const, timeout: 0 }];
+      const result = demoSpecSchema.safeParse(spec);
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects invalid narration sync mode", () => {
+      const spec = minimalSpec() as Record<string, unknown>;
+      spec["narration"] = { enabled: true, sync: { mode: "fast" } };
       const result = demoSpecSchema.safeParse(spec);
       expect(result.success).toBe(false);
     });

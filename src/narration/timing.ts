@@ -10,14 +10,14 @@ export interface TimedSegment {
   durationMs: number;
 }
 
-export function adjustTiming(segmentFiles: TimedSegment[]): void {
-  // Shift narration to lead into the action: audio finishes when the action happens
+export function adjustTiming(segmentFiles: TimedSegment[], leadInBufferMs = 0): void {
+  // Shift narration to lead into the action: audio finishes leadInBufferMs before the action.
   for (let i = 0; i < segmentFiles.length; i++) {
     const seg = segmentFiles[i]!;
     const actionMs = seg.startMs;
-    seg.startMs = Math.max(0, actionMs - seg.durationMs);
+    seg.startMs = Math.max(0, actionMs - seg.durationMs - leadInBufferMs);
     logger.debug(
-      `Segment ${i + 1}: action at ${actionMs}ms, narration ${seg.durationMs}ms → starts at ${seg.startMs}ms`,
+      `Segment ${i + 1}: action at ${actionMs}ms, narration ${seg.durationMs}ms buffer ${leadInBufferMs}ms → starts at ${seg.startMs}ms`,
     );
   }
 

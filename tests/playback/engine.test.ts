@@ -58,6 +58,28 @@ function createMockContext(page?: PlaywrightPage): PlaybackContext {
     pacing: TEST_PACING,
     moveCursorTo: vi.fn<(box: BoundingBox | null) => Promise<void>>().mockResolvedValue(undefined),
     reinjectCursor: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
+    waitAfterStep: vi
+      .fn<(stepIndex: number, step: Chapter["steps"][number]) => Promise<void>>()
+      .mockImplementation(async (_stepIndex, step) => {
+        let delay = 0;
+        switch (step.action) {
+          case "navigate":
+            delay = TEST_PACING.postNavigateDelayMs;
+            break;
+          case "click":
+          case "hover":
+          case "scroll":
+          case "press":
+            delay = (step as { delay?: number | undefined }).delay ?? TEST_PACING.postClickDelayMs;
+            break;
+          case "type":
+            delay = (step as { delay?: number | undefined }).delay ?? TEST_PACING.postTypeDelayMs;
+            break;
+          default:
+            delay = 0;
+        }
+        if (delay > 0) await p.waitForTimeout(delay);
+      }),
   };
 }
 
@@ -72,7 +94,7 @@ describe("actionHandlers", () => {
 
   it("handles navigate action", async () => {
     const step = { action: "navigate" as const, url: "https://example.com" };
-    await actionHandlers["navigate"]!(ctx, step, events);
+    await actionHandlers["navigate"]!(ctx, step, events, 0);
     expect(ctx.page.goto).toHaveBeenCalledWith("https://example.com");
     expect(events).toHaveLength(1);
     expect(events[0]!.action).toBe("navigate");
@@ -80,13 +102,13 @@ describe("actionHandlers", () => {
 
   it("reinjects cursor after navigate", async () => {
     const step = { action: "navigate" as const, url: "https://example.com" };
-    await actionHandlers["navigate"]!(ctx, step, events);
+    await actionHandlers["navigate"]!(ctx, step, events, 0);
     expect(ctx.reinjectCursor).toHaveBeenCalled();
   });
 
   it("handles click action with bounding box", async () => {
     const step = { action: "click" as const, selector: "#btn" };
-    await actionHandlers["click"]!(ctx, step, events);
+    await actionHandlers["click"]!(ctx, step, events, 0);
     expect(ctx.moveCursorTo).toHaveBeenCalled();
     expect(ctx.page.click).toHaveBeenCalledWith("#btn");
     expect(events).toHaveLength(1);
@@ -97,7 +119,7 @@ describe("actionHandlers", () => {
 
   it("handles type action with character-by-character typing", async () => {
     const step = { action: "type" as const, selector: "#input", text: "hello" };
-    await actionHandlers["type"]!(ctx, step, events);
+    await actionHandlers["type"]!(ctx, step, events, 0);
     expect(ctx.moveCursorTo).toHaveBeenCalled();
     expect(ctx.page.click).toHaveBeenCalledWith("#input");
     expect(ctx.page.keyboard.type).toHaveBeenCalledWith("hello", { delay: 50 });
@@ -107,7 +129,7 @@ describe("actionHandlers", () => {
 
   it("handles hover action", async () => {
     const step = { action: "hover" as const, selector: ".menu" };
-    await actionHandlers["hover"]!(ctx, step, events);
+    await actionHandlers["hover"]!(ctx, step, events, 0);
     expect(ctx.moveCursorTo).toHaveBeenCalled();
     expect(ctx.page.hover).toHaveBeenCalledWith(".menu");
     expect(events).toHaveLength(1);
@@ -115,7 +137,7 @@ describe("actionHandlers", () => {
 
   it("handles scroll action with selector", async () => {
     const step = { action: "scroll" as const, selector: "#section", x: 0, y: 0 };
-    await actionHandlers["scroll"]!(ctx, step, events);
+    await actionHandlers["scroll"]!(ctx, step, events, 0);
     expect(ctx.page.evaluate).toHaveBeenCalled();
     expect(events).toHaveLength(1);
     expect(events[0]!.action).toBe("scroll");
@@ -123,21 +145,21 @@ describe("actionHandlers", () => {
 
   it("handles scroll action without selector", async () => {
     const step = { action: "scroll" as const, x: 0, y: 200 };
-    await actionHandlers["scroll"]!(ctx, step, events);
+    await actionHandlers["scroll"]!(ctx, step, events, 0);
     expect(ctx.page.evaluate).toHaveBeenCalled();
     expect(events).toHaveLength(1);
   });
 
   it("handles wait action", async () => {
     const step = { action: "wait" as const, timeout: 1000 };
-    await actionHandlers["wait"]!(ctx, step, events);
+    await actionHandlers["wait"]!(ctx, step, events, 0);
     expect(ctx.page.waitForTimeout).toHaveBeenCalledWith(1000);
     expect(events).toHaveLength(1);
   });
 
   it("handles assert action with visibility", async () => {
     const step = { action: "assert" as const, selector: "#el", visible: true };
-    await actionHandlers["assert"]!(ctx, step, events);
+    await actionHandlers["assert"]!(ctx, step, events, 0);
     expect(ctx.page.locator).toHaveBeenCalledWith("#el");
     expect(events).toHaveLength(1);
   });
@@ -149,32 +171,34 @@ describe("actionHandlers", () => {
       boundingBox: vi.fn().mockResolvedValue(null),
     });
     const step = { action: "assert" as const, selector: "#el", visible: true };
-    await expect(actionHandlers["assert"]!(ctx, step, events)).rejects.toThrow("Assertion failed");
+    await expect(actionHandlers["assert"]!(ctx, step, events, 0)).rejects.toThrow(
+      "Assertion failed",
+    );
   });
 
   it("handles screenshot action", async () => {
     const step = { action: "screenshot" as const };
-    await actionHandlers["screenshot"]!(ctx, step, events);
+    await actionHandlers["screenshot"]!(ctx, step, events, 0);
     expect(ctx.page.screenshot).toHaveBeenCalled();
     expect(events).toHaveLength(1);
   });
 
   it("handles press action", async () => {
     const step = { action: "press" as const, key: "Enter" };
-    await actionHandlers["press"]!(ctx, step, events);
+    await actionHandlers["press"]!(ctx, step, events, 0);
     expect(ctx.page.keyboard.press).toHaveBeenCalledWith("Enter");
     expect(events).toHaveLength(1);
   });
 
   it("applies post-action delay using step.delay override", async () => {
     const step = { action: "click" as const, selector: "#btn", delay: 100 };
-    await actionHandlers["click"]!(ctx, step, events);
+    await actionHandlers["click"]!(ctx, step, events, 0);
     expect(ctx.page.waitForTimeout).toHaveBeenCalledWith(100);
   });
 
   it("applies default post-action delay when no step.delay", async () => {
     const step = { action: "click" as const, selector: "#btn" };
-    await actionHandlers["click"]!(ctx, step, events);
+    await actionHandlers["click"]!(ctx, step, events, 0);
     expect(ctx.page.waitForTimeout).toHaveBeenCalledWith(TEST_PACING.postClickDelayMs);
   });
 });

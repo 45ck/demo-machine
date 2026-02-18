@@ -9,5 +9,6 @@ export interface CaptureBundle {
   videoPath: string;
   tracePath: string;
   eventLogPath: string;
+  metadataPath?: string;
   screenshots: string[];
 }

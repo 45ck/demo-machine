@@ -55,8 +55,14 @@ export type { Renderer, RenderArgs, RenderResult } from "./editor/renderer-types
 // Narration
 export { generateScript } from "./narration/script-generator.js";
 export { createTTSProvider } from "./narration/provider.js";
-export { mixNarrationAudio } from "./narration/audio-mixer.js";
+export { mixNarrationAudio, mixPreSynthesizedNarrationAudio } from "./narration/audio-mixer.js";
+export {
+  preSynthesizeNarration,
+  extractNarrationItems,
+  buildEstimatedNarrationTiming,
+} from "./narration/pre-synthesizer.js";
 export { generateVTT, generateSRT } from "./narration/subtitles.js";
+export { generateVTTFromTimed, generateSRTFromTimed } from "./narration/subtitles.js";
 export { cloneVoice } from "./narration/providers/elevenlabs-clone.js";
 export type {
   CloneVoiceOptions,
@@ -72,6 +78,14 @@ export type {
   TimedNarrationSegment,
   ElevenLabsVoiceSettings,
 } from "./narration/types.js";
+export type {
+  NarrationSyncMode,
+  NarrationSyncConfig,
+  SpecNarrationConfig,
+  NarrationTimingEntry,
+  NarrationTimingMap,
+  NarrationPreSynthesisResult,
+} from "./utils/narration-sync-types.js";
 
 // Redaction
 export { generateBlurStyles } from "./redaction/mask.js";

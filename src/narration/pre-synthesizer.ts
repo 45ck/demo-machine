@@ -1,221 +1,168 @@
-/**
- * Pre-synthesis module for calculating narration timing before playback
- * This allows demo-machine to automatically adjust action delays to match narration duration
- */
-
-import { spawn } from "node:child_process";
-import { mkdir } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { DemoSpec, NarrationOptions, NarrationSegment, NarrationTimingMap } from "./types.js";
+import { spawn } from "node:child_process";
+import { createLogger } from "../utils/logger.js";
+import type { DemoSpec } from "../spec/types.js";
+import type { TTSOptions, TTSProvider } from "./types.js";
+import type {
+  NarrationPreSynthesisResult,
+  NarrationTimingMap,
+} from "../utils/narration-sync-types.js";
 
-/**
- * Extracts narration segments from spec chapters/steps
- */
-export function extractNarrationSegments(spec: DemoSpec): NarrationSegment[] {
-  const segments: NarrationSegment[] = [];
+const log = createLogger("pre-synthesizer");
+
+interface NarrationItem {
+  actionIndex: number;
+  text: string;
+  action: string;
+}
+
+export function extractNarrationItems(spec: DemoSpec): NarrationItem[] {
+  const items: NarrationItem[] = [];
   let actionIndex = 0;
 
   for (const chapter of spec.chapters) {
     for (const step of chapter.steps) {
       if (step.narration) {
-        segments.push({
-          actionIndex,
-          text: step.narration,
-          action: step.action,
-        });
+        items.push({ actionIndex, text: step.narration, action: step.action });
       }
       actionIndex++;
     }
   }
 
-  return segments;
+  return items;
 }
 
-/**
- * Synthesize a single narration segment using the specified TTS provider
- */
-async function synthesizeSegment(
-  text: string,
-  index: number,
-  options: NarrationOptions,
-  outputDir: string,
-): Promise<string> {
-  const audioPath = join(outputDir, `narration-${index}.wav`);
+function estimateDurationMs(text: string): number {
+  // Rough fallback: ~150 wpm ~= 2.5 w/s.
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  const seconds = Math.max(0.8, words / 2.5);
+  return Math.round(seconds * 1000);
+}
 
-  // For now, implement Kokoro (local TTS) as it's the default
-  // Other providers (openai, elevenlabs) would be similar but with API calls
-  const provider = options.provider || "kokoro";
+function tryParsePcmWavDurationMs(buf: Buffer): number | undefined {
+  // Works for standard 44-byte PCM WAV (what Kokoro provider generates).
+  if (buf.length < 44) return undefined;
+  if (buf.toString("ascii", 0, 4) !== "RIFF") return undefined;
+  if (buf.toString("ascii", 8, 12) !== "WAVE") return undefined;
+  const numChannels = buf.readUInt16LE(22);
+  const sampleRate = buf.readUInt32LE(24);
+  const bitsPerSample = buf.readUInt16LE(34);
+  const dataBytes = buf.readUInt32LE(40);
+  if (numChannels <= 0 || sampleRate <= 0 || bitsPerSample <= 0) return undefined;
+  const bytesPerSample = bitsPerSample / 8;
+  const denom = sampleRate * numChannels * bytesPerSample;
+  if (!Number.isFinite(denom) || denom <= 0) return undefined;
+  const seconds = dataBytes / denom;
+  return Math.round(seconds * 1000);
+}
 
-  if (provider === "kokoro") {
-    await synthesizeWithKokoro(text, audioPath, options.voice);
-  } else {
-    // Placeholder for other providers
-    throw new Error(`TTS provider ${provider} not yet implemented in pre-synthesis`);
+function guessExtension(audio: Buffer): string {
+  if (audio.length >= 12) {
+    const riff = audio.toString("ascii", 0, 4);
+    const wave = audio.toString("ascii", 8, 12);
+    if (riff === "RIFF" && wave === "WAVE") return "wav";
   }
-
-  return audioPath;
+  if (audio.length >= 3 && audio.toString("ascii", 0, 3) === "ID3") return "mp3";
+  if (audio.length >= 2 && audio[0] === 0xff && (audio[1]! & 0xe0) === 0xe0) return "mp3";
+  return "audio";
 }
 
-/**
- * Synthesize audio using Kokoro TTS (local, fast, free)
- */
-async function synthesizeWithKokoro(
-  text: string,
-  outputPath: string,
-  _voice?: string,
-): Promise<void> {
-  // Kokoro-js library integration
-  // This is a placeholder - the actual implementation would use the kokoro-js library
-  // For now, we'll create a mock implementation that can be replaced with real TTS
-
-  // In a real implementation, this would be:
-  // const { generateSpeech } = await import('kokoro-js');
-  // const audio = await generateSpeech(text, { voice: voice || 'af_sarah' });
-  // await writeFile(outputPath, audio);
-
-  // Mock implementation for testing (generates silent audio)
-  const duration = estimateDuration(text);
-  await generateMockAudio(outputPath, duration);
-}
-
-/**
- * Estimate duration based on character count (fallback for testing)
- * Real TTS will provide exact duration
- */
-function estimateDuration(text: string): number {
-  // Average speaking rate: ~15 characters per second
-  const CHARS_PER_SECOND = 15;
-  return Math.ceil((text.length / CHARS_PER_SECOND) * 1000);
-}
-
-/**
- * Generate mock silent audio file for testing
- */
-async function generateMockAudio(outputPath: string, durationMs: number): Promise<void> {
-  const durationSec = durationMs / 1000;
-  // Use FFmpeg to generate silent audio
+async function probeDurationMsWithFfprobe(filePath: string): Promise<number> {
   return new Promise((resolve, reject) => {
-    const ffmpeg = spawn("ffmpeg", [
-      "-f",
-      "lavfi",
-      "-i",
-      `anullsrc=r=44100:cl=mono`,
-      "-t",
-      durationSec.toString(),
-      "-y",
-      outputPath,
-    ]);
-
-    ffmpeg.on("close", (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(new Error(`FFmpeg failed with code ${code}`));
-      }
+    const proc = spawn(
+      "ffprobe",
+      ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", filePath],
+      { stdio: "pipe" },
+    );
+    let stdout = "";
+    let stderr = "";
+    proc.stdout?.on("data", (chunk: Buffer) => {
+      stdout += chunk.toString();
     });
-
-    ffmpeg.on("error", reject);
+    proc.stderr?.on("data", (chunk: Buffer) => {
+      stderr += chunk.toString();
+    });
+    proc.on("error", (err) => reject(new Error(`Failed to spawn ffprobe: ${err.message}`)));
+    proc.on("close", (code) => {
+      if (code !== 0) {
+        reject(new Error(`ffprobe exited ${String(code)}: ${stderr.slice(-200)}`));
+        return;
+      }
+      const seconds = parseFloat(stdout.trim());
+      if (isNaN(seconds)) {
+        reject(new Error(`ffprobe returned invalid duration: ${stdout.trim()}`));
+        return;
+      }
+      resolve(Math.round(seconds * 1000));
+    });
   });
 }
 
-/**
- * Measure audio file duration using ffprobe
- */
-async function measureAudioDuration(audioPath: string): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const ffprobe = spawn("ffprobe", [
-      "-v",
-      "error",
-      "-show_entries",
-      "format=duration",
-      "-of",
-      "default=noprint_wrappers=1:nokey=1",
-      audioPath,
-    ]);
-
-    let output = "";
-    ffprobe.stdout.on("data", (data) => {
-      output += data.toString();
-    });
-
-    ffprobe.on("close", (code) => {
-      if (code === 0) {
-        const durationSec = parseFloat(output.trim());
-        resolve(Math.round(durationSec * 1000));
-      } else {
-        reject(new Error(`ffprobe failed with code ${code}`));
-      }
-    });
-
-    ffprobe.on("error", reject);
-  });
+export function buildEstimatedNarrationTiming(spec: DemoSpec): NarrationTimingMap {
+  const timing: NarrationTimingMap = new Map();
+  for (const item of extractNarrationItems(spec)) {
+    timing.set(item.actionIndex, { text: item.text, durationMs: estimateDurationMs(item.text) });
+  }
+  return timing;
 }
 
-/**
- * Pre-synthesizes all narration segments from spec
- * Returns a map of action index → narration timing
- * This allows the playback engine to adjust delays dynamically
- *
- * @param spec - The demo YAML spec
- * @param options - TTS provider config
- * @param outputDir - Directory to store pre-synthesized audio files
- * @returns Map of action index → narration duration (ms) and audio path
- */
 export async function preSynthesizeNarration(
   spec: DemoSpec,
-  options: NarrationOptions,
+  provider: TTSProvider,
+  ttsOptions: TTSOptions,
   outputDir: string,
-): Promise<NarrationTimingMap> {
-  const segments = extractNarrationSegments(spec);
+): Promise<NarrationPreSynthesisResult | undefined> {
+  const items = extractNarrationItems(spec);
+  if (items.length === 0) return undefined;
 
-  if (segments.length === 0) {
-    console.log("[INFO] No narration segments found, skipping pre-synthesis");
-    return new Map();
-  }
+  const dir = join(outputDir, "narration", "pre");
+  await mkdir(dir, { recursive: true });
 
-  console.log(`[INFO] Pre-synthesizing ${segments.length} narration segments...`);
+  log.info(`Pre-synthesizing ${String(items.length)} narration segment(s) with ${provider.name}`);
 
-  // Create narration subdirectory
-  const narrationDir = join(outputDir, "narration");
-  await mkdir(narrationDir, { recursive: true });
+  const timing: NarrationTimingMap = new Map();
 
-  const timingMap: NarrationTimingMap = new Map();
-
-  // Synthesize each segment
-  for (let i = 0; i < segments.length; i++) {
-    const segment = segments[i];
-    console.log(
-      `[INFO] Synthesizing segment ${i + 1}/${segments.length}: "${segment.text.substring(0, 50)}..."`,
-    );
-
+  for (const item of items) {
     try {
-      // Synthesize audio
-      const audioPath = await synthesizeSegment(segment.text, i, options, narrationDir);
+      const audio = await provider.synthesize(item.text, ttsOptions);
+      const ext = guessExtension(audio);
+      const audioPath = join(dir, `seg-${item.actionIndex}.${ext}`);
+      await writeFile(audioPath, audio);
 
-      // Measure duration
-      const durationMs = await measureAudioDuration(audioPath);
+      let durationMs: number | undefined =
+        ext === "wav" ? tryParsePcmWavDurationMs(audio) : undefined;
+      if (durationMs === undefined) {
+        try {
+          durationMs = await probeDurationMsWithFfprobe(audioPath);
+        } catch (err) {
+          // ffprobe might be missing; keep going with an estimate.
+          log.warn(
+            `Failed to measure duration for action ${String(item.actionIndex)} (${item.action}): ${String(
+              err,
+            )}`,
+          );
+          durationMs = estimateDurationMs(item.text);
+        }
+      }
 
-      timingMap.set(segment.actionIndex, {
-        durationMs,
-        audioPath,
-        text: segment.text,
-      });
-
-      console.log(`[INFO]   Duration: ${(durationMs / 1000).toFixed(1)}s`);
-    } catch (error) {
-      console.error(`[ERROR] Failed to synthesize segment ${i}:`, error);
-      // Continue with other segments even if one fails
+      timing.set(item.actionIndex, { text: item.text, durationMs, audioPath });
+      log.debug(
+        `Segment ${String(item.actionIndex)} (${item.action}): ${durationMs}ms -> ${audioPath}`,
+      );
+    } catch (err) {
+      log.warn(
+        `Failed to synthesize segment for action ${String(item.actionIndex)} (${item.action}): ${String(
+          err,
+        )}`,
+      );
+      timing.set(item.actionIndex, { text: item.text, durationMs: estimateDurationMs(item.text) });
     }
   }
 
-  const totalDuration = Array.from(timingMap.values()).reduce(
-    (sum, timing) => sum + timing.durationMs,
-    0,
-  );
-
-  console.log(
-    `[INFO] Pre-synthesis complete: ${timingMap.size} segments, total ${(totalDuration / 1000).toFixed(1)}s`,
-  );
-
-  return timingMap;
+  return {
+    timing,
+    providerName: provider.name,
+    outputDir: dir,
+  };
 }

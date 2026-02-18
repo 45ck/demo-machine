@@ -44,6 +44,18 @@ const pacingSchema = z.object({
   settleDelayMs: z.number().optional().default(200),
 });
 
+const narrationSyncSchema = z.object({
+  mode: z.enum(["auto-sync", "manual", "warn-only"]).optional().default("manual"),
+  bufferMs: z.number().int().nonnegative().optional().default(500),
+});
+
+const narrationSchema = z.object({
+  enabled: z.boolean().optional().default(true),
+  provider: z.string().optional(),
+  voice: z.string().optional(),
+  sync: narrationSyncSchema.optional().default({ mode: "manual", bufferMs: 500 }),
+});
+
 const navigateStepSchema = z.object({
   action: z.literal("navigate"),
   url: z.string(),
@@ -130,6 +142,7 @@ export const demoSpecSchema = z.object({
   meta: metaSchema,
   runner: runnerConfigSchema.optional(),
   redaction: redactionConfigSchema.optional(),
+  narration: narrationSchema.optional(),
   pacing: pacingSchema.optional().default({}),
   chapters: z.array(chapterSchema).min(1),
 });
