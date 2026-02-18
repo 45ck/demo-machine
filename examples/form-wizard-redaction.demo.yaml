@@ -1,0 +1,22 @@
+meta:
+  title: "FlowForm - Redaction Demo"
+
+runner:
+  command: "node examples/form-wizard/serve.mjs"
+  url: "http://localhost:4568"
+  timeout: 10000
+
+redaction:
+  selectors:
+    - ".secret-key"
+  secrets:
+    - "sk-demo-[0-9]{10}"
+
+chapters:
+  - title: "Redaction"
+    steps:
+      - action: navigate
+        url: "http://localhost:4568"
+        narration: "Sensitive values can be blurred and scanned automatically."
+      - action: wait
+        timeout: 1200

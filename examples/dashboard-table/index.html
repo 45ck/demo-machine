@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DashLite - Table Dashboard</title>
+    <style>
+      :root {
+        --bg: #06080c;
+        --panel: rgba(255, 255, 255, 0.06);
+        --border: rgba(255, 255, 255, 0.12);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.68);
+        --accent: #ff6a8b;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        color: var(--text);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Arial;
+        background:
+          radial-gradient(1000px 650px at 20% 10%, #5a1b2b 0%, transparent 60%),
+          radial-gradient(1000px 650px at 85% 20%, #103a4e 0%, transparent 60%),
+          radial-gradient(1000px 700px at 50% 92%, #2c2d5f 0%, transparent 60%), var(--bg);
+        min-height: 100vh;
+        padding: 24px;
+      }
+      .wrap {
+        width: min(1100px, 100%);
+        margin: 0 auto;
+      }
+      header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 12px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+      .panel {
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: linear-gradient(180deg, var(--panel), rgba(255, 255, 255, 0.03));
+        box-shadow: 0 22px 70px rgba(0, 0, 0, 0.45);
+        overflow: hidden;
+      }
+      .toolbar {
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        display: grid;
+        grid-template-columns: 1fr 220px 220px;
+        gap: 10px;
+        align-items: center;
+      }
+      input,
+      select {
+        height: 42px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        padding: 0 12px;
+        outline: none;
+      }
+      input:focus,
+      select:focus {
+        border-color: rgba(255, 106, 139, 0.6);
+        box-shadow: 0 0 0 4px rgba(255, 106, 139, 0.14);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 12px 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        font-size: 13px;
+      }
+      th {
+        text-align: left;
+        color: rgba(255, 255, 255, 0.86);
+        user-select: none;
+        cursor: pointer;
+      }
+      tr:hover td {
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .pill {
+        font-size: 12px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.05);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+      }
+      .dot.active {
+        background: #33d69f;
+      }
+      .dot.invited {
+        background: #ffcc66;
+      }
+      .dot.disabled {
+        background: #ff4d7d;
+      }
+      .footer {
+        padding: 10px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .mono {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+          monospace;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.78);
+      }
+      @media (max-width: 980px) {
+        .toolbar {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div>
+          <h1>DashLite</h1>
+          <div class="muted">Search, filter, and sort a dense table.</div>
+        </div>
+        <div class="mono secret-key secret">tenant: acme-prod</div>
+      </header>
+
+      <div class="panel">
+        <div class="toolbar">
+          <input id="q" data-testid="search" placeholder="Search name or email…" />
+          <select id="status" data-testid="status">
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="invited">Invited</option>
+            <option value="disabled">Disabled</option>
+          </select>
+          <div class="mono" data-testid="hint">Click column headers to sort</div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th data-testid="th-name" data-col="name">Name</th>
+              <th data-testid="th-email" data-col="email">Email</th>
+              <th data-testid="th-status" data-col="status">Status</th>
+            </tr>
+          </thead>
+          <tbody id="tbody" data-testid="tbody"></tbody>
+        </table>
+
+        <div class="footer">
+          <div class="muted">Showing <span class="mono" data-testid="count">0</span> users</div>
+          <div class="mono" data-testid="sort">sort: name asc</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const users = [
+        { name: "Ada Lovelace", email: "ada@acme.com", status: "active" },
+        { name: "Grace Hopper", email: "grace@acme.com", status: "invited" },
+        { name: "Linus Torvalds", email: "linus@acme.com", status: "active" },
+        { name: "Margaret Hamilton", email: "margaret@acme.com", status: "disabled" },
+        { name: "James Gosling", email: "james@acme.com", status: "active" },
+        { name: "Ken Thompson", email: "ken@acme.com", status: "invited" },
+      ];
+
+      const q = document.getElementById("q");
+      const status = document.getElementById("status");
+      const tbody = document.getElementById("tbody");
+      const count = document.querySelector("[data-testid='count']");
+      const sortEl = document.querySelector("[data-testid='sort']");
+
+      const state = { sortBy: "name", dir: "asc" };
+
+      function dotClass(s) {
+        return s === "active" ? "active" : s === "invited" ? "invited" : "disabled";
+      }
+
+      function apply() {
+        const term = q.value.trim().toLowerCase();
+        const st = status.value;
+        let rows = users.filter((u) => {
+          const matches =
+            !term || u.name.toLowerCase().includes(term) || u.email.toLowerCase().includes(term);
+          const statusOk = st === "all" || u.status === st;
+          return matches && statusOk;
+        });
+
+        rows.sort((a, b) => {
+          const av = a[state.sortBy];
+          const bv = b[state.sortBy];
+          if (av < bv) return state.dir === "asc" ? -1 : 1;
+          if (av > bv) return state.dir === "asc" ? 1 : -1;
+          return 0;
+        });
+
+        tbody.innerHTML = "";
+        for (const u of rows) {
+          const tr = document.createElement("tr");
+          tr.setAttribute("data-testid", "row");
+          tr.innerHTML = `
+            <td>${u.name}</td>
+            <td>${u.email}</td>
+            <td><span class="pill"><span class="dot ${dotClass(u.status)}"></span>${u.status}</span></td>
+          `;
+          tbody.appendChild(tr);
+        }
+
+        count.textContent = String(rows.length);
+        sortEl.textContent = `sort: ${state.sortBy} ${state.dir}`;
+      }
+
+      q.addEventListener("input", apply);
+      status.addEventListener("change", apply);
+
+      document.querySelectorAll("th").forEach((th) => {
+        th.addEventListener("click", () => {
+          const col = th.dataset.col;
+          if (state.sortBy === col) state.dir = state.dir === "asc" ? "desc" : "asc";
+          else {
+            state.sortBy = col;
+            state.dir = "asc";
+          }
+          apply();
+        });
+      });
+
+      apply();
+    </script>
+  </body>
+</html>

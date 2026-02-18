@@ -1,0 +1,37 @@
+meta:
+  title: "ScrollForge - Infinite Scroll Demo"
+  resolution:
+    width: 1920
+    height: 1080
+
+runner:
+  command: "node examples/infinite-scroll/serve.mjs"
+  url: "http://localhost:4571"
+  timeout: 10000
+
+chapters:
+  - title: "Initial List"
+    steps:
+      - action: navigate
+        url: "http://localhost:4571"
+        narration: "ScrollForge shows infinite scrolling with deterministic loading."
+      - action: assert
+        selector: "[data-testid='count']"
+        text: "items: 20"
+      - action: wait
+        timeout: 600
+
+  - title: "Load More"
+    steps:
+      - action: scroll
+        selector: "[data-testid='list']"
+        narration: "We'll scroll near the bottom to trigger the next page."
+      - action: wait
+        timeout: 700
+      - action: scroll
+        selector: "[data-testid='list']"
+      - action: wait
+        timeout: 700
+      - action: assert
+        selector: "[data-testid='count']"
+        text: "items: 30"

@@ -188,6 +188,21 @@ demo-machine capture <spec.yaml>
 demo-machine edit <events.json>
 ```
 
+### Example Suite
+
+The repo includes multiple example apps and `.demo.yaml` specs under `examples/`.
+
+```bash
+# Validate all example specs
+pnpm examples:validate
+
+# Smoke-capture raw videos for all example specs (no narration, no post-processing)
+pnpm examples:capture
+
+# Filter to a subset (note the `--` for pnpm passthrough)
+pnpm examples:capture -- --filter spa-router
+```
+
 `capture` and `run` write these artifacts into `--output`:
 
 - `video.webm` (raw recording)

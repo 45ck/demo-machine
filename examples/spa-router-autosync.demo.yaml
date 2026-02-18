@@ -1,0 +1,29 @@
+meta:
+  title: "RouteLab - SPA Router (Auto-Sync)"
+
+runner:
+  command: "node examples/spa-router/serve.mjs"
+  url: "http://localhost:4569"
+  timeout: 10000
+
+narration:
+  sync:
+    mode: "auto-sync"
+    bufferMs: 450
+
+chapters:
+  - title: "Routes"
+    steps:
+      - action: navigate
+        url: "http://localhost:4569"
+        narration: "RouteLab is a tiny SPA. We'll jump across routes with perfectly timed narration."
+      - action: click
+        selector: "[data-testid='nav-pricing']"
+        narration: "Pricing loads asynchronously."
+      - action: wait
+        timeout: 650
+      - action: click
+        selector: "[data-testid='nav-docs']"
+        narration: "Docs is another route, also with async content."
+      - action: wait
+        timeout: 650

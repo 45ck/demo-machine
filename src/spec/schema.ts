@@ -56,6 +56,17 @@ const narrationSchema = z.object({
   sync: narrationSyncSchema.optional().default({ mode: "manual", bufferMs: 500 }),
 });
 
+const targetSchema = z.discriminatedUnion("by", [
+  z.object({ by: z.literal("css"), selector: z.string().min(1) }),
+  z.object({ by: z.literal("text"), text: z.string().min(1) }),
+  z.object({
+    by: z.literal("role"),
+    role: z.string().min(1),
+    name: z.string().optional(),
+  }),
+  z.object({ by: z.literal("testId"), testId: z.string().min(1) }),
+]);
+
 const navigateStepSchema = z.object({
   action: z.literal("navigate"),
   url: z.string(),
@@ -64,14 +75,16 @@ const navigateStepSchema = z.object({
 
 const clickStepSchema = z.object({
   action: z.literal("click"),
-  selector: z.string(),
+  selector: z.string().optional(),
+  target: targetSchema.optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
 });
 
 const typeStepSchema = z.object({
   action: z.literal("type"),
-  selector: z.string(),
+  selector: z.string().optional(),
+  target: targetSchema.optional(),
   text: z.string(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
@@ -79,7 +92,8 @@ const typeStepSchema = z.object({
 
 const hoverStepSchema = z.object({
   action: z.literal("hover"),
-  selector: z.string(),
+  selector: z.string().optional(),
+  target: targetSchema.optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
 });
@@ -101,7 +115,8 @@ const waitStepSchema = z.object({
 
 const assertStepSchema = z.object({
   action: z.literal("assert"),
-  selector: z.string(),
+  selector: z.string().optional(),
+  target: targetSchema.optional(),
   visible: z.boolean().optional(),
   text: z.string().optional(),
   narration: z.string().optional(),
@@ -120,14 +135,27 @@ const pressStepSchema = z.object({
   narration: z.string().optional(),
 });
 
-const stepSchema = z.discriminatedUnion("action", [
+const clickStepSchemaValidated = clickStepSchema.refine((v) => v.selector || v.target, {
+  message: "click requires selector or target",
+});
+const typeStepSchemaValidated = typeStepSchema.refine((v) => v.selector || v.target, {
+  message: "type requires selector or target",
+});
+const hoverStepSchemaValidated = hoverStepSchema.refine((v) => v.selector || v.target, {
+  message: "hover requires selector or target",
+});
+const assertStepSchemaValidated = assertStepSchema.refine((v) => v.selector || v.target, {
+  message: "assert requires selector or target",
+});
+
+const stepSchema = z.union([
   navigateStepSchema,
-  clickStepSchema,
-  typeStepSchema,
-  hoverStepSchema,
+  clickStepSchemaValidated,
+  typeStepSchemaValidated,
+  hoverStepSchemaValidated,
   scrollStepSchema,
   waitStepSchema,
-  assertStepSchema,
+  assertStepSchemaValidated,
   screenshotStepSchema,
   pressStepSchema,
 ]);

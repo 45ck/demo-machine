@@ -1,0 +1,66 @@
+meta:
+  title: "FlowForm - Onboarding Wizard (Auto-Sync)"
+
+runner:
+  command: "node examples/form-wizard/serve.mjs"
+  url: "http://localhost:4568"
+  timeout: 10000
+
+narration:
+  sync:
+    mode: "auto-sync"
+    bufferMs: 450
+
+chapters:
+  - title: "Start"
+    steps:
+      - action: navigate
+        url: "http://localhost:4568"
+        narration: "Welcome to FlowForm. We'll move fast, but everything stays perfectly timed."
+      - action: wait
+        timeout: 400
+
+  - title: "Profile"
+    steps:
+      - action: click
+        selector: "[data-testid='name']"
+        narration: "Let's fill in a name."
+      - action: type
+        selector: "[data-testid='name']"
+        text: "Ada Lovelace"
+        narration: "And an email address."
+      - action: click
+        selector: "[data-testid='email']"
+      - action: type
+        selector: "[data-testid='email']"
+        text: "ada@company.com"
+      - action: click
+        target:
+          by: role
+          role: button
+          name: "Next"
+        narration: "Next, we'll pick a plan."
+      - action: wait
+        timeout: 350
+
+  - title: "Plan"
+    steps:
+      - action: click
+        selector: "[data-testid='plan-pro']"
+        narration: "Pro gives us the essentials for a growing team."
+      - action: click
+        target:
+          by: role
+          role: button
+          name: "Next"
+        narration: "Then we review."
+      - action: wait
+        timeout: 350
+
+  - title: "Submit"
+    steps:
+      - action: click
+        selector: "[data-testid='submit']"
+        narration: "Finally, submit the workspace."
+      - action: wait
+        timeout: 600

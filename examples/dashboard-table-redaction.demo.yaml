@@ -1,0 +1,22 @@
+meta:
+  title: "DashLite - Redaction Demo"
+
+runner:
+  command: "node examples/dashboard-table/serve.mjs"
+  url: "http://localhost:4572"
+  timeout: 10000
+
+redaction:
+  selectors:
+    - ".secret-key"
+  secrets:
+    - "tenant:\\s+[a-z-]+"
+
+chapters:
+  - title: "Redaction"
+    steps:
+      - action: navigate
+        url: "http://localhost:4572"
+        narration: "Tenant identifiers or account IDs can be blurred and scanned."
+      - action: wait
+        timeout: 1200

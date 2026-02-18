@@ -1,0 +1,55 @@
+meta:
+  title: "DashLite - Table Dashboard Demo"
+  resolution:
+    width: 1920
+    height: 1080
+
+runner:
+  command: "node examples/dashboard-table/serve.mjs"
+  url: "http://localhost:4572"
+  timeout: 10000
+
+chapters:
+  - title: "Search and Filter"
+    steps:
+      - action: navigate
+        url: "http://localhost:4572"
+        narration: "DashLite is a dense admin table with search, filters, and sorting."
+      - action: assert
+        selector: "[data-testid='count']"
+        text: "6"
+      - action: click
+        selector: "[data-testid='search']"
+        narration: "We'll search for a specific user."
+      - action: type
+        selector: "[data-testid='search']"
+        text: "Ada"
+      - action: assert
+        selector: "[data-testid='count']"
+        text: "1"
+      - action: wait
+        timeout: 500
+
+  - title: "Sort the Table"
+    steps:
+      - action: click
+        selector: "[data-testid='search']"
+      - action: press
+        key: "Control+A"
+      - action: press
+        key: "Backspace"
+      - action: click
+        selector: "[data-testid='th-email']"
+        narration: "Now we sort by email."
+      - action: assert
+        selector: "[data-testid='sort']"
+        text: "email"
+      - action: click
+        selector: "[data-testid='status']"
+      - action: press
+        key: "ArrowDown"
+      - action: press
+        key: "Enter"
+        narration: "And filter to Active users."
+      - action: wait
+        timeout: 500

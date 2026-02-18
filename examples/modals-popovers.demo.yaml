@@ -1,0 +1,47 @@
+meta:
+  title: "OverlayKit - Modals and Popovers Demo"
+  resolution:
+    width: 1920
+    height: 1080
+
+runner:
+  command: "node examples/modals-popovers/serve.mjs"
+  url: "http://localhost:4570"
+  timeout: 10000
+
+chapters:
+  - title: "Tooltips"
+    steps:
+      - action: navigate
+        url: "http://localhost:4570"
+        narration: "This demo focuses on overlay UI: tooltips and modals."
+      - action: hover
+        selector: "[data-testid='info']"
+        narration: "Hover can reveal tooltips."
+      - action: assert
+        selector: "[data-testid='tooltip']"
+        visible: true
+      - action: wait
+        timeout: 600
+
+  - title: "Modal Flow"
+    steps:
+      - action: click
+        selector: "[data-testid='open-modal']"
+        narration: "We'll open the Invite modal."
+      - action: assert
+        selector: "[data-testid='overlay']"
+        visible: true
+      - action: click
+        selector: "[data-testid='invite-email']"
+        narration: "Then type an email and send the invite."
+      - action: type
+        selector: "[data-testid='invite-email']"
+        text: "new.user@company.com"
+      - action: click
+        selector: "[data-testid='send-invite']"
+      - action: assert
+        selector: "[data-testid='toast']"
+        visible: true
+      - action: wait
+        timeout: 700

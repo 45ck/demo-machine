@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RouteLab - SPA Router</title>
+    <style>
+      :root {
+        --bg: #0b0f14;
+        --card: rgba(255, 255, 255, 0.05);
+        --border: rgba(255, 255, 255, 0.12);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.68);
+        --accent: #9bff6a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        color: var(--text);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Arial;
+        background:
+          radial-gradient(900px 600px at 80% 20%, #214b2b 0%, transparent 55%),
+          radial-gradient(900px 700px at 20% 20%, #1b2a5a 0%, transparent 55%),
+          radial-gradient(1000px 700px at 40% 90%, #3a1a2b 0%, transparent 55%), var(--bg);
+        min-height: 100vh;
+      }
+      header {
+        position: sticky;
+        top: 0;
+        backdrop-filter: blur(12px);
+        background: rgba(11, 15, 20, 0.55);
+        border-bottom: 1px solid var(--border);
+      }
+      .wrap {
+        width: min(1100px, 100%);
+        margin: 0 auto;
+        padding: 14px 18px;
+      }
+      .bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .badge {
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: 0 0 0 6px rgba(155, 255, 106, 0.16);
+      }
+      nav {
+        display: flex;
+        gap: 10px;
+      }
+      a {
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid transparent;
+      }
+      a.active {
+        border-color: rgba(155, 255, 106, 0.45);
+        background: rgba(155, 255, 106, 0.08);
+        color: rgba(255, 255, 255, 0.95);
+      }
+      main {
+        padding: 22px 0 46px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1.3fr 0.7fr;
+        gap: 16px;
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: linear-gradient(180deg, var(--card), rgba(255, 255, 255, 0.03));
+        padding: 16px;
+        box-shadow: 0 18px 55px rgba(0, 0, 0, 0.35);
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0 0 8px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+      .loading {
+        display: none;
+        margin-top: 12px;
+        padding: 10px 12px;
+        border-radius: 14px;
+        border: 1px solid rgba(155, 255, 106, 0.35);
+        background: rgba(155, 255, 106, 0.08);
+        width: fit-content;
+      }
+      .mono {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+          monospace;
+        font-size: 12px;
+      }
+      .kpi {
+        display: grid;
+        gap: 10px;
+      }
+      .kpi .item {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 14px;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .kpi strong {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+      @media (max-width: 900px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bar">
+          <div class="brand">
+            <div class="badge" aria-hidden="true"></div>
+            <div>
+              <div><strong>RouteLab</strong></div>
+              <div class="muted">Tiny SPA router with async loads</div>
+            </div>
+          </div>
+          <nav aria-label="Primary">
+            <a href="/" data-testid="nav-home">Home</a>
+            <a href="/pricing" data-testid="nav-pricing">Pricing</a>
+            <a href="/docs" data-testid="nav-docs">Docs</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="wrap">
+        <div class="grid">
+          <section class="card" aria-live="polite">
+            <h1 id="route-title" data-testid="route-title">Home</h1>
+            <div class="muted" id="route-body" data-testid="route-body">
+              Fast, deterministic routing for demos.
+            </div>
+            <div class="loading mono" id="loading" data-testid="loading">Loading…</div>
+          </section>
+
+          <aside class="card">
+            <div class="kpi">
+              <div class="item">
+                <strong>Latency</strong>
+                <div class="muted">Simulated async load: <span class="mono">500ms</span></div>
+              </div>
+              <div class="item">
+                <strong>Deep Link</strong>
+                <div class="muted mono" data-testid="path">/</div>
+              </div>
+              <div class="item">
+                <strong>Hint</strong>
+                <div class="muted">
+                  Try <span class="mono">Back</span> and <span class="mono">Forward</span>.
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const routes = {
+        "/": {
+          title: "Home",
+          body: "Fast, deterministic routing for demos.",
+        },
+        "/pricing": {
+          title: "Pricing",
+          body: "Simple pricing with transparent tiers and upgrades.",
+        },
+        "/docs": {
+          title: "Docs",
+          body: "Guides, API reference, and examples to get started quickly.",
+        },
+      };
+
+      const titleEl = document.getElementById("route-title");
+      const bodyEl = document.getElementById("route-body");
+      const loadingEl = document.getElementById("loading");
+      const pathEl = document.querySelector("[data-testid='path']");
+
+      function setActive(path) {
+        document.querySelectorAll("nav a").forEach((a) => {
+          a.classList.toggle("active", a.getAttribute("href") === path);
+        });
+      }
+
+      function render(path) {
+        const entry = routes[path] || routes["/"];
+        setActive(path);
+        pathEl.textContent = path;
+        loadingEl.style.display = "inline-block";
+        // Simulated async load
+        setTimeout(() => {
+          titleEl.textContent = entry.title;
+          bodyEl.textContent = entry.body;
+          loadingEl.style.display = "none";
+        }, 500);
+      }
+
+      function navigate(path) {
+        history.pushState({}, "", path);
+        render(path);
+      }
+
+      document.querySelectorAll("nav a").forEach((a) => {
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          navigate(a.getAttribute("href"));
+        });
+      });
+
+      window.addEventListener("popstate", () => render(location.pathname));
+      render(location.pathname);
+    </script>
+  </body>
+</html>

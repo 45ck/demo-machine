@@ -45,9 +45,6 @@ function createMockPage(): PlaywrightPage {
     evaluate: vi.fn().mockResolvedValue("page text content"),
     screenshot: vi.fn().mockResolvedValue(Buffer.from("")),
     addStyleTag: vi.fn<(o: { content: string }) => Promise<void>>().mockResolvedValue(undefined),
-    $: vi.fn().mockResolvedValue({
-      boundingBox: vi.fn().mockResolvedValue({ x: 10, y: 20, width: 100, height: 50 }),
-    }),
   };
 }
 

@@ -30,6 +30,49 @@ export function getCursorCSS(): string {
   filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.35));
   transition: transform 0.15s ease;
 }
+
+/* Focus ring to visually "select" targets before interacting */
+#dm-focus-ring {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  z-index: ${CURSOR_Z_INDEX - 1};
+  opacity: 0;
+  border-radius: 12px;
+  border: 2px solid rgba(50, 220, 255, 0.95);
+  box-shadow:
+    0 0 0 6px rgba(50, 220, 255, 0.18),
+    0 12px 28px rgba(0, 0, 0, 0.25);
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease;
+  will-change: transform, opacity;
+}
+
+/* Click ripple for extra "polish" */
+.dm-ripple {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+  z-index: ${CURSOR_Z_INDEX - 2};
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 4px rgba(50, 220, 255, 0.25);
+  transform: translate(-50%, -50%) scale(0.2);
+  opacity: 0.95;
+  animation: dm-ripple 420ms ease-out forwards;
+}
+
+@keyframes dm-ripple {
+  0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0.95; }
+  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+}
 `.trim();
 }
 

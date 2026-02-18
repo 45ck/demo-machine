@@ -1,32 +1,10 @@
 import type { Step } from "../spec/types.js";
 import type { ActionEvent, BoundingBox, Pacing } from "./types.js";
+import type { PlaywrightPage } from "./playwright.js";
+import { resolveStepSelector } from "./selector.js";
+import { pulseFocus, spawnRipple } from "./visuals.js";
 
-export interface PlaywrightLocator {
-  isVisible(): Promise<boolean>;
-  textContent(): Promise<string | null>;
-  boundingBox(): Promise<BoundingBox | null>;
-}
-
-export interface PlaywrightElement {
-  boundingBox(): Promise<BoundingBox | null>;
-}
-
-export interface PlaywrightPage {
-  goto(url: string): Promise<void>;
-  click(selector: string): Promise<void>;
-  fill(selector: string, value: string): Promise<void>;
-  hover(selector: string): Promise<void>;
-  keyboard: {
-    press(key: string): Promise<void>;
-    type(text: string, options?: { delay?: number | undefined }): Promise<void>;
-  };
-  waitForTimeout(ms: number): Promise<void>;
-  locator(selector: string): PlaywrightLocator;
-  evaluate(fn: string | ((...args: unknown[]) => unknown), ...args: unknown[]): Promise<unknown>;
-  screenshot(options?: { path?: string }): Promise<Buffer>;
-  addStyleTag(options: { content: string }): Promise<void>;
-  $(selector: string): Promise<PlaywrightElement | null>;
-}
+export type { PlaywrightPage } from "./playwright.js";
 
 export interface PlaybackContext {
   page: PlaywrightPage;
@@ -64,9 +42,7 @@ function buildEvent(params: EventParams): ActionEvent {
 }
 
 async function getBoundingBox(page: PlaywrightPage, selector: string): Promise<BoundingBox | null> {
-  const element = await page.$(selector);
-  if (!element) return null;
-  return element.boundingBox();
+  return page.locator(selector).boundingBox();
 }
 
 const handleNavigate: ActionHandler = async (ctx, step, events, stepIndex) => {
@@ -81,8 +57,10 @@ const handleNavigate: ActionHandler = async (ctx, step, events, stepIndex) => {
 const handleClick: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "click") return;
-  const box = await getBoundingBox(ctx.page, step.selector);
+  const selector = resolveStepSelector(step);
+  const box = await getBoundingBox(ctx.page, selector);
   await ctx.moveCursorTo(box);
+  await pulseFocus(ctx.page, box);
   await ctx.page.evaluate((() => {
     const cursor = document.getElementById("dm-cursor");
     if (!cursor) return;
@@ -91,12 +69,13 @@ const handleClick: ActionHandler = async (ctx, step, events, stepIndex) => {
       cursor.style.transform = "translate(-4px, -2px) scale(1)";
     }, 150);
   }) as (...args: unknown[]) => unknown);
-  await ctx.page.click(step.selector);
+  await spawnRipple(ctx.page, box);
+  await ctx.page.click(selector);
   events.push(
     buildEvent({
       action: "click",
       startTime: start,
-      selector: step.selector,
+      selector,
       boundingBox: box,
       narration: step.narration,
     }),
@@ -107,15 +86,17 @@ const handleClick: ActionHandler = async (ctx, step, events, stepIndex) => {
 const handleType: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "type") return;
-  const box = await getBoundingBox(ctx.page, step.selector);
+  const selector = resolveStepSelector(step);
+  const box = await getBoundingBox(ctx.page, selector);
   await ctx.moveCursorTo(box);
-  await ctx.page.click(step.selector);
+  await pulseFocus(ctx.page, box);
+  await ctx.page.click(selector);
   await ctx.page.keyboard.type(step.text, { delay: ctx.pacing.typeDelayMs });
   events.push(
     buildEvent({
       action: "type",
       startTime: start,
-      selector: step.selector,
+      selector,
       boundingBox: box,
       narration: step.narration,
     }),
@@ -126,14 +107,16 @@ const handleType: ActionHandler = async (ctx, step, events, stepIndex) => {
 const handleHover: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "hover") return;
-  const box = await getBoundingBox(ctx.page, step.selector);
+  const selector = resolveStepSelector(step);
+  const box = await getBoundingBox(ctx.page, selector);
   await ctx.moveCursorTo(box);
-  await ctx.page.hover(step.selector);
+  await pulseFocus(ctx.page, box);
+  await ctx.page.hover(selector);
   events.push(
     buildEvent({
       action: "hover",
       startTime: start,
-      selector: step.selector,
+      selector,
       boundingBox: box,
       narration: step.narration,
     }),
@@ -184,24 +167,26 @@ const handleWait: ActionHandler = async (ctx, step, events, stepIndex) => {
 const handleAssert: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "assert") return;
-  const locator = ctx.page.locator(step.selector);
+  const selector = resolveStepSelector(step);
+  const locator = ctx.page.locator(selector);
   if (step.visible !== undefined) {
     const isVisible = await locator.isVisible();
     if (isVisible !== step.visible) {
-      throw new Error(`Assertion failed: ${step.selector} visibility is ${String(isVisible)}`);
+      throw new Error(`Assertion failed: ${selector} visibility is ${String(isVisible)}`);
     }
   }
   if (step.text !== undefined) {
     const content = await locator.textContent();
     if (!content?.includes(step.text)) {
-      throw new Error(`Assertion failed: "${step.text}" not found in ${step.selector}`);
+      throw new Error(`Assertion failed: "${step.text}" not found in ${selector}`);
     }
   }
+  await pulseFocus(ctx.page, await locator.boundingBox());
   events.push(
     buildEvent({
       action: "assert",
       startTime: start,
-      selector: step.selector,
+      selector,
       narration: step.narration,
     }),
   );

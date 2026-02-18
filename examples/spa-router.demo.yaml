@@ -1,0 +1,62 @@
+meta:
+  title: "RouteLab - SPA Router Demo"
+  resolution:
+    width: 1920
+    height: 1080
+
+runner:
+  command: "node examples/spa-router/serve.mjs"
+  url: "http://localhost:4569"
+  timeout: 10000
+
+chapters:
+  - title: "Home"
+    steps:
+      - action: navigate
+        url: "http://localhost:4569"
+        narration: "This app is a tiny single-page router with async loading."
+      - action: assert
+        selector: "[data-testid='route-title']"
+        text: "Home"
+      - action: wait
+        timeout: 700
+
+  - title: "Navigate Routes"
+    steps:
+      - action: click
+        selector: "[data-testid='nav-pricing']"
+        narration: "Let's navigate to Pricing."
+      - action: assert
+        selector: "[data-testid='loading']"
+        visible: true
+      - action: wait
+        timeout: 650
+      - action: assert
+        selector: "[data-testid='route-title']"
+        text: "Pricing"
+      - action: click
+        selector: "[data-testid='nav-docs']"
+        narration: "And then to Docs."
+      - action: wait
+        timeout: 650
+      - action: assert
+        selector: "[data-testid='route-title']"
+        text: "Docs"
+
+  - title: "Back and Forward"
+    steps:
+      - action: press
+        key: "Alt+Left"
+        narration: "We can even drive browser history."
+      - action: wait
+        timeout: 650
+      - action: assert
+        selector: "[data-testid='route-title']"
+        text: "Pricing"
+      - action: press
+        key: "Alt+Right"
+      - action: wait
+        timeout: 650
+      - action: assert
+        selector: "[data-testid='route-title']"
+        text: "Docs"

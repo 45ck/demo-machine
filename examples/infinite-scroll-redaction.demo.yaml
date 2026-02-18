@@ -1,0 +1,20 @@
+meta:
+  title: "ScrollForge - Redaction Demo"
+
+runner:
+  command: "node examples/infinite-scroll/serve.mjs"
+  url: "http://localhost:4571"
+  timeout: 10000
+
+redaction:
+  selectors:
+    - "[data-testid='count']"
+
+chapters:
+  - title: "Redaction"
+    steps:
+      - action: navigate
+        url: "http://localhost:4571"
+        narration: "Even simple counters can be redacted in public demos."
+      - action: wait
+        timeout: 1200

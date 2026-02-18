@@ -1,0 +1,22 @@
+meta:
+  title: "RouteLab - Redaction Demo"
+
+runner:
+  command: "node examples/spa-router/serve.mjs"
+  url: "http://localhost:4569"
+  timeout: 10000
+
+redaction:
+  selectors:
+    - "[data-testid='path']"
+
+chapters:
+  - title: "Redaction"
+    steps:
+      - action: navigate
+        url: "http://localhost:4569"
+        narration: "Sometimes paths or user identifiers should be redacted in demos."
+      - action: click
+        selector: "[data-testid='nav-docs']"
+      - action: wait
+        timeout: 900

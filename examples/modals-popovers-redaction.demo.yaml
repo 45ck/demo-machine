@@ -1,0 +1,22 @@
+meta:
+  title: "OverlayKit - Redaction Demo"
+
+runner:
+  command: "node examples/modals-popovers/serve.mjs"
+  url: "http://localhost:4570"
+  timeout: 10000
+
+redaction:
+  selectors:
+    - "[data-testid='invite-email']"
+
+chapters:
+  - title: "Redaction"
+    steps:
+      - action: navigate
+        url: "http://localhost:4570"
+        narration: "Inputs can be blurred during recording to protect sensitive values."
+      - action: click
+        selector: "[data-testid='open-modal']"
+      - action: wait
+        timeout: 900

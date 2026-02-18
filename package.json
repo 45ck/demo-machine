@@ -29,6 +29,8 @@
     "knip": "knip",
     "dep-check": "dependency-cruiser src --config",
     "mutation": "stryker run",
+    "examples:validate": "node scripts/examples-suite.mjs --mode validate",
+    "examples:capture": "node scripts/examples-suite.mjs --mode capture",
     "prepublishOnly": "pnpm build && pnpm test",
     "prepare": "husky",
     "validate": "pnpm lint && pnpm format && pnpm spell && pnpm typecheck && pnpm test && pnpm knip && pnpm dep-check"

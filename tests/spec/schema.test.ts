@@ -299,6 +299,15 @@ describe("demoSpecSchema", () => {
       expect(result.success).toBe(false);
     });
 
+    it("accepts click step with target instead of selector", () => {
+      const spec = minimalSpec();
+      spec.chapters[0]!.steps = [
+        { action: "click" as const, target: { by: "role", role: "button", name: "Save" } },
+      ];
+      const result = demoSpecSchema.safeParse(spec);
+      expect(result.success).toBe(true);
+    });
+
     it("rejects type step missing required text", () => {
       const spec = minimalSpec();
       spec.chapters[0]!.steps = [{ action: "type", selector: "#in" } as never];
