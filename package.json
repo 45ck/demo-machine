@@ -31,6 +31,7 @@
     "mutation": "stryker run",
     "examples:validate": "node scripts/examples-suite.mjs --mode validate",
     "examples:capture": "node scripts/examples-suite.mjs --mode capture",
+    "demo:gallery": "node scripts/demo-gallery.mjs",
     "prepublishOnly": "pnpm build && pnpm test",
     "prepare": "husky",
     "validate": "pnpm lint && pnpm format && pnpm spell && pnpm typecheck && pnpm test && pnpm knip && pnpm dep-check"

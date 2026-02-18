@@ -1,0 +1,170 @@
+{
+  "generatedAt": "2026-02-18T06:50:43.189Z",
+  "results": [
+    {
+      "slug": "todo-app",
+      "spec": "examples/todo-app.demo.yaml",
+      "title": "TaskFlow (Tasks)",
+      "mp4": "output/demo-gallery/todo-app/output.mp4",
+      "gif": "assets/demo-gallery/todo-app.gif",
+      "frames": [
+        "assets/demo-gallery/todo-app-01.webp",
+        "assets/demo-gallery/todo-app-02.webp",
+        "assets/demo-gallery/todo-app-03.webp",
+        "assets/demo-gallery/todo-app-04.webp",
+        "assets/demo-gallery/todo-app-05.webp"
+      ],
+      "durationSec": 28.44
+    },
+    {
+      "slug": "form-wizard",
+      "spec": "examples/form-wizard.demo.yaml",
+      "title": "FlowForm (Wizard)",
+      "mp4": "output/demo-gallery/form-wizard/output.mp4",
+      "gif": "assets/demo-gallery/form-wizard.gif",
+      "frames": [
+        "assets/demo-gallery/form-wizard-01.webp",
+        "assets/demo-gallery/form-wizard-02.webp",
+        "assets/demo-gallery/form-wizard-03.webp",
+        "assets/demo-gallery/form-wizard-04.webp",
+        "assets/demo-gallery/form-wizard-05.webp"
+      ],
+      "durationSec": 18.92
+    },
+    {
+      "slug": "auth-otp",
+      "spec": "examples/auth-otp.demo.yaml",
+      "title": "AuthFlow (OTP)",
+      "mp4": "output/demo-gallery/auth-otp/output.mp4",
+      "gif": "assets/demo-gallery/auth-otp.gif",
+      "frames": [
+        "assets/demo-gallery/auth-otp-01.webp",
+        "assets/demo-gallery/auth-otp-02.webp",
+        "assets/demo-gallery/auth-otp-03.webp",
+        "assets/demo-gallery/auth-otp-04.webp",
+        "assets/demo-gallery/auth-otp-05.webp"
+      ],
+      "durationSec": 13.8
+    },
+    {
+      "slug": "modals-popovers",
+      "spec": "examples/modals-popovers.demo.yaml",
+      "title": "OverlayKit",
+      "mp4": "output/demo-gallery/modals-popovers/output.mp4",
+      "gif": "assets/demo-gallery/modals-popovers.gif",
+      "frames": [
+        "assets/demo-gallery/modals-popovers-01.webp",
+        "assets/demo-gallery/modals-popovers-02.webp",
+        "assets/demo-gallery/modals-popovers-03.webp",
+        "assets/demo-gallery/modals-popovers-04.webp",
+        "assets/demo-gallery/modals-popovers-05.webp"
+      ],
+      "durationSec": 13.16
+    },
+    {
+      "slug": "spa-router",
+      "spec": "examples/spa-router.demo.yaml",
+      "title": "RouteLab (SPA)",
+      "mp4": "output/demo-gallery/spa-router/output.mp4",
+      "gif": "assets/demo-gallery/spa-router.gif",
+      "frames": [
+        "assets/demo-gallery/spa-router-01.webp",
+        "assets/demo-gallery/spa-router-02.webp",
+        "assets/demo-gallery/spa-router-03.webp",
+        "assets/demo-gallery/spa-router-04.webp",
+        "assets/demo-gallery/spa-router-05.webp"
+      ],
+      "durationSec": 11.76
+    },
+    {
+      "slug": "infinite-scroll",
+      "spec": "examples/infinite-scroll.demo.yaml",
+      "title": "ScrollForge",
+      "mp4": "output/demo-gallery/infinite-scroll/output.mp4",
+      "gif": "assets/demo-gallery/infinite-scroll.gif",
+      "frames": [
+        "assets/demo-gallery/infinite-scroll-01.webp",
+        "assets/demo-gallery/infinite-scroll-02.webp",
+        "assets/demo-gallery/infinite-scroll-03.webp",
+        "assets/demo-gallery/infinite-scroll-04.webp",
+        "assets/demo-gallery/infinite-scroll-05.webp"
+      ],
+      "durationSec": 8.76
+    },
+    {
+      "slug": "dashboard-table",
+      "spec": "examples/dashboard-table.demo.yaml",
+      "title": "DashLite (Table)",
+      "mp4": "output/demo-gallery/dashboard-table/output.mp4",
+      "gif": "assets/demo-gallery/dashboard-table.gif",
+      "frames": [
+        "assets/demo-gallery/dashboard-table-01.webp",
+        "assets/demo-gallery/dashboard-table-02.webp",
+        "assets/demo-gallery/dashboard-table-03.webp",
+        "assets/demo-gallery/dashboard-table-04.webp",
+        "assets/demo-gallery/dashboard-table-05.webp"
+      ],
+      "durationSec": 14.56
+    },
+    {
+      "slug": "controls-lab",
+      "spec": "examples/controls-lab.demo.yaml",
+      "title": "ControlRoom (Inputs)",
+      "mp4": "output/demo-gallery/controls-lab/output.mp4",
+      "gif": "assets/demo-gallery/controls-lab.gif",
+      "frames": [
+        "assets/demo-gallery/controls-lab-01.webp",
+        "assets/demo-gallery/controls-lab-02.webp",
+        "assets/demo-gallery/controls-lab-03.webp",
+        "assets/demo-gallery/controls-lab-04.webp",
+        "assets/demo-gallery/controls-lab-05.webp"
+      ],
+      "durationSec": 9.52
+    },
+    {
+      "slug": "chart-tooltips",
+      "spec": "examples/chart-tooltips.demo.yaml",
+      "title": "ChartLab (Tooltips)",
+      "mp4": "output/demo-gallery/chart-tooltips/output.mp4",
+      "gif": "assets/demo-gallery/chart-tooltips.gif",
+      "frames": [
+        "assets/demo-gallery/chart-tooltips-01.webp",
+        "assets/demo-gallery/chart-tooltips-02.webp",
+        "assets/demo-gallery/chart-tooltips-03.webp",
+        "assets/demo-gallery/chart-tooltips-04.webp",
+        "assets/demo-gallery/chart-tooltips-05.webp"
+      ],
+      "durationSec": 4.72
+    },
+    {
+      "slug": "virtual-table",
+      "spec": "examples/virtual-table.demo.yaml",
+      "title": "GridV (Virtualized)",
+      "mp4": "output/demo-gallery/virtual-table/output.mp4",
+      "gif": "assets/demo-gallery/virtual-table.gif",
+      "frames": [
+        "assets/demo-gallery/virtual-table-01.webp",
+        "assets/demo-gallery/virtual-table-02.webp",
+        "assets/demo-gallery/virtual-table-03.webp",
+        "assets/demo-gallery/virtual-table-04.webp",
+        "assets/demo-gallery/virtual-table-05.webp"
+      ],
+      "durationSec": 5.48
+    },
+    {
+      "slug": "selector-stress",
+      "spec": "examples/selector-stress.demo.yaml",
+      "title": "SelectorGym (nth)",
+      "mp4": "output/demo-gallery/selector-stress/output.mp4",
+      "gif": "assets/demo-gallery/selector-stress.gif",
+      "frames": [
+        "assets/demo-gallery/selector-stress-01.webp",
+        "assets/demo-gallery/selector-stress-02.webp",
+        "assets/demo-gallery/selector-stress-03.webp",
+        "assets/demo-gallery/selector-stress-04.webp",
+        "assets/demo-gallery/selector-stress-05.webp"
+      ],
+      "durationSec": 4.24
+    }
+  ]
+}

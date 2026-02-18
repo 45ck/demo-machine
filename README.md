@@ -114,6 +114,28 @@ chapters:
 
 </details>
 
+## Demo Gallery (GIF Previews)
+
+These are **compressed GIF previews** generated from real rendered MP4s. For the full acceptance matrix, see `docs/demo-anything.md`.
+
+<div align="center">
+  <a href="examples/todo-app.demo.yaml"><img src="assets/demo-gallery/todo-app.gif" width="49%" alt="TaskFlow demo preview (GIF)" /></a>
+  <a href="examples/form-wizard.demo.yaml"><img src="assets/demo-gallery/form-wizard.gif" width="49%" alt="FlowForm demo preview (GIF)" /></a>
+  <a href="examples/auth-otp.demo.yaml"><img src="assets/demo-gallery/auth-otp.gif" width="49%" alt="AuthFlow OTP demo preview (GIF)" /></a>
+  <a href="examples/modals-popovers.demo.yaml"><img src="assets/demo-gallery/modals-popovers.gif" width="49%" alt="OverlayKit demo preview (GIF)" /></a>
+  <a href="examples/spa-router.demo.yaml"><img src="assets/demo-gallery/spa-router.gif" width="49%" alt="RouteLab SPA demo preview (GIF)" /></a>
+  <a href="examples/infinite-scroll.demo.yaml"><img src="assets/demo-gallery/infinite-scroll.gif" width="49%" alt="ScrollForge demo preview (GIF)" /></a>
+  <a href="examples/dashboard-table.demo.yaml"><img src="assets/demo-gallery/dashboard-table.gif" width="49%" alt="DashLite table demo preview (GIF)" /></a>
+  <a href="examples/controls-lab.demo.yaml"><img src="assets/demo-gallery/controls-lab.gif" width="49%" alt="ControlRoom inputs demo preview (GIF)" /></a>
+  <a href="examples/chart-tooltips.demo.yaml"><img src="assets/demo-gallery/chart-tooltips.gif" width="49%" alt="ChartLab tooltips demo preview (GIF)" /></a>
+  <a href="examples/virtual-table.demo.yaml"><img src="assets/demo-gallery/virtual-table.gif" width="49%" alt="GridV virtualized table demo preview (GIF)" /></a>
+  <a href="examples/selector-stress.demo.yaml"><img src="assets/demo-gallery/selector-stress.gif" width="49%" alt="SelectorGym demo preview (GIF)" /></a>
+</div>
+
+To regenerate the gallery assets (GIFs + 5 screenshots per demo): `pnpm demo:gallery`.
+
+For the frame-by-frame review output, see `docs/demo-gallery.md`.
+
 ## Why demo-machine?
 
 Tools like Screen Studio and Arcade require manual recording sessions. Every time your UI changes, you re-record. demo-machine takes a different approach:
