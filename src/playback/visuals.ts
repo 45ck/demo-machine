@@ -4,6 +4,17 @@ import type { PlaywrightPage } from "./playwright.js";
 const FOCUS_ID = "dm-focus-ring";
 const SPOTLIGHT_ID = "dm-spotlight";
 
+function paddedBox(
+  box: BoundingBox,
+  pad: number,
+): { x: number; y: number; width: number; height: number } {
+  const x = Math.max(0, Math.round(box.x - pad));
+  const y = Math.max(0, Math.round(box.y - pad));
+  const width = Math.max(8, Math.round(box.width + pad * 2));
+  const height = Math.max(8, Math.round(box.height + pad * 2));
+  return { x, y, width, height };
+}
+
 async function ensureFocusOverlay(page: PlaywrightPage): Promise<void> {
   await page.evaluate(
     ((id: string) => {
@@ -33,15 +44,15 @@ async function ensureSpotlightOverlay(page: PlaywrightPage): Promise<void> {
 export async function pulseFocus(page: PlaywrightPage, box: BoundingBox | null): Promise<void> {
   if (!box) return;
   await ensureFocusOverlay(page);
+  const b = paddedBox(box, 10);
   await page.evaluate(
     ((p: { b: { x: number; y: number; width: number; height: number }; id: string }) => {
       const el = document.getElementById(p.id);
       if (!el) return;
-      const pad = 10;
-      const x = Math.max(0, p.b.x - pad);
-      const y = Math.max(0, p.b.y - pad);
-      const w = Math.max(8, p.b.width + pad * 2);
-      const h = Math.max(8, p.b.height + pad * 2);
+      const x = p.b.x;
+      const y = p.b.y;
+      const w = p.b.width;
+      const h = p.b.height;
       el.style.width = `${w}px`;
       el.style.height = `${h}px`;
       el.style.transform = `translate(${x}px, ${y}px) scale(1)`;
@@ -49,31 +60,31 @@ export async function pulseFocus(page: PlaywrightPage, box: BoundingBox | null):
       el.animate(
         [
           { transform: `translate(${x}px, ${y}px) scale(0.985)` },
+          { transform: `translate(${x}px, ${y}px) scale(1.01)` },
           { transform: `translate(${x}px, ${y}px) scale(1)` },
         ],
-        { duration: 220, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" },
+        { duration: 260, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" },
       );
       window.setTimeout(() => {
         el.style.opacity = "0";
-      }, 420);
+      }, 520);
     }) as (...args: unknown[]) => unknown,
-    { b: box, id: FOCUS_ID } as unknown,
+    { b, id: FOCUS_ID } as unknown,
   );
 }
 
 export async function flashSpotlight(page: PlaywrightPage, box: BoundingBox | null): Promise<void> {
   if (!box) return;
   await ensureSpotlightOverlay(page);
+  const b = paddedBox(box, 14);
   await page.evaluate(
     ((p: { b: { x: number; y: number; width: number; height: number }; id: string }) => {
       const el = document.getElementById(p.id);
       if (!el) return;
-
-      const pad = 14;
-      const x = Math.max(0, p.b.x - pad);
-      const y = Math.max(0, p.b.y - pad);
-      const w = Math.max(8, p.b.width + pad * 2);
-      const h = Math.max(8, p.b.height + pad * 2);
+      const x = p.b.x;
+      const y = p.b.y;
+      const w = p.b.width;
+      const h = p.b.height;
 
       el.style.width = `${w}px`;
       el.style.height = `${h}px`;
@@ -84,16 +95,17 @@ export async function flashSpotlight(page: PlaywrightPage, box: BoundingBox | nu
         [
           { opacity: 0, transform: `translate(${x}px, ${y}px) scale(0.985)` },
           { opacity: 1, transform: `translate(${x}px, ${y}px) scale(1)` },
-          { opacity: 0, transform: `translate(${x}px, ${y}px) scale(1.006)` },
+          { opacity: 1, transform: `translate(${x}px, ${y}px) scale(1.002)` },
+          { opacity: 0, transform: `translate(${x}px, ${y}px) scale(1.008)` },
         ],
-        { duration: 520, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" },
+        { duration: 640, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" },
       );
 
       window.setTimeout(() => {
         el.style.opacity = "0";
-      }, 560);
+      }, 720);
     }) as (...args: unknown[]) => unknown,
-    { b: box, id: SPOTLIGHT_ID } as unknown,
+    { b, id: SPOTLIGHT_ID } as unknown,
   );
 }
 

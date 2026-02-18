@@ -11,6 +11,8 @@ export const handleAssert: ActionHandler = async (ctx, step, events, stepIndex) 
   const resolved = resolveStepLocator(ctx.page, step);
   const locator = resolved.locator;
 
+  const box = await locator.boundingBox();
+
   if (step.visible !== undefined) {
     await locator.waitFor({
       state: step.visible ? "visible" : "hidden",
@@ -31,7 +33,6 @@ export const handleAssert: ActionHandler = async (ctx, step, events, stepIndex) 
     }
   }
 
-  const box = await locator.boundingBox();
   await flashSpotlight(ctx.page, box);
   await pulseFocus(ctx.page, box);
 
@@ -40,6 +41,7 @@ export const handleAssert: ActionHandler = async (ctx, step, events, stepIndex) 
       action: "assert",
       startTime: start,
       selector: resolved.selectorForEvent,
+      boundingBox: box,
       narration: step.narration,
     }),
   );

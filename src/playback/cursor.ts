@@ -15,8 +15,15 @@ const CURSOR_SVG = `<svg xmlns='http://www.w3.org/2000/svg' width='24' height='2
 
 const CURSOR_DATA_URL = `data:image/svg+xml,${encodeURIComponent(CURSOR_SVG)}`;
 
-export function getCursorCSS(): string {
-  return `
+const ROOT_CSS = `
+:root {
+  --dm-accent: rgba(50, 220, 255, 0.95);
+  --dm-accent-soft: rgba(50, 220, 255, 0.18);
+  --dm-dim: rgba(2, 6, 23, 0.28);
+}
+`.trim();
+
+const CURSOR_CSS = `
 #dm-cursor {
   position: fixed;
   width: ${CURSOR_SIZE}px;
@@ -30,7 +37,9 @@ export function getCursorCSS(): string {
   filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.35));
   transition: transform 0.15s ease;
 }
+`.trim();
 
+const FOCUS_RING_CSS = `
 /* Focus ring to visually "select" targets before interacting */
 #dm-focus-ring {
   position: fixed;
@@ -42,16 +51,19 @@ export function getCursorCSS(): string {
   z-index: ${CURSOR_Z_INDEX - 1};
   opacity: 0;
   border-radius: 12px;
-  border: 2px solid rgba(50, 220, 255, 0.95);
+  border: 2px solid var(--dm-accent);
   box-shadow:
-    0 0 0 6px rgba(50, 220, 255, 0.18),
+    0 0 0 1px rgba(255, 255, 255, 0.18) inset,
+    0 0 0 6px var(--dm-accent-soft),
     0 12px 28px rgba(0, 0, 0, 0.25);
   transition:
     opacity 0.12s ease,
     transform 0.12s ease;
   will-change: transform, opacity;
 }
+`.trim();
 
+const SPOTLIGHT_CSS = `
 /* Spotlight overlay to strongly "select" targets (non-interactive). */
 #dm-spotlight {
   position: fixed;
@@ -63,14 +75,21 @@ export function getCursorCSS(): string {
   z-index: ${CURSOR_Z_INDEX - 3};
   opacity: 0;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.04);
-  box-shadow: 0 0 0 9999px rgba(2, 6, 23, 0.22);
+  background: rgba(255, 255, 255, 0.035);
+  box-shadow:
+    0 0 0 9999px var(--dm-dim),
+    0 0 0 1px rgba(255, 255, 255, 0.12) inset,
+    0 0 0 6px rgba(50, 220, 255, 0.08),
+    0 22px 70px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(1.5px);
   transition:
     opacity 0.14s ease,
     transform 0.14s ease;
   will-change: transform, opacity;
 }
+`.trim();
 
+const RIPPLE_CSS = `
 /* Click ripple for extra "polish" */
 .dm-ripple {
   position: fixed;
@@ -93,6 +112,9 @@ export function getCursorCSS(): string {
   100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
 }
 `.trim();
+
+export function getCursorCSS(): string {
+  return [ROOT_CSS, CURSOR_CSS, FOCUS_RING_CSS, SPOTLIGHT_CSS, RIPPLE_CSS].join("\n\n");
 }
 
 interface CursorMoveParams {
