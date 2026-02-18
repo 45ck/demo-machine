@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ChartLab - Hover Tooltips</title>
+    <style>
+      :root {
+        --bg: #071016;
+        --panel: rgba(255, 255, 255, 0.06);
+        --border: rgba(255, 255, 255, 0.12);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.68);
+        --accent: #ffb000;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Arial;
+        background:
+          radial-gradient(900px 650px at 20% 20%, #2a2f78 0%, transparent 55%),
+          radial-gradient(900px 650px at 85% 20%, #5a2a1b 0%, transparent 55%),
+          radial-gradient(1100px 700px at 50% 90%, #2a4f3a 0%, transparent 55%), var(--bg);
+        padding: 26px;
+      }
+      .wrap {
+        width: min(1040px, 100%);
+        margin: 0 auto;
+      }
+      header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .panel {
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: linear-gradient(180deg, var(--panel), rgba(255, 255, 255, 0.03));
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+        overflow: hidden;
+        padding: 16px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 0.85fr;
+        gap: 16px;
+      }
+      @media (max-width: 960px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .chartCard {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        background: rgba(0, 0, 0, 0.22);
+        padding: 14px;
+        position: relative;
+        overflow: hidden;
+      }
+      .hint {
+        margin-top: 8px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.72);
+      }
+      .tooltip {
+        position: absolute;
+        left: 16px;
+        top: 16px;
+        display: none;
+        padding: 10px 12px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 176, 0, 0.55);
+        background: rgba(255, 176, 0, 0.1);
+        backdrop-filter: blur(8px);
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.4);
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+          monospace;
+        font-size: 12px;
+      }
+      .tooltip.visible {
+        display: block;
+      }
+      .legend {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        background: rgba(0, 0, 0, 0.22);
+        padding: 14px;
+      }
+      .legend h2 {
+        margin: 0 0 8px;
+        font-size: 14px;
+      }
+      .legend ul {
+        margin: 10px 0 0;
+        padding-left: 18px;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .bar {
+        fill: rgba(255, 176, 0, 0.3);
+        stroke: rgba(255, 176, 0, 0.55);
+        stroke-width: 1;
+        transition:
+          transform 120ms ease,
+          fill 120ms ease;
+        transform-origin: center bottom;
+        cursor: default;
+      }
+      .bar:hover {
+        fill: rgba(255, 176, 0, 0.48);
+        transform: scale(1.02);
+      }
+      .axis {
+        stroke: rgba(255, 255, 255, 0.18);
+        stroke-width: 1;
+      }
+      .tick {
+        fill: rgba(255, 255, 255, 0.72);
+        font-size: 12px;
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+          monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>ChartLab</h1>
+        <div class="muted">Hover bars to reveal deterministic tooltips</div>
+      </header>
+
+      <div class="panel">
+        <div class="grid">
+          <section class="chartCard" aria-label="Revenue chart">
+            <div
+              class="tooltip"
+              id="tooltip"
+              data-testid="tooltip"
+              role="status"
+              aria-live="polite"
+            >
+              hover a bar
+            </div>
+            <svg width="100%" viewBox="0 0 720 360" aria-label="Revenue by quarter">
+              <line class="axis" x1="60" y1="320" x2="680" y2="320"></line>
+              <line class="axis" x1="60" y1="50" x2="60" y2="320"></line>
+
+              <rect
+                class="bar"
+                data-testid="bar-q1"
+                role="img"
+                aria-label="Q1 revenue"
+                x="120"
+                y="170"
+                width="90"
+                height="150"
+              ></rect>
+              <rect
+                class="bar"
+                data-testid="bar-q2"
+                role="img"
+                aria-label="Q2 revenue"
+                x="250"
+                y="120"
+                width="90"
+                height="200"
+              ></rect>
+              <rect
+                class="bar"
+                data-testid="bar-q3"
+                role="img"
+                aria-label="Q3 revenue"
+                x="380"
+                y="95"
+                width="90"
+                height="225"
+              ></rect>
+              <rect
+                class="bar"
+                data-testid="bar-q4"
+                role="img"
+                aria-label="Q4 revenue"
+                x="510"
+                y="145"
+                width="90"
+                height="175"
+              ></rect>
+
+              <text class="tick" x="145" y="345">Q1</text>
+              <text class="tick" x="275" y="345">Q2</text>
+              <text class="tick" x="405" y="345">Q3</text>
+              <text class="tick" x="535" y="345">Q4</text>
+            </svg>
+            <div class="hint">
+              Tip: in real apps, charts are often SVG/canvas, but hover/tooltips are still
+              targetable.
+            </div>
+          </section>
+
+          <aside class="legend">
+            <h2>What this app proves</h2>
+            <div class="muted">
+              Hover targeting should look great and remain resilient. Use roles and test IDs.
+            </div>
+            <ul>
+              <li>Hover triggers tooltip visibility</li>
+              <li>Tooltips update deterministically</li>
+              <li>Targets can be SVG elements</li>
+            </ul>
+          </aside>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const tooltip = document.getElementById("tooltip");
+      const data = {
+        "bar-q1": { label: "Q1", value: 31 },
+        "bar-q2": { label: "Q2", value: 42 },
+        "bar-q3": { label: "Q3", value: 48 },
+        "bar-q4": { label: "Q4", value: 37 },
+      };
+
+      function show(text) {
+        tooltip.textContent = text;
+        tooltip.classList.add("visible");
+      }
+
+      function hide() {
+        tooltip.classList.remove("visible");
+        tooltip.textContent = "hover a bar";
+      }
+
+      document.querySelectorAll(".bar").forEach((el) => {
+        el.addEventListener("mouseenter", () => {
+          const d = data[el.getAttribute("data-testid")];
+          show(`${d.label}: $${d.value}k`);
+        });
+        el.addEventListener("mouseleave", hide);
+      });
+    </script>
+  </body>
+</html>

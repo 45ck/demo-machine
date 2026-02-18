@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AuthFlow - OTP Sign-In</title>
+    <style>
+      :root {
+        --bg: #070b12;
+        --panel: rgba(255, 255, 255, 0.06);
+        --border: rgba(255, 255, 255, 0.12);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.68);
+        --accent: #57d6ff;
+        --good: #79ff9a;
+        --bad: #ff6b81;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Arial;
+        background:
+          radial-gradient(900px 650px at 20% 15%, #1b3a78 0%, transparent 55%),
+          radial-gradient(900px 650px at 80% 15%, #0a3a4f 0%, transparent 55%),
+          radial-gradient(1100px 700px at 50% 90%, #3b1b3f 0%, transparent 55%), var(--bg);
+        display: grid;
+        place-items: center;
+        padding: 28px;
+      }
+      .shell {
+        width: min(980px, 100%);
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 16px;
+      }
+      @media (max-width: 920px) {
+        .shell {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: linear-gradient(180deg, var(--panel), rgba(255, 255, 255, 0.03));
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+        overflow: hidden;
+      }
+      header {
+        padding: 16px 18px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 16px;
+        letter-spacing: 0.2px;
+      }
+      .tag {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.78);
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+          monospace;
+        border: 1px solid rgba(87, 214, 255, 0.35);
+        background: rgba(87, 214, 255, 0.08);
+        padding: 6px 10px;
+        border-radius: 999px;
+      }
+      .body {
+        padding: 18px;
+      }
+      label {
+        display: block;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.78);
+        margin-bottom: 8px;
+      }
+      input[type="email"] {
+        width: 100%;
+        height: 46px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        padding: 0 14px;
+        outline: none;
+      }
+      input[type="email"]:focus {
+        border-color: rgba(87, 214, 255, 0.6);
+        box-shadow: 0 0 0 6px rgba(87, 214, 255, 0.12);
+      }
+      .row {
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+      button {
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        height: 44px;
+        padding: 0 14px;
+        border-radius: 14px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      button.primary {
+        border-color: rgba(87, 214, 255, 0.55);
+        background: linear-gradient(180deg, rgba(87, 214, 255, 0.22), rgba(87, 214, 255, 0.08));
+      }
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.35;
+      }
+      .otp {
+        margin-top: 16px;
+        padding: 14px;
+        border-radius: 16px;
+        border: 1px dashed rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.03);
+        display: none;
+      }
+      .otp.visible {
+        display: block;
+      }
+      .otpInputs {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 10px;
+        margin: 12px 0;
+      }
+      .otpInputs input {
+        height: 50px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        font-size: 18px;
+        text-align: center;
+        outline: none;
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+          monospace;
+      }
+      .otpInputs input:focus {
+        border-color: rgba(87, 214, 255, 0.6);
+        box-shadow: 0 0 0 6px rgba(87, 214, 255, 0.12);
+      }
+      .status {
+        margin-top: 14px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.25);
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+          monospace;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.8);
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.35);
+        box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.06);
+      }
+      .dot.good {
+        background: var(--good);
+        box-shadow: 0 0 0 6px rgba(121, 255, 154, 0.12);
+      }
+      .dot.bad {
+        background: var(--bad);
+        box-shadow: 0 0 0 6px rgba(255, 107, 129, 0.12);
+      }
+      .proof {
+        padding: 18px;
+      }
+      .proof h2 {
+        margin: 0 0 8px;
+        font-size: 14px;
+      }
+      .proof ul {
+        margin: 10px 0 0;
+        padding-left: 18px;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .codeHint {
+        margin-top: 12px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.72);
+        border-left: 3px solid rgba(87, 214, 255, 0.6);
+        padding-left: 10px;
+      }
+      .codeHint code {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+          monospace;
+        color: rgba(255, 255, 255, 0.9);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <section class="card">
+        <header>
+          <h1>AuthFlow</h1>
+          <div class="tag">OTP sign-in</div>
+        </header>
+        <div class="body">
+          <div class="pill" data-testid="state-pill">
+            <span class="dot" id="stateDot" aria-hidden="true"></span>
+            <span data-testid="state-text">ready</span>
+          </div>
+
+          <div style="height: 12px"></div>
+
+          <label for="email">Work email</label>
+          <input
+            id="email"
+            type="email"
+            autocomplete="off"
+            placeholder="you@company.com"
+            data-testid="email"
+          />
+          <div class="row">
+            <button class="primary" id="sendBtn" data-testid="send" type="button">Send code</button>
+            <button id="resetBtn" data-testid="reset" type="button">Reset</button>
+          </div>
+
+          <div class="otp" id="otpPanel" data-testid="otp-panel">
+            <div class="muted">We sent a 6-digit code. Enter it below to continue.</div>
+            <div class="codeHint">Demo hint: use <code>123456</code>.</div>
+            <div class="otpInputs" role="group" aria-label="Verification code">
+              <input data-testid="otp-0" inputmode="numeric" maxlength="1" aria-label="Digit 1" />
+              <input data-testid="otp-1" inputmode="numeric" maxlength="1" aria-label="Digit 2" />
+              <input data-testid="otp-2" inputmode="numeric" maxlength="1" aria-label="Digit 3" />
+              <input data-testid="otp-3" inputmode="numeric" maxlength="1" aria-label="Digit 4" />
+              <input data-testid="otp-4" inputmode="numeric" maxlength="1" aria-label="Digit 5" />
+              <input data-testid="otp-5" inputmode="numeric" maxlength="1" aria-label="Digit 6" />
+            </div>
+            <div class="row">
+              <button class="primary" id="verifyBtn" data-testid="verify" type="button" disabled>
+                Verify
+              </button>
+              <div class="muted" data-testid="loading" id="loading" style="display: none">
+                Verifying…
+              </div>
+            </div>
+            <div class="status" data-testid="status" id="status">Status: waiting</div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card">
+        <header>
+          <h1>What this proves</h1>
+          <div class="tag">targets</div>
+        </header>
+        <div class="proof">
+          <h2>Selector-free targeting works well for auth flows</h2>
+          <div class="muted">
+            This mini app is designed to exercise robust locators: labels, roles, and test IDs.
+          </div>
+          <ul>
+            <li>Form input via label targeting</li>
+            <li>Multi-field OTP input (keyboard typing + auto-advance)</li>
+            <li>State changes and deterministic success path</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+
+    <script>
+      const sendBtn = document.getElementById("sendBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const verifyBtn = document.getElementById("verifyBtn");
+      const otpPanel = document.getElementById("otpPanel");
+      const loading = document.getElementById("loading");
+      const status = document.getElementById("status");
+      const stateDot = document.getElementById("stateDot");
+      const stateText = document.querySelector("[data-testid='state-text']");
+      const email = document.getElementById("email");
+      const inputs = Array.from(document.querySelectorAll(".otpInputs input"));
+
+      let step = "ready";
+
+      function setState(next, kind) {
+        step = next;
+        stateText.textContent = next;
+        stateDot.className = "dot" + (kind ? " " + kind : "");
+      }
+
+      function sanitizeDigit(v) {
+        return String(v || "")
+          .replace(/[^0-9]/g, "")
+          .slice(0, 1);
+      }
+
+      function currentCode() {
+        return inputs.map((i) => i.value || "").join("");
+      }
+
+      function updateVerifyEnabled() {
+        const code = currentCode();
+        verifyBtn.disabled = code.length !== 6;
+        status.textContent = `Status: code=${code.padEnd(6, "•")}`;
+      }
+
+      function reset() {
+        email.value = "";
+        inputs.forEach((i) => (i.value = ""));
+        otpPanel.classList.remove("visible");
+        loading.style.display = "none";
+        verifyBtn.disabled = true;
+        status.textContent = "Status: waiting";
+        setState("ready", "");
+      }
+
+      sendBtn.addEventListener("click", () => {
+        otpPanel.classList.add("visible");
+        inputs.forEach((i) => (i.value = ""));
+        inputs[0].focus();
+        status.textContent = "Status: sent";
+        setState("code-sent", "");
+      });
+
+      resetBtn.addEventListener("click", reset);
+
+      inputs.forEach((input, idx) => {
+        input.addEventListener("input", () => {
+          input.value = sanitizeDigit(input.value);
+          if (input.value && idx < inputs.length - 1) inputs[idx + 1].focus();
+          updateVerifyEnabled();
+        });
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Backspace" && !input.value && idx > 0) {
+            inputs[idx - 1].focus();
+          }
+        });
+      });
+
+      verifyBtn.addEventListener("click", async () => {
+        if (verifyBtn.disabled) return;
+        const code = currentCode();
+        loading.style.display = "inline-block";
+        status.textContent = "Status: verifying";
+        setState("verifying", "");
+
+        await new Promise((r) => setTimeout(r, 450));
+
+        loading.style.display = "none";
+        if (code === "123456") {
+          status.textContent = "Status: signed-in";
+          setState("signed-in", "good");
+          return;
+        }
+        status.textContent = "Status: invalid-code";
+        setState("invalid-code", "bad");
+      });
+
+      reset();
+    </script>
+  </body>
+</html>

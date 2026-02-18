@@ -1,0 +1,37 @@
+meta:
+  title: "GridV - Virtualized Table Demo"
+  resolution:
+    width: 1920
+    height: 1080
+
+runner:
+  command: "node examples/virtual-table/serve.mjs"
+  url: "http://localhost:4577"
+  healthcheck: "http://localhost:4577/api/health"
+  timeout: 10000
+
+chapters:
+  - title: "Scroll Deep"
+    steps:
+      - action: navigate
+        url: "http://localhost:4577"
+        narration: "Virtualized tables are common: only a small window of rows exists in the DOM."
+      - action: assert
+        target:
+          by: testId
+          testId: "range"
+        text: "rendering rows:"
+      - action: scroll
+        target:
+          by: testId
+          testId: "viewport"
+        y: 12000
+        narration: "We can still scroll deterministically within a container."
+      - action: wait
+        timeout: 650
+      - action: assert
+        target:
+          by: text
+          text: "Row 300"
+          exact: true
+        visible: true

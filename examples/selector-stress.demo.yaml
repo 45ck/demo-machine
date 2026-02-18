@@ -1,0 +1,30 @@
+meta:
+  title: "SelectorGym - Disambiguation Demo"
+  resolution:
+    width: 1920
+    height: 1080
+
+runner:
+  command: "node examples/selector-stress/serve.mjs"
+  url: "http://localhost:4578"
+  healthcheck: "http://localhost:4578/api/health"
+  timeout: 10000
+
+chapters:
+  - title: "Disambiguate"
+    steps:
+      - action: navigate
+        url: "http://localhost:4578"
+        narration: "Real apps often have repeated controls. When multiple matches exist, use nth to pick the right one."
+      - action: click
+        target:
+          by: role
+          role: "button"
+          name: "Delete"
+        nth: 3
+        narration: "This clicks the fourth Delete button, without brittle CSS."
+      - action: assert
+        target:
+          by: testId
+          testId: "status"
+        text: "deleted Card 4"

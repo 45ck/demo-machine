@@ -59,11 +59,15 @@ If there are multiple matches, add `nth` (0-based):
 The `examples/` suite is the living acceptance test. It intentionally covers different UI patterns:
 
 - **Forms and validation**: `examples/form-wizard*.demo.yaml`
+- **Auth flows (OTP)**: `examples/auth-otp.demo.yaml`
 - **Dialogs, tooltips, overlays**: `examples/modals-popovers*.demo.yaml`
 - **SPA navigation**: `examples/spa-router*.demo.yaml`
 - **Infinite scroll / long pages**: `examples/infinite-scroll*.demo.yaml`
 - **Dense tables / dashboards**: `examples/dashboard-table*.demo.yaml`
+- **Charts + hover tooltips**: `examples/chart-tooltips.demo.yaml`
+- **Virtualized tables**: `examples/virtual-table.demo.yaml`
 - **Controls matrix (checkbox/select/upload/drag)**: `examples/controls-lab*.demo.yaml`
+- **Selector stress (nth disambiguation)**: `examples/selector-stress.demo.yaml`
 
 Run:
 

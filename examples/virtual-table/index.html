@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GridV - Virtualized Table</title>
+    <style>
+      :root {
+        --bg: #06131b;
+        --panel: rgba(255, 255, 255, 0.06);
+        --border: rgba(255, 255, 255, 0.12);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.68);
+        --accent: #8bf7ff;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Arial;
+        background:
+          radial-gradient(900px 650px at 20% 15%, #1b3a78 0%, transparent 55%),
+          radial-gradient(900px 650px at 85% 20%, #0a4f44 0%, transparent 55%),
+          radial-gradient(1100px 700px at 50% 90%, #3b1b3f 0%, transparent 55%), var(--bg);
+        padding: 26px;
+      }
+      .wrap {
+        width: min(1100px, 100%);
+        margin: 0 auto;
+      }
+      header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+      .panel {
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: linear-gradient(180deg, var(--panel), rgba(255, 255, 255, 0.03));
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+        overflow: hidden;
+      }
+      .toolbar {
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .mono {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+          monospace;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.78);
+      }
+      .viewport {
+        height: 520px;
+        overflow: auto;
+        position: relative;
+        padding: 0;
+      }
+      .spacer {
+        position: relative;
+        width: 100%;
+      }
+      .rows {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 10px 12px 16px;
+      }
+      .row {
+        height: 32px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.04);
+        display: grid;
+        grid-template-columns: 120px 1fr 160px;
+        gap: 12px;
+        align-items: center;
+        padding: 0 12px;
+        margin-bottom: 8px;
+      }
+      .pill {
+        width: fit-content;
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(139, 247, 255, 0.45);
+        background: rgba(139, 247, 255, 0.08);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>GridV</h1>
+        <div class="muted">A virtualized list: only visible rows exist in the DOM</div>
+      </header>
+
+      <div class="panel">
+        <div class="toolbar">
+          <div class="muted">Scroll the viewport to jump deep into the dataset.</div>
+          <div class="mono" data-testid="range" id="range">rendering rows: 0..0</div>
+        </div>
+
+        <div
+          class="viewport"
+          id="viewport"
+          data-testid="viewport"
+          aria-label="Virtual table viewport"
+        >
+          <div class="spacer" id="spacer"></div>
+          <div class="rows" id="rows"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const TOTAL = 2000;
+      const ROW_H = 40; // includes margin
+      const viewport = document.getElementById("viewport");
+      const spacer = document.getElementById("spacer");
+      const rowsEl = document.getElementById("rows");
+      const rangeEl = document.getElementById("range");
+
+      spacer.style.height = `${TOTAL * ROW_H + 20}px`;
+
+      let scheduled = false;
+
+      function clamp(n, a, b) {
+        return Math.max(a, Math.min(b, n));
+      }
+
+      function render() {
+        const top = viewport.scrollTop;
+        const height = viewport.clientHeight;
+        const start = clamp(Math.floor(top / ROW_H) - 6, 0, TOTAL - 1);
+        const count = Math.ceil(height / ROW_H) + 14;
+        const end = clamp(start + count, 0, TOTAL);
+
+        const y = start * ROW_H;
+        rowsEl.style.transform = `translateY(${y}px)`;
+        rowsEl.innerHTML = "";
+
+        for (let i = start; i < end; i++) {
+          const el = document.createElement("div");
+          el.className = "row";
+          el.setAttribute("data-testid", "row");
+          el.innerHTML = `
+            <div class="mono pill">Row ${i}</div>
+            <div class="muted">Customer ${String(i).padStart(4, "0")} · Region ${i % 7}</div>
+            <div class="mono">id=${100000 + i}</div>
+          `;
+          rowsEl.appendChild(el);
+        }
+
+        rangeEl.textContent = `rendering rows: ${start}..${end - 1}`;
+        scheduled = false;
+      }
+
+      function schedule() {
+        if (scheduled) return;
+        scheduled = true;
+        requestAnimationFrame(render);
+      }
+
+      viewport.addEventListener("scroll", schedule);
+      render();
+    </script>
+  </body>
+</html>
