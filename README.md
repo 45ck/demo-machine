@@ -2,6 +2,8 @@
 
 # demo-machine
 
+<img src="banner.svg" alt="demo-machine banner" width="100%" />
+
 **Demo as code** — turn YAML specs into polished product demo videos.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
