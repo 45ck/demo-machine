@@ -1,0 +1,26 @@
+{
+  "repo_name": "demo-machine",
+  "tagline": "Demo as code",
+  "one_sentence_purpose": "Turn YAML specs into polished product demo videos with real browser automation, human-like interactions, and voice narration.",
+  "target_users": "Developer advocates, product teams, and open-source maintainers who need repeatable, high-quality demo videos without manual screen recording.",
+  "keywords": ["demo", "video automation", "YAML", "playwright", "CLI", "screen recording", "product demo", "developer tooling"],
+  "visual_metaphors": ["film strip or clapperboard frame", "terminal cursor blinking on a command line", "play button morphing into a code bracket", "timeline with keyframes"],
+  "avoid": ["no mascots", "no photorealism", "no camera or webcam imagery", "no overly playful or cartoonish style", "no generic stock-photo aesthetics"],
+  "style_adjectives": ["technical", "cinematic", "precise", "modern", "minimal", "developer-focused"],
+  "palette_hint": {
+    "bg_light": "#ffffff",
+    "bg_dark": "#0d1117",
+    "primary": "#e44d26",
+    "accent": "#f5a623",
+    "ink": "#c9d1d9"
+  },
+  "assets_needed": [
+    {"path": "assets/logo.light.svg", "type": "square_logo", "size_px": 512},
+    {"path": "assets/logo.dark.svg", "type": "square_logo", "size_px": 512},
+    {"path": "assets/banner.light.svg", "type": "readme_banner", "size_px": [1200, 300]},
+    {"path": "assets/banner.dark.svg", "type": "readme_banner", "size_px": [1200, 300]},
+    {"path": "assets/icon.light.svg", "type": "mono_icon", "size_px": 64},
+    {"path": "assets/icon.dark.svg", "type": "mono_icon", "size_px": 64},
+    {"path": "assets/social-preview.png", "type": "github_social_preview", "size_px": [1280, 640]}
+  ]
+}

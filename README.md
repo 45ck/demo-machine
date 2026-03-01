@@ -2,7 +2,11 @@
 
 # demo-machine
 
-<img src="banner.svg" alt="demo-machine banner" width="100%" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/banner.dark.svg" />
+  <source media="(prefers-color-scheme: light)" srcset="assets/banner.light.svg" />
+  <img src="assets/banner.light.svg" alt="demo-machine banner" width="100%" />
+</picture>
 
 **Demo as code** — turn YAML specs into polished product demo videos.
 
