@@ -1,4 +1,4 @@
-import type { ActionEvent } from "../playback/types.js";
+import type { ActionEvent } from "../capture/types.js";
 import type { DemoSpec } from "../spec/types.js";
 
 function totalStepCount(spec: DemoSpec): number {
