@@ -346,6 +346,17 @@ describe("actionHandlers", () => {
     await actionHandlers["click"]!(ctx, step, events, 0);
     expect(ctx.page.waitForTimeout).toHaveBeenCalledWith(TEST_PACING.postClickDelayMs);
   });
+
+  it("handles type action with clear: true (clears field before typing)", async () => {
+    const step = { action: "type" as const, selector: "#input", text: "hello", clear: true };
+    await actionHandlers["type"]!(ctx, step, events, 0);
+    const loc = (ctx.page.locator as unknown as ReturnType<typeof vi.fn>).mock.results[0]!.value;
+    expect(loc.fill).toHaveBeenCalledWith("", expect.anything());
+    expect(loc.click).toHaveBeenCalled();
+    expect(ctx.page.keyboard.type).toHaveBeenCalledWith("hello", { delay: 50 });
+    expect(events).toHaveLength(1);
+    expect(events[0]!.action).toBe("type");
+  });
 });
 
 describe("PlaybackEngine", () => {

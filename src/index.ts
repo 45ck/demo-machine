@@ -58,6 +58,7 @@ export type {
 export type { Renderer, RenderArgs, RenderResult } from "./editor/renderer-types.js";
 
 // CLI types
+export type { CaptureResult } from "./cli/capture.js";
 export type { NarrationSettings } from "./cli/narration.js";
 
 // Narration

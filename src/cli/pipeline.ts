@@ -164,6 +164,10 @@ export async function runEditPipeline(eventsPath: string, opts: GlobalOptions): 
   const events = await eventLogMod.readEventLog(eventsPath);
   log.info(`Loaded ${String(events.length)} events`);
 
+  if (events.length === 0) {
+    throw new Error(`No events found in ${eventsPath}. Cannot render an empty capture.`);
+  }
+
   const assetsDir = pathMod.dirname(eventsPath);
   const meta = await captureMetaMod.readCaptureMetadataMaybe(
     pathMod.join(assetsDir, "metadata.json"),
@@ -206,6 +210,9 @@ export async function runEditPipeline(eventsPath: string, opts: GlobalOptions): 
   } catch {
     throw new Error(`video file not found: ${videoPath}`);
   }
+
+  const fsMod = await import("node:fs/promises");
+  await fsMod.mkdir(opts.output, { recursive: true });
 
   await renderer.render(timeline, {
     outputPath,

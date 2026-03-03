@@ -48,9 +48,9 @@ const preSetCookieStepSchema = z
     name: z.string().min(1),
     value: z.string().optional(),
     valueFrom: valueFromSchema.optional(),
-    url: z.string().optional(),
-    domain: z.string().optional(),
-    path: z.string().optional(),
+    url: z.string().min(1).optional(),
+    domain: z.string().min(1).optional(),
+    path: z.string().min(1).optional(),
     secure: z.boolean().optional(),
     httpOnly: z.boolean().optional(),
     sameSite: z.enum(["Strict", "Lax", "None"]).optional(),
@@ -66,7 +66,7 @@ const preSetLocalStorageStepSchema = z
     key: z.string().min(1),
     value: z.string().optional(),
     valueFrom: valueFromSchema.optional(),
-    origin: z.string().optional(),
+    origin: z.string().min(1).optional(),
   })
   .refine((v) => v.value !== undefined || v.valueFrom !== undefined, {
     message: "setLocalStorage requires value or valueFrom",
@@ -132,9 +132,9 @@ const scrollStepSchema = z.object({
   selector: nonBlankString.optional(),
   target: targetSchema.optional(),
   nth: z.number().int().nonnegative().optional(),
-  x: z.number().optional().default(0),
+  x: z.number().finite().optional().default(0),
   // Default to a meaningful downward scroll so specs can omit y for common cases.
-  y: z.number().optional().default(800),
+  y: z.number().finite().optional().default(800),
   timeoutMs: z.number().int().positive().optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
@@ -267,9 +267,13 @@ const typeStepSchemaValidated = typeStepSchema.refine((v) => v.selector || v.tar
 const hoverStepSchemaValidated = hoverStepSchema.refine((v) => v.selector || v.target, {
   message: "hover requires selector or target",
 });
-const assertStepSchemaValidated = assertStepSchema.refine((v) => v.selector || v.target, {
-  message: "assert requires selector or target",
-});
+const assertStepSchemaValidated = assertStepSchema
+  .refine((v) => v.selector || v.target, {
+    message: "assert requires selector or target",
+  })
+  .refine((v) => v.visible !== undefined || (v.text !== undefined && v.text !== null), {
+    message: 'assert step must specify at least one of: "visible", "text"',
+  });
 const checkStepSchemaValidated = checkStepSchema.refine((v) => v.selector || v.target, {
   message: "check requires selector or target",
 });

@@ -36,7 +36,14 @@ export const handleDragAndDrop: ActionHandler = async (ctx, step, events, stepIn
   await flashSpotlight(ctx.page, fromBox);
   await pulseFocus(ctx.page, fromBox);
 
-  await fromResolved.locator.dragTo(toResolved.locator, { timeout: timeoutMs });
+  try {
+    await fromResolved.locator.dragTo(toResolved.locator, { timeout: timeoutMs });
+  } catch (err) {
+    throw new Error(
+      `dragAndDrop failed from "${fromResolved.selectorForEvent}" to "${toResolved.selectorForEvent}": ${err instanceof Error ? err.message : String(err)}`,
+      { cause: err },
+    );
+  }
 
   events.push(
     buildEvent({

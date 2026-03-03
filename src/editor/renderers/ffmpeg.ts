@@ -27,6 +27,9 @@ export class FfmpegRenderer implements VideoRenderer {
     args.push("-i", options.videoPath);
 
     if (options.audioPath) {
+      if (options.trimStartMs !== undefined && options.trimStartMs > 0) {
+        args.push("-ss", msToSec(options.trimStartMs));
+      }
       args.push("-i", options.audioPath);
     }
 

@@ -17,7 +17,7 @@ import * as path from "node:path";
 
 const log = createLogger("cli:capture");
 
-interface CaptureResult {
+export interface CaptureResult {
   videoPath: string;
   events: ActionEvent[];
   spec: DemoSpec;

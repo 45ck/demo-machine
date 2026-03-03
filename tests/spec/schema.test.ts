@@ -557,3 +557,39 @@ describe("preStepSchema", () => {
     expect(result.success).toBe(false);
   });
 });
+
+/* ------------------------------------------------------------------ */
+/*  FIX-14a: scroll NaN/Infinity, redaction empty strings              */
+/* ------------------------------------------------------------------ */
+
+describe("scroll NaN/Infinity validation", () => {
+  it("rejects scroll step with x: NaN", () => {
+    const result = stepSchema.safeParse({ action: "scroll", x: NaN });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects scroll step with x: Infinity", () => {
+    const result = stepSchema.safeParse({ action: "scroll", x: Infinity });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("redaction empty string validation", () => {
+  it("rejects redaction with empty secret string", () => {
+    const spec = {
+      ...minimalSpec(),
+      redaction: { secrets: [""] },
+    };
+    const result = demoSpecSchema.safeParse(spec);
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects redaction with empty selector string", () => {
+    const spec = {
+      ...minimalSpec(),
+      redaction: { selectors: [""] },
+    };
+    const result = demoSpecSchema.safeParse(spec);
+    expect(result.success).toBe(false);
+  });
+});

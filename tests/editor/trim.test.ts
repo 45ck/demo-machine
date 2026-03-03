@@ -5,7 +5,7 @@ import {
   applyTimelineTrim,
 } from "../../src/editor/trim.js";
 import type { DemoSpec } from "../../src/spec/types.js";
-import type { ActionEvent } from "../../src/playback/types.js";
+import type { ActionEvent } from "../../src/capture/types.js";
 
 function makeSpec(chapterDefs: { title: string; stepCount: number }[]): DemoSpec {
   return {

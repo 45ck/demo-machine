@@ -1,4 +1,4 @@
-export type SegmentType = "intro" | "chapter" | "content" | "callout" | "zoom" | "outro";
+export type SegmentType = "intro" | "chapter" | "content" | "callout" | "outro";
 
 export interface Segment {
   startMs: number;

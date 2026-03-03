@@ -32,8 +32,8 @@ const runnerConfigSchema = z.object({
 });
 
 const redactionConfigSchema = z.object({
-  selectors: z.array(z.string()).optional().default([]),
-  secrets: z.array(z.string()).optional().default([]),
+  selectors: z.array(z.string().min(1)).optional().default([]),
+  secrets: z.array(z.string().min(1)).optional().default([]),
 });
 
 const pacingSchema = z.object({

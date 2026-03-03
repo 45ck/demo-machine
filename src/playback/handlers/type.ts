@@ -19,7 +19,14 @@ export const handleType: ActionHandler = async (ctx, step, events, stepIndex) =>
 
   const clear = (step as unknown as { clear?: unknown }).clear;
   if (clear === true) {
-    await locator.fill("", { timeout: timeoutMs });
+    try {
+      await locator.fill("", { timeout: timeoutMs });
+    } catch (err) {
+      throw new Error(
+        `type action failed to clear "${resolved.selectorForEvent}" before typing: ${err instanceof Error ? err.message : String(err)}`,
+        { cause: err },
+      );
+    }
   }
 
   await locator.click({ timeout: timeoutMs });
