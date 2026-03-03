@@ -10,6 +10,8 @@ const POST_CLICK_ACTIONS = new Set<Chapter["steps"][number]["action"]>([
   "check",
   "uncheck",
   "select",
+  "selectFirstNonPlaceholder",
+  "clickFirstVisible",
   "upload",
   "dragAndDrop",
   "hover",

@@ -54,7 +54,9 @@
     "statfs",
     "bavail",
     "Fagan",
-    "embedders"
+    "embedders",
+    "presteps",
+    "prestep"
   ],
   "ignorePaths": ["node_modules", "dist", "pnpm-lock.yaml", "*.json"]
 }

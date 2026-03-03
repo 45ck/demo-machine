@@ -22,6 +22,7 @@ interface PlaywrightContext {
 
 interface PlaywrightPage {
   video(): PlaywrightVideo | null;
+  evaluate(fn: string | ((...args: unknown[]) => unknown), ...args: unknown[]): Promise<unknown>;
 }
 
 interface PlaywrightVideo {
@@ -31,6 +32,16 @@ interface PlaywrightVideo {
 const logger = createLogger("capture:recorder");
 
 type FinalizeCaptureOptions = CaptureOptions & { meta?: CaptureMetadata };
+
+interface GeometrySnapshot {
+  innerWidth: number;
+  innerHeight: number;
+  outerWidth: number;
+  outerHeight: number;
+  availWidth: number;
+  availHeight: number;
+  devicePixelRatio: number;
+}
 
 async function safeUnlink(path: string): Promise<void> {
   try {
@@ -83,6 +94,23 @@ async function writeMetadataIfProvided(
   return metadataPath;
 }
 
+async function inspectGeometry(page: PlaywrightPage): Promise<GeometrySnapshot | undefined> {
+  try {
+    return (await page.evaluate((() => ({
+      innerWidth: window.innerWidth,
+      innerHeight: window.innerHeight,
+      outerWidth: window.outerWidth,
+      outerHeight: window.outerHeight,
+      availWidth: window.screen?.availWidth ?? 0,
+      availHeight: window.screen?.availHeight ?? 0,
+      devicePixelRatio: window.devicePixelRatio,
+    })) as (...args: unknown[]) => unknown)) as GeometrySnapshot;
+  } catch (err) {
+    logger.warn(`Failed to inspect capture geometry: ${String(err)}`);
+    return undefined;
+  }
+}
+
 export async function createRecordingContext(
   browser: PlaywrightBrowser,
   options: CaptureOptions,
@@ -91,16 +119,40 @@ export async function createRecordingContext(
   logger.info(`Output directory ready: ${options.outputDir}`);
 
   const context = await browser.newContext({
+    // Ensure the page viewport matches the recorded video size.
+    // If these differ, Playwright will pad the capture with gray bars.
+    viewport: options.resolution,
+    // Force CSS pixel density to 1 so the effective viewport does not shrink
+    // on high-DPI hosts (e.g. 150% display scaling on Windows).
+    deviceScaleFactor: 1,
+    // Keep screen size aligned with viewport for consistent recordings.
+    screen: options.resolution,
     recordVideo: {
       dir: options.outputDir,
       size: options.resolution,
     },
   });
 
+  const page = await context.newPage();
+  const geometry = await inspectGeometry(page);
+  if (geometry) {
+    logger.info(
+      `Geometry requested=${options.resolution.width}x${options.resolution.height} viewport=${geometry.innerWidth}x${geometry.innerHeight} outer=${geometry.outerWidth}x${geometry.outerHeight} screen=${geometry.availWidth}x${geometry.availHeight} dpr=${String(geometry.devicePixelRatio)}`,
+    );
+    if (
+      options.strictGeometry &&
+      (geometry.innerWidth !== options.resolution.width ||
+        geometry.innerHeight !== options.resolution.height)
+    ) {
+      throw new Error(
+        `Strict geometry mismatch: requested ${options.resolution.width}x${options.resolution.height}, got viewport ${geometry.innerWidth}x${geometry.innerHeight} (dpr=${String(geometry.devicePixelRatio)})`,
+      );
+    }
+  }
+
   await context.tracing.start({ screenshots: true, snapshots: true });
   logger.info("Tracing started");
 
-  const page = await context.newPage();
   return { context, page };
 }
 

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { demoSpecSchema } from "../../src/spec/schema.js";
+import { preStepSchema, stepSchema } from "../../src/spec/step-schema.js";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
@@ -148,6 +149,11 @@ describe("demoSpecSchema", () => {
       { action: "check", step: { action: "check", selector: "#cb" } },
       { action: "uncheck", step: { action: "uncheck", selector: "#cb" } },
       { action: "select", step: { action: "select", selector: "#sel", option: { label: "Pro" } } },
+      { action: "clickFirstVisible", step: { action: "clickFirstVisible", selector: "#btn" } },
+      {
+        action: "selectFirstNonPlaceholder",
+        step: { action: "selectFirstNonPlaceholder", selector: "#sel" },
+      },
       { action: "upload", step: { action: "upload", selector: "#file", files: ["./a.txt"] } },
       {
         action: "dragAndDrop",
@@ -348,6 +354,31 @@ describe("demoSpecSchema", () => {
       const result = demoSpecSchema.safeParse(spec);
       expect(result.success).toBe(false);
     });
+
+    it("rejects upload with neither file nor files", () => {
+      const result = stepSchema.safeParse({ action: "upload", selector: "#input" });
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects type step with empty text", () => {
+      const result = stepSchema.safeParse({ action: "type", selector: "#i", text: "" });
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects upload with both file and files", () => {
+      const result = stepSchema.safeParse({
+        action: "upload",
+        selector: "#i",
+        file: "a.txt",
+        files: ["b.txt"],
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects clickFirstVisible with missing selector", () => {
+      const result = stepSchema.safeParse({ action: "clickFirstVisible" });
+      expect(result.success).toBe(false);
+    });
   });
 
   /* ---------- Pacing ---------------------------------------------- */
@@ -454,5 +485,75 @@ describe("demoSpecSchema", () => {
       expect(result.data.chapters).toHaveLength(2);
       expect(result.data.chapters[0]!.steps).toHaveLength(14);
     }
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/*  preStepSchema                                                      */
+/* ------------------------------------------------------------------ */
+
+describe("preStepSchema", () => {
+  it("validates httpRequest with all fields", () => {
+    const result = preStepSchema.safeParse({
+      action: "httpRequest",
+      method: "POST",
+      url: "https://example.com/api/data",
+      headers: { Authorization: "Bearer token" },
+      body: { key: "value" },
+      expectStatus: 201,
+      saveResponseAs: "loginResponse",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("validates setCookie with value", () => {
+    const result = preStepSchema.safeParse({
+      action: "setCookie",
+      name: "session",
+      value: "abc123",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("validates setCookie with valueFrom", () => {
+    const result = preStepSchema.safeParse({
+      action: "setCookie",
+      name: "session",
+      valueFrom: { source: "loginResponse", path: "token" },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects setCookie with neither value nor valueFrom", () => {
+    const result = preStepSchema.safeParse({
+      action: "setCookie",
+      name: "session",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("validates setLocalStorage with value", () => {
+    const result = preStepSchema.safeParse({
+      action: "setLocalStorage",
+      key: "authToken",
+      value: "xyz",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects setLocalStorage with neither value nor valueFrom", () => {
+    const result = preStepSchema.safeParse({
+      action: "setLocalStorage",
+      key: "authToken",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects invalid action type", () => {
+    const result = preStepSchema.safeParse({
+      action: "deleteDatabase",
+      url: "http://example.com",
+    });
+    expect(result.success).toBe(false);
   });
 });

@@ -7,6 +7,7 @@ export type { PlaywrightPage } from "./playwright.js";
 export interface PlaybackContext {
   page: PlaywrightPage;
   baseUrl: string;
+  outputDir?: string | undefined;
   specDir?: string | undefined;
   pacing: Pacing;
   moveCursorTo(box: BoundingBox | null): Promise<void>;
@@ -49,18 +50,52 @@ export function stepTimeoutMs(step: Step): number {
   return DEFAULT_ACTION_TIMEOUT_MS;
 }
 
+export function isTimeoutLikeError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /timeout/i.test(msg);
+}
+
 export async function ensureTargetReady(
   locator: ReturnType<PlaywrightPage["locator"]>,
   timeoutMs: number,
 ): Promise<void> {
-  await locator.waitFor({ state: "attached", timeout: timeoutMs });
-  await locator.scrollIntoViewIfNeeded({ timeout: timeoutMs });
-  await locator.waitFor({ state: "visible", timeout: timeoutMs });
+  try {
+    await locator.waitFor({ state: "attached", timeout: timeoutMs });
+  } catch (err) {
+    if (isTimeoutLikeError(err)) {
+      throw new Error(`Target was not attached within ${String(timeoutMs)}ms`, { cause: err });
+    }
+    throw err;
+  }
+
+  try {
+    await locator.scrollIntoViewIfNeeded({ timeout: timeoutMs });
+  } catch (err) {
+    throw new Error(`Target could not be scrolled into view`, { cause: err });
+  }
+
+  try {
+    await locator.waitFor({ state: "visible", timeout: timeoutMs });
+  } catch (err) {
+    if (isTimeoutLikeError(err)) {
+      throw new Error(`Target was attached but not visible within ${String(timeoutMs)}ms`, {
+        cause: err,
+      });
+    }
+    throw err;
+  }
 }
 
 export async function ensureTargetAttached(
   locator: ReturnType<PlaywrightPage["locator"]>,
   timeoutMs: number,
 ): Promise<void> {
-  await locator.waitFor({ state: "attached", timeout: timeoutMs });
+  try {
+    await locator.waitFor({ state: "attached", timeout: timeoutMs });
+  } catch (err) {
+    if (isTimeoutLikeError(err)) {
+      throw new Error(`Target was not attached within ${String(timeoutMs)}ms`, { cause: err });
+    }
+    throw err;
+  }
 }

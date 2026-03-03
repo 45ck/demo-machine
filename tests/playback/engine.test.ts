@@ -46,6 +46,9 @@ function createMockLocator() {
 
 function createMockPage(): PlaywrightPage {
   const locator = createMockLocator();
+  const mockContext = {
+    addCookies: vi.fn().mockResolvedValue(undefined),
+  };
   return {
     goto: vi
       .fn<(url: string, options?: Record<string, unknown>) => Promise<void>>()
@@ -72,6 +75,7 @@ function createMockPage(): PlaywrightPage {
     evaluate: vi.fn().mockResolvedValue("page text content"),
     screenshot: vi.fn().mockResolvedValue(Buffer.from("")),
     addStyleTag: vi.fn<(o: { content: string }) => Promise<void>>().mockResolvedValue(undefined),
+    context: vi.fn(() => mockContext),
   };
 }
 
@@ -80,6 +84,7 @@ function createMockContext(page?: PlaywrightPage): PlaybackContext {
   return {
     page: p,
     baseUrl: "https://example.com",
+    outputDir: "C:\\out",
     pacing: TEST_PACING,
     moveCursorTo: vi.fn<(box: BoundingBox | null) => Promise<void>>().mockResolvedValue(undefined),
     reinjectCursor: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
@@ -149,6 +154,14 @@ describe("actionHandlers", () => {
     expect(events[0]!.boundingBox).toBeDefined();
   });
 
+  it("handles clickFirstVisible action", async () => {
+    const step = { action: "clickFirstVisible" as const, selector: ".row-action" };
+    await actionHandlers["clickFirstVisible"]!(ctx, step, events, 0);
+    expect(ctx.page.locator).toHaveBeenCalledWith(".row-action:visible");
+    expect(events).toHaveLength(1);
+    expect(events[0]!.action).toBe("clickFirstVisible");
+  });
+
   it("handles type action with character-by-character typing", async () => {
     const step = { action: "type" as const, selector: "#input", text: "hello" };
     await actionHandlers["type"]!(ctx, step, events, 0);
@@ -202,13 +215,30 @@ describe("actionHandlers", () => {
     expect(events).toHaveLength(1);
   });
 
+  it("handles hidden assert when element is absent", async () => {
+    const hiddenLocator = {
+      ...createMockLocator(),
+      waitFor: vi.fn().mockResolvedValue(undefined),
+      boundingBox: vi.fn().mockRejectedValue(new Error("No element")),
+    };
+    ctx.page.locator = vi.fn().mockReturnValue(hiddenLocator);
+
+    const step = { action: "assert" as const, selector: "#gone", visible: false };
+    await actionHandlers["assert"]!(ctx, step, events, 0);
+
+    expect(events).toHaveLength(1);
+    expect(events[0]!.action).toBe("assert");
+  });
+
   it("throws on failed visibility assertion", async () => {
     ctx.page.locator = vi.fn().mockReturnValue({
       ...createMockLocator(),
       waitFor: vi.fn().mockRejectedValue(new Error("Timeout")),
     });
     const step = { action: "assert" as const, selector: "#el", visible: true };
-    await expect(actionHandlers["assert"]!(ctx, step, events, 0)).rejects.toThrow("Timeout");
+    await expect(actionHandlers["assert"]!(ctx, step, events, 0)).rejects.toThrow(
+      "expected #el to be visible",
+    );
   });
 
   it("handles screenshot action", async () => {
@@ -216,6 +246,16 @@ describe("actionHandlers", () => {
     await actionHandlers["screenshot"]!(ctx, step, events, 0);
     expect(ctx.page.screenshot).toHaveBeenCalled();
     expect(events).toHaveLength(1);
+  });
+
+  it("screenshot action appends .png when name has no extension", async () => {
+    const step = { action: "screenshot" as const, name: "frame-login" };
+    await actionHandlers["screenshot"]!(ctx, step, events, 0);
+    expect(ctx.page.screenshot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: expect.stringContaining("frame-login.png"),
+      }),
+    );
   });
 
   it("handles press action", async () => {

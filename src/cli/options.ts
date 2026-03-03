@@ -10,6 +10,10 @@ export interface GlobalOptions {
   narrationBuffer: number;
   verbose: boolean;
   headless: boolean;
+  strictGeometry: boolean;
+  fromChapter?: string | undefined;
+  fromStep?: number | undefined;
+  trimStartMs: number;
 }
 
 export function applyGlobalOptions(opts: GlobalOptions): void {

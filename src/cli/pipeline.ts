@@ -21,6 +21,80 @@ function extractBranding(
   return result;
 }
 
+async function prepareTrimmedCapture(params: {
+  capture: Awaited<ReturnType<typeof captureFromSpec>>;
+  opts: GlobalOptions;
+}): Promise<{
+  workingCapture: Awaited<ReturnType<typeof captureFromSpec>>;
+  trim: Awaited<ReturnType<typeof import("../editor/trim.js").applyTimelineTrim>>;
+}> {
+  const trimMod = await import("../editor/trim.js");
+  const trim = trimMod.applyTimelineTrim({
+    events: params.capture.events,
+    spec: params.capture.spec,
+    startTimestamp: params.capture.startTimestamp,
+    fromChapter: params.opts.fromChapter,
+    fromStep: params.opts.fromStep,
+    trimStartMs: params.opts.trimStartMs,
+  });
+  if (trim.videoTrimStartMs > 0) {
+    log.info(
+      `Applying trim start at ${String(trim.videoTrimStartMs)}ms (event index ${String(trim.startEventIndex)})`,
+    );
+  }
+
+  return {
+    trim,
+    workingCapture: {
+      ...params.capture,
+      events: trim.events,
+      spec: trim.spec,
+      startTimestamp: trim.timelineStartTimestamp,
+    },
+  };
+}
+
+async function renderFromTimeline(params: {
+  workingCapture: Awaited<ReturnType<typeof captureFromSpec>>;
+  narrationPrep: Awaited<ReturnType<typeof prepareNarration>>;
+  trimStartMs: number;
+  renderer: GlobalOptions["renderer"];
+  outputDir: string;
+}): Promise<string> {
+  const rendererMod = await import("../editor/renderer.js");
+  const pathMod = await import("node:path");
+  const outputPath = pathMod.join(params.outputDir, "output.mp4");
+  const branding = extractBranding(params.workingCapture.spec);
+
+  if (params.renderer === "remotion") {
+    if (params.trimStartMs > 0) {
+      throw new Error(
+        "Timeline trimming (--from-chapter/--from-step/--trim-start-ms) is not supported with the remotion renderer",
+      );
+    }
+    const remotionRenderer = await rendererMod.createRendererV2("remotion");
+    await remotionRenderer.render({
+      spec: params.workingCapture.spec,
+      outFile: outputPath,
+      tempDir: params.outputDir,
+      assetsDir: params.outputDir,
+    });
+    return outputPath;
+  }
+
+  const ffmpegRenderer = rendererMod.createRenderer(params.renderer);
+  await ffmpegRenderer.render(params.narrationPrep.timeline, {
+    outputPath,
+    videoPath: params.workingCapture.videoPath,
+    trimStartMs: params.trimStartMs,
+    resolution: params.workingCapture.spec.meta.resolution,
+    ...(params.narrationPrep.audioPath ? { audioPath: params.narrationPrep.audioPath } : {}),
+    ...(params.narrationPrep.extendToMs ? { extendToMs: params.narrationPrep.extendToMs } : {}),
+    ...(branding ? { branding } : {}),
+  });
+  return outputPath;
+}
+
 export async function runFullPipeline(params: {
   spec: DemoSpec;
   specPath?: string;
@@ -40,44 +114,28 @@ export async function runFullPipeline(params: {
   }
 
   const timelineMod = await import("../editor/timeline.js");
-  const rendererMod = await import("../editor/renderer.js");
-  const pathMod = await import("node:path");
+  const { workingCapture, trim } = await prepareTrimmedCapture({ capture, opts: params.opts });
 
   const baseTimeline = timelineMod.buildTimeline(
-    capture.events,
-    capture.spec,
-    capture.startTimestamp,
+    workingCapture.events,
+    workingCapture.spec,
+    workingCapture.startTimestamp,
   );
-  const outputPath = pathMod.join(params.opts.output, "output.mp4");
 
   const narrationPrep = await prepareNarration({
-    capture,
+    capture: workingCapture,
     timeline: baseTimeline,
     opts: params.opts,
     settings: params.settings,
   });
 
-  const branding = extractBranding(capture.spec);
-
-  if (params.opts.renderer === "remotion") {
-    const renderer = await rendererMod.createRendererV2("remotion");
-    await renderer.render({
-      spec: capture.spec,
-      outFile: outputPath,
-      tempDir: params.opts.output,
-      assetsDir: params.opts.output,
-    });
-  } else {
-    const renderer = rendererMod.createRenderer(params.opts.renderer);
-    await renderer.render(narrationPrep.timeline, {
-      outputPath,
-      videoPath: capture.videoPath,
-      resolution: capture.spec.meta.resolution,
-      ...(narrationPrep.audioPath ? { audioPath: narrationPrep.audioPath } : {}),
-      ...(narrationPrep.extendToMs ? { extendToMs: narrationPrep.extendToMs } : {}),
-      ...(branding ? { branding } : {}),
-    });
-  }
+  const outputPath = await renderFromTimeline({
+    workingCapture,
+    narrationPrep,
+    trimStartMs: trim.videoTrimStartMs,
+    renderer: params.opts.renderer,
+    outputDir: params.opts.output,
+  });
 
   if (params.opts.narration && narrationPrep.timedSegments) {
     await writeSubtitlesFromTimed({
@@ -90,6 +148,12 @@ export async function runFullPipeline(params: {
 }
 
 export async function runEditPipeline(eventsPath: string, opts: GlobalOptions): Promise<void> {
+  if (opts.fromChapter) {
+    throw new Error(
+      "--from-chapter is not supported with the 'edit' command (no spec chapters available). Use --from-step or --trim-start-ms instead.",
+    );
+  }
+
   const eventLogMod = await import("../capture/event-log.js");
   const captureMetaMod = await import("../capture/metadata.js");
   const timelineMod = await import("../editor/timeline.js");
@@ -110,16 +174,43 @@ export async function runEditPipeline(eventsPath: string, opts: GlobalOptions): 
   const dummySpec = specMod.validateSpec({
     meta: { title: "Demo", resolution: { width: 1920, height: 1080 } },
     runner: { url: "http://localhost:3000" },
-    chapters: [{ title: "Content", steps: [{ action: "wait", timeout: 1000 }] }],
+    chapters: [
+      {
+        title: "Content",
+        steps: events.map(() => ({ action: "wait" as const, timeout: 1000 })),
+      },
+    ],
   });
 
-  const timeline = timelineMod.buildTimeline(events, dummySpec, t0);
+  const trimMod = await import("../editor/trim.js");
+  const trim = trimMod.applyTimelineTrim({
+    events,
+    spec: dummySpec,
+    startTimestamp: t0 ?? events[0]?.timestamp ?? 0,
+    fromStep: opts.fromStep,
+    trimStartMs: opts.trimStartMs,
+  });
+  if (trim.videoTrimStartMs > 0) {
+    log.info(
+      `Applying trim start at ${String(trim.videoTrimStartMs)}ms (event index ${String(trim.startEventIndex)})`,
+    );
+  }
+
+  const timeline = timelineMod.buildTimeline(trim.events, trim.spec, trim.timelineStartTimestamp);
   const renderer = rendererMod.createRenderer(opts.renderer);
   const outputPath = pathMod.join(opts.output, "output.mp4");
 
+  const videoPath = pathMod.join(assetsDir, "video.webm");
+  try {
+    await (await import("node:fs/promises")).access(videoPath);
+  } catch {
+    throw new Error(`video file not found: ${videoPath}`);
+  }
+
   await renderer.render(timeline, {
     outputPath,
-    videoPath: pathMod.join(assetsDir, "video.webm"),
+    videoPath,
+    trimStartMs: trim.videoTrimStartMs,
   });
 
   log.info(`Output: ${outputPath}`);

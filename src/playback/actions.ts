@@ -1,8 +1,14 @@
 import type { ActionHandler } from "./action-core.js";
 import { handleAssert } from "./handlers/assert.js";
-import { handleClick } from "./handlers/click.js";
+import { handleClick, handleClickFirstVisible } from "./handlers/click.js";
 import { handleDragAndDrop } from "./handlers/drag-and-drop.js";
-import { handleCheck, handleSelect, handleUncheck, handleUpload } from "./handlers/forms.js";
+import {
+  handleCheck,
+  handleSelect,
+  handleSelectFirstNonPlaceholder,
+  handleUncheck,
+  handleUpload,
+} from "./handlers/forms.js";
 import { handleBack, handleForward } from "./handlers/history.js";
 import { handleHover } from "./handlers/hover.js";
 import { handleNavigate } from "./handlers/navigate.js";
@@ -18,6 +24,7 @@ export type { PlaybackContext } from "./action-core.js";
 export const actionHandlers: Record<string, ActionHandler> = {
   navigate: handleNavigate,
   click: handleClick,
+  clickFirstVisible: handleClickFirstVisible,
   type: handleType,
   hover: handleHover,
   scroll: handleScroll,
@@ -30,6 +37,7 @@ export const actionHandlers: Record<string, ActionHandler> = {
   check: handleCheck,
   uncheck: handleUncheck,
   select: handleSelect,
+  selectFirstNonPlaceholder: handleSelectFirstNonPlaceholder,
   upload: handleUpload,
   dragAndDrop: handleDragAndDrop,
 };

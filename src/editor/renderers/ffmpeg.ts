@@ -18,7 +18,13 @@ export class FfmpegRenderer implements VideoRenderer {
   }
 
   private buildArgs(timeline: Timeline, options: RenderOptions): string[] {
-    const args: string[] = ["-y", "-i", options.videoPath];
+    const args: string[] = ["-y"];
+
+    if (options.trimStartMs !== undefined && options.trimStartMs > 0) {
+      args.push("-ss", msToSec(options.trimStartMs));
+    }
+
+    args.push("-i", options.videoPath);
 
     if (options.audioPath) {
       args.push("-i", options.audioPath);
@@ -147,6 +153,8 @@ function msToSec(ms: number): string {
 
 function escapeDrawtext(text: string): string {
   return text
+    .replace(/%/g, "%%")
+    .replace(/\n/g, " ")
     .replace(/\\/g, "\\\\")
     .replace(/'/g, "\\'")
     .replace(/:/g, "\\:")

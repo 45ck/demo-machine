@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createRecordingContext, finalizeCapture } from "../../src/capture/recorder.js";
 import type { CaptureOptions } from "../../src/capture/types.js";
 import type { ActionEvent } from "../../src/playback/types.js";
@@ -28,6 +28,15 @@ describe("recorder", () => {
     const mockPage = {
       video: vi.fn().mockReturnValue({
         path: vi.fn().mockResolvedValue("/tmp/video.webm"),
+      }),
+      evaluate: vi.fn().mockResolvedValue({
+        innerWidth: 1920,
+        innerHeight: 1080,
+        outerWidth: 1920,
+        outerHeight: 1080,
+        availWidth: 1920,
+        availHeight: 1080,
+        devicePixelRatio: 1,
       }),
     };
 
@@ -65,6 +74,9 @@ describe("recorder", () => {
       await createRecordingContext(mockBrowser, options);
 
       expect(mockBrowser.newContext).toHaveBeenCalledWith({
+        viewport: options.resolution,
+        screen: options.resolution,
+        deviceScaleFactor: 1,
         recordVideo: {
           dir: options.outputDir,
           size: options.resolution,
@@ -82,6 +94,25 @@ describe("recorder", () => {
         screenshots: true,
         snapshots: true,
       });
+    });
+
+    it("fails when strictGeometry is enabled and viewport does not match", async () => {
+      const { mockBrowser, mockPage } = createMockBrowser();
+      const options = { ...makeOptions(), strictGeometry: true };
+
+      mockPage.evaluate.mockResolvedValueOnce({
+        innerWidth: 1280,
+        innerHeight: 720,
+        outerWidth: 1280,
+        outerHeight: 720,
+        availWidth: 1280,
+        availHeight: 720,
+        devicePixelRatio: 1.5,
+      });
+
+      await expect(createRecordingContext(mockBrowser, options)).rejects.toThrow(
+        "Strict geometry mismatch",
+      );
     });
   });
 

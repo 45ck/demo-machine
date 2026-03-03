@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* eslint-disable @typescript-eslint/unbound-method */
 
-import { Command } from "commander";
+import { Command, InvalidArgumentError } from "commander";
 import { loadSpec } from "./spec/loader.js";
 import { createLogger } from "./utils/logger.js";
 import { applyGlobalOptions, type GlobalOptions } from "./cli/options.js";
@@ -35,12 +35,43 @@ program
   .option(
     "--narration-buffer <ms>",
     "Lead-in buffer between narration end and action (ms). Used by auto-sync and subtitles",
-    (v) => parseInt(v, 10),
+    (v) => {
+      const n = parseInt(v, 10);
+      if (!Number.isFinite(n) || n < 0) {
+        throw new InvalidArgumentError("--narration-buffer must be a non-negative integer.");
+      }
+      return n;
+    },
     500,
   )
   .option("--verbose", "Verbose logging", false)
   .option("--headless", "Run browser in headless mode", true)
-  .option("--no-headless", "Run browser in headed mode");
+  .option("--no-headless", "Run browser in headed mode")
+  .option(
+    "--strict-geometry",
+    "Fail capture when viewport geometry does not match requested resolution",
+    false,
+  )
+  .option("--from-chapter <title>", "Trim output to start from this chapter title")
+  .option("--from-step <index>", "Trim output to start from this step index", (v) => {
+    const n = parseInt(v, 10);
+    if (!Number.isInteger(n) || n < 0) {
+      throw new InvalidArgumentError("--from-step must be a non-negative integer.");
+    }
+    return n;
+  })
+  .option(
+    "--trim-start-ms <ms>",
+    "Additional trim offset in milliseconds",
+    (v) => {
+      const n = Number(v);
+      if (!Number.isFinite(n) || n < 0) {
+        throw new InvalidArgumentError("--trim-start-ms must be a non-negative number.");
+      }
+      return n;
+    },
+    0,
+  );
 
 program
   .command("validate <spec>")

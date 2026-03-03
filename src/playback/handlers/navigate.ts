@@ -7,7 +7,12 @@ export const handleNavigate: ActionHandler = async (ctx, step, events, stepIndex
 
   const waitUntil = (step as unknown as { waitUntil?: unknown }).waitUntil;
   const timeoutMs = stepTimeoutMs(step);
-  const url = new URL(step.url, ctx.baseUrl).toString();
+  let url: string;
+  try {
+    url = new URL(step.url, ctx.baseUrl).toString();
+  } catch {
+    throw new Error(`navigate failed: invalid URL "${step.url}" (base: "${ctx.baseUrl}")`);
+  }
 
   await ctx.page.goto(url, {
     waitUntil:

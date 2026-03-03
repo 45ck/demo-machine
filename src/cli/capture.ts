@@ -8,8 +8,10 @@ import {
   buildEstimatedNarrationTiming,
   preSynthesizeNarration,
 } from "../narration/pre-synthesizer.js";
+import type { CaptureMetadata } from "../capture/metadata.js";
 import type { NarrationSettings } from "./narration.js";
 import { PlaybackStepError } from "../playback/errors.js";
+import { runPreSteps } from "../playback/presteps.js";
 import { mkdir, writeFile } from "node:fs/promises";
 import * as path from "node:path";
 
@@ -26,6 +28,44 @@ interface CaptureResult {
         preSynth?: NarrationPreSynthesisResult | undefined;
       }
     | undefined;
+}
+
+function createCaptureMetadata(specTitle: string, startTimestamp: number): CaptureMetadata {
+  return {
+    schemaVersion: 1,
+    startTimestamp,
+    createdAt: new Date().toISOString(),
+    specTitle,
+  };
+}
+
+function createPlaybackEngine(params: {
+  PlaybackEngine: typeof import("../playback/engine.js").PlaybackEngine;
+  page: PlaywrightPage;
+  baseUrl: string;
+  outputDir: string;
+  spec: DemoSpec;
+  specDir?: string | undefined;
+  settings: NarrationSettings;
+  timing?: import("../utils/narration-sync-types.js").NarrationTimingMap | undefined;
+}) {
+  return new params.PlaybackEngine(params.page, {
+    baseUrl: params.baseUrl,
+    outputDir: params.outputDir,
+    ...(params.specDir ? { specDir: params.specDir } : {}),
+    redactionSelectors: params.spec.redaction?.selectors,
+    secretPatterns: params.spec.redaction?.secrets,
+    pacing: params.spec.pacing,
+    ...(params.timing
+      ? {
+          narration: {
+            mode: params.settings.syncMode,
+            bufferMs: params.settings.bufferMs,
+            timing: params.timing,
+          },
+        }
+      : {}),
+  });
 }
 
 async function prepareNarrationTiming(params: {
@@ -152,12 +192,7 @@ async function finalizeCaptureSafe(params: {
       params.events,
       {
         ...params.captureOpts,
-        meta: {
-          schemaVersion: 1,
-          startTimestamp: params.startTimestamp,
-          createdAt: new Date().toISOString(),
-          specTitle: params.specTitle,
-        },
+        meta: createCaptureMetadata(params.specTitle, params.startTimestamp),
       },
     );
   } catch (fErr) {
@@ -174,12 +209,22 @@ async function captureWithBrowser(params: {
   opts: GlobalOptions;
   settings: NarrationSettings;
 }): Promise<CaptureResult> {
-  const captureOpts = { outputDir: params.opts.output, resolution: params.spec.meta.resolution };
+  const captureOpts = {
+    outputDir: params.opts.output,
+    resolution: params.spec.meta.resolution,
+    strictGeometry: params.opts.strictGeometry,
+  };
   const recording = await params.captureMod.createRecordingContext(
     params.browser as Parameters<typeof params.captureMod.createRecordingContext>[0],
     captureOpts,
   );
   const page = recording.page as unknown as PlaywrightPage;
+  const baseUrl = params.spec.runner?.url ?? "http://localhost:3000";
+  if (params.spec.runner?.url === undefined && params.spec.preSteps?.length) {
+    log.warn("No runner.url specified; preSteps will use default baseUrl http://localhost:3000");
+  }
+
+  await runPreSteps({ page, baseUrl, preSteps: params.spec.preSteps });
 
   const narrationPrep = await prepareNarrationTiming({
     spec: params.spec,
@@ -187,21 +232,15 @@ async function captureWithBrowser(params: {
     outputDir: params.opts.output,
   });
 
-  const engine = new params.PlaybackEngine(page, {
-    baseUrl: params.spec.runner?.url ?? "http://localhost:3000",
-    ...(params.specDir ? { specDir: params.specDir } : {}),
-    redactionSelectors: params.spec.redaction?.selectors,
-    secretPatterns: params.spec.redaction?.secrets,
-    pacing: params.spec.pacing,
-    ...(narrationPrep.timing
-      ? {
-          narration: {
-            mode: params.settings.syncMode,
-            bufferMs: params.settings.bufferMs,
-            timing: narrationPrep.timing,
-          },
-        }
-      : {}),
+  const engine = createPlaybackEngine({
+    PlaybackEngine: params.PlaybackEngine,
+    page,
+    baseUrl,
+    outputDir: params.opts.output,
+    spec: params.spec,
+    specDir: params.specDir,
+    settings: params.settings,
+    timing: narrationPrep.timing,
   });
 
   try {
@@ -212,12 +251,7 @@ async function captureWithBrowser(params: {
       result.events,
       {
         ...captureOpts,
-        meta: {
-          schemaVersion: 1,
-          startTimestamp: result.startTimestamp,
-          createdAt: new Date().toISOString(),
-          specTitle: params.spec.meta.title,
-        },
+        meta: createCaptureMetadata(params.spec.meta.title, result.startTimestamp),
       },
     );
 

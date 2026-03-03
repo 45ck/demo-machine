@@ -32,3 +32,32 @@ export const handleClick: ActionHandler = async (ctx, step, events, stepIndex) =
   );
   await ctx.waitAfterStep(stepIndex, step);
 };
+
+export const handleClickFirstVisible: ActionHandler = async (ctx, step, events, stepIndex) => {
+  const start = Date.now();
+  if (step.action !== "clickFirstVisible") return;
+
+  const timeoutMs = stepTimeoutMs(step);
+  const selector = `${step.selector}:visible`;
+  const locator = ctx.page.locator(selector).nth(step.nth ?? 0);
+
+  await ensureTargetReady(locator, timeoutMs);
+  const box = await locator.boundingBox();
+  await ctx.moveCursorTo(box);
+  await flashSpotlight(ctx.page, box);
+  await pulseFocus(ctx.page, box);
+  await ctx.page.evaluate(getClickPulseScript());
+  await spawnRipple(ctx.page, box);
+  await locator.click({ timeout: timeoutMs });
+
+  events.push(
+    buildEvent({
+      action: "clickFirstVisible",
+      startTime: start,
+      selector: `${selector}[nth=${step.nth ?? 0}]`,
+      boundingBox: box,
+      narration: step.narration,
+    }),
+  );
+  await ctx.waitAfterStep(stepIndex, step);
+};

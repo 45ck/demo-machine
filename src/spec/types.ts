@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import type { demoSpecSchema } from "./schema.js";
+import type { preStepSchema } from "./step-schema.js";
 
 export type DemoSpec = z.infer<typeof demoSpecSchema>;
 export type Chapter = DemoSpec["chapters"][number];
@@ -9,3 +10,4 @@ export type RunnerConfig = NonNullable<DemoSpec["runner"]>;
 export type Resolution = Meta["resolution"];
 export type Branding = NonNullable<Meta["branding"]>;
 export type Pacing = DemoSpec["pacing"];
+export type PreStep = z.infer<typeof preStepSchema>;

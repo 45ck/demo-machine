@@ -34,8 +34,14 @@ export interface PlaywrightPage {
       timeout?: number;
     },
   ): Promise<void>;
-  goBack(options?: { timeout?: number }): Promise<unknown>;
-  goForward(options?: { timeout?: number }): Promise<unknown>;
+  goBack(options?: {
+    timeout?: number;
+    waitUntil?: "load" | "domcontentloaded" | "networkidle" | "commit";
+  }): Promise<unknown>;
+  goForward(options?: {
+    timeout?: number;
+    waitUntil?: "load" | "domcontentloaded" | "networkidle" | "commit";
+  }): Promise<unknown>;
   keyboard: {
     press(key: string): Promise<void>;
     type(text: string, options?: { delay?: number | undefined }): Promise<void>;
@@ -52,4 +58,19 @@ export interface PlaywrightPage {
   evaluate(fn: string | ((...args: unknown[]) => unknown), ...args: unknown[]): Promise<unknown>;
   screenshot(options?: { path?: string }): Promise<Buffer>;
   addStyleTag(options: { content: string }): Promise<void>;
+  context(): {
+    addCookies(
+      cookies: Array<{
+        name: string;
+        value: string;
+        url?: string;
+        domain?: string;
+        path?: string;
+        secure?: boolean;
+        httpOnly?: boolean;
+        sameSite?: "Strict" | "Lax" | "None";
+        expires?: number;
+      }>,
+    ): Promise<void>;
+  };
 }

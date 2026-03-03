@@ -6,7 +6,14 @@ export const handlePress: ActionHandler = async (ctx, step, events, stepIndex) =
   const start = Date.now();
   if (step.action !== "press") return;
 
-  await ctx.page.keyboard.press(step.key);
+  try {
+    await ctx.page.keyboard.press(step.key);
+  } catch (err) {
+    throw new Error(
+      `press action failed for key "${step.key}": ${err instanceof Error ? err.message : String(err)}. Valid key names: Enter, Escape, Tab, ArrowUp, ArrowDown, Control, Shift, Meta, etc.`,
+      { cause: err },
+    );
+  }
   events.push(
     buildEvent({
       action: "press",

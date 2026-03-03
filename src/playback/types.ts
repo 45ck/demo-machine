@@ -32,6 +32,7 @@ export interface Pacing {
 
 export interface PlaybackOptions {
   baseUrl: string;
+  outputDir?: string | undefined;
   /** Directory of the spec file (used to resolve relative assets like upload paths). */
   specDir?: string | undefined;
   redactionSelectors?: string[] | undefined;

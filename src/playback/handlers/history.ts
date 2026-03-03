@@ -7,7 +7,8 @@ export const handleBack: ActionHandler = async (ctx, step, events, stepIndex) =>
   if (step.action !== "back") return;
 
   const timeoutMs = stepTimeoutMs(step);
-  await ctx.page.goBack({ timeout: timeoutMs });
+  await ctx.page.goBack({ timeout: timeoutMs, waitUntil: "domcontentloaded" });
+  await ctx.reinjectCursor();
 
   events.push(
     buildEvent({
@@ -25,7 +26,8 @@ export const handleForward: ActionHandler = async (ctx, step, events, stepIndex)
   if (step.action !== "forward") return;
 
   const timeoutMs = stepTimeoutMs(step);
-  await ctx.page.goForward({ timeout: timeoutMs });
+  await ctx.page.goForward({ timeout: timeoutMs, waitUntil: "domcontentloaded" });
+  await ctx.reinjectCursor();
 
   events.push(
     buildEvent({

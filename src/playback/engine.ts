@@ -275,6 +275,7 @@ export class PlaybackEngine {
     const ctx: PlaybackContext = {
       page: this.page,
       baseUrl: this.options.baseUrl,
+      outputDir: this.options.outputDir,
       specDir: this.options.specDir,
       pacing,
       moveCursorTo: (box) => this.moveCursorTo(box),

@@ -26,6 +26,7 @@ export interface Timeline {
 export interface RenderOptions {
   outputPath: string;
   videoPath: string;
+  trimStartMs?: number | undefined;
   audioPath?: string | undefined;
   extendToMs?: number | undefined;
   resolution?: { width: number; height: number } | undefined;
