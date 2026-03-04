@@ -18,5 +18,6 @@ chapters:
         narration: "Sometimes paths or user identifiers should be redacted in demos."
       - action: click
         selector: "[data-testid='nav-docs']"
+        narration: "Navigate to Docs so the redacted path element is visible."
       - action: wait
         timeout: 900

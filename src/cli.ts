@@ -171,11 +171,12 @@ program
 program
   .command("edit <events>")
   .description("Edit from existing event log + raw video")
-  .action(async (eventsPath: string) => {
+  .option("--spec <path>", "Original spec file — enables narration without re-capturing")
+  .action(async (eventsPath: string, cmdOpts: { spec?: string }) => {
     const opts = program.opts<GlobalOptions>();
     applyGlobalOptions(opts);
     try {
-      await runEditPipeline(eventsPath, opts);
+      await runEditPipeline(eventsPath, opts, cmdOpts.spec);
     } catch (err) {
       logger.error(err instanceof Error ? (err.stack ?? err.message) : String(err));
       process.exitCode = 1;

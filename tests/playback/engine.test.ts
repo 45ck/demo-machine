@@ -4,11 +4,21 @@ import type { PlaywrightPage, PlaybackContext } from "../../src/playback/actions
 import { PlaybackEngine } from "../../src/playback/engine.js";
 import type { Chapter } from "../../src/spec/types.js";
 import type { ActionEvent, BoundingBox, Pacing } from "../../src/playback/types.js";
+import * as visuals from "../../src/playback/visuals.js";
 
 vi.mock("../../src/redaction/mask.js", () => ({
   generateBlurStyles: vi.fn((selectors: string[]) =>
     selectors.map((s: string) => `${s} { filter: blur(10px); }`).join("\n"),
   ),
+}));
+
+vi.mock("../../src/playback/visuals.js", () => ({
+  pulseFocus: vi.fn().mockResolvedValue(undefined),
+  flashSpotlight: vi.fn().mockResolvedValue(undefined),
+  spawnRipple: vi.fn().mockResolvedValue(undefined),
+  showKeyBadge: vi.fn().mockResolvedValue(undefined),
+  showFilePickerOverlay: vi.fn().mockResolvedValue(undefined),
+  showSelectOverlay: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("../../src/redaction/secrets.js", () => ({
@@ -122,6 +132,12 @@ describe("actionHandlers", () => {
   beforeEach(() => {
     ctx = createMockContext();
     events = [];
+    vi.mocked(visuals.pulseFocus).mockClear();
+    vi.mocked(visuals.flashSpotlight).mockClear();
+    vi.mocked(visuals.spawnRipple).mockClear();
+    vi.mocked(visuals.showKeyBadge).mockClear();
+    vi.mocked(visuals.showFilePickerOverlay).mockClear();
+    vi.mocked(visuals.showSelectOverlay).mockClear();
   });
 
   it("handles navigate action", async () => {
@@ -241,6 +257,16 @@ describe("actionHandlers", () => {
     );
   });
 
+  it("assert does not call pulseFocus or flashSpotlight (no phantom highlight)", async () => {
+    // Regression: assert was calling pulseFocus/flashSpotlight, causing a
+    // visible focus ring/dim to appear on elements the cursor had never moved to.
+    // Assert is a background verification — it must produce zero visual effects.
+    const step = { action: "assert" as const, selector: "#note-count", visible: true };
+    await actionHandlers["assert"]!(ctx, step, events, 0);
+    expect(visuals.pulseFocus).not.toHaveBeenCalled();
+    expect(visuals.flashSpotlight).not.toHaveBeenCalled();
+  });
+
   it("handles screenshot action", async () => {
     const step = { action: "screenshot" as const };
     await actionHandlers["screenshot"]!(ctx, step, events, 0);
@@ -308,6 +334,28 @@ describe("actionHandlers", () => {
     expect(events[0]!.action).toBe("select");
   });
 
+  it("select shows option overlay after selectOption when evaluate returns a label", async () => {
+    // Regression: native <select> opens/closes in one frame — the viewer sees nothing.
+    // Fix: showSelectOverlay must run after selectOption with the resolved option text.
+    const executionOrder: string[] = [];
+    ctx.page.locator = vi.fn().mockReturnValue({
+      ...createMockLocator(),
+      selectOption: vi.fn().mockImplementation(async () => {
+        executionOrder.push("selectOption");
+      }),
+      evaluate: vi.fn().mockResolvedValue("Pro Plan"),
+    });
+    vi.mocked(visuals.showSelectOverlay).mockImplementation(async () => {
+      executionOrder.push("overlay");
+    });
+
+    const step = { action: "select" as const, selector: "#plan", option: { value: "pro" } };
+    await actionHandlers["select"]!(ctx, step, events, 0);
+
+    expect(executionOrder).toEqual(["selectOption", "overlay"]);
+    expect(visuals.showSelectOverlay).toHaveBeenCalledWith(ctx.page, "Pro Plan");
+  });
+
   it("handles upload action (resolves relative paths using specDir when provided)", async () => {
     ctx = { ...ctx, specDir: "C:\\demo" };
     const step = { action: "upload" as const, selector: "#file", file: "assets\\a.txt" };
@@ -333,6 +381,65 @@ describe("actionHandlers", () => {
     expect(events[0]!.action).toBe("dragAndDrop");
     expect(events[0]!.selector).toContain("#a");
     expect(events[0]!.selector).toContain("#b");
+  });
+
+  it("dragAndDrop animates cursor toward destination concurrently with drag (not after)", async () => {
+    // Regression: cursor was animated AFTER dragTo completed, making it look like a teleport.
+    // Fix: moveCursorTo(toBox) must start BEFORE the drag resolves (concurrent via Promise.all).
+    const executionOrder: string[] = [];
+
+    (ctx.moveCursorTo as ReturnType<typeof vi.fn>).mockImplementation(
+      async (box: BoundingBox | null) => {
+        if (box && box.x > 300) executionOrder.push("moveCursorTo:dest");
+      },
+    );
+
+    const locatorFrom = {
+      ...createMockLocator(),
+      dragTo: vi.fn().mockImplementation(async () => {
+        await new Promise<void>((r) => setTimeout(r, 50));
+        executionOrder.push("dragTo:resolved");
+      }),
+    };
+    const locatorTo = {
+      ...createMockLocator(),
+      boundingBox: vi.fn().mockResolvedValue({ x: 600, y: 100, width: 80, height: 40 }),
+    };
+    ctx.page.locator = vi.fn().mockReturnValueOnce(locatorFrom).mockReturnValueOnce(locatorTo);
+
+    const step = {
+      action: "dragAndDrop" as const,
+      from: { selector: "#from" },
+      to: { selector: "#to" },
+    };
+    await actionHandlers["dragAndDrop"]!(ctx, step, events, 0);
+
+    // moveCursorTo toward destination must start BEFORE dragTo resolves
+    expect(executionOrder[0]).toBe("moveCursorTo:dest");
+    expect(executionOrder[1]).toBe("dragTo:resolved");
+  });
+
+  it("upload shows file picker overlay before calling setInputFiles", async () => {
+    // Regression: upload called setInputFiles silently — viewer saw no file selection at all.
+    // Fix: showFilePickerOverlay must run (and complete) before setInputFiles is called.
+    ctx = { ...ctx, specDir: "C:\\demo" };
+    const executionOrder: string[] = [];
+
+    vi.mocked(visuals.showFilePickerOverlay).mockImplementation(async () => {
+      executionOrder.push("overlay");
+    });
+
+    const loc = createMockLocator();
+    (loc.setInputFiles as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      executionOrder.push("setInputFiles");
+    });
+    ctx.page.locator = vi.fn().mockReturnValue(loc);
+
+    const step = { action: "upload" as const, selector: "#file", file: "assets/sample.txt" };
+    await actionHandlers["upload"]!(ctx, step, events, 0);
+
+    expect(visuals.showFilePickerOverlay).toHaveBeenCalled();
+    expect(executionOrder).toEqual(["overlay", "setInputFiles"]);
   });
 
   it("applies post-action delay using step.delay override", async () => {

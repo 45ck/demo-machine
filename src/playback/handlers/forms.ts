@@ -6,7 +6,12 @@ import {
   stepTimeoutMs,
 } from "../action-core.js";
 import { resolveStepLocator } from "../selector.js";
-import { flashSpotlight, pulseFocus } from "../visuals.js";
+import {
+  flashSpotlight,
+  pulseFocus,
+  showFilePickerOverlay,
+  showSelectOverlay,
+} from "../visuals.js";
 import * as path from "node:path";
 
 export const handleCheck: ActionHandler = async (ctx, step, events, stepIndex) => {
@@ -78,6 +83,14 @@ export const handleSelect: ActionHandler = async (ctx, step, events, stepIndex) 
   await pulseFocus(ctx.page, box);
   await locator.selectOption(step.option, { timeout: timeoutMs });
 
+  // Show which option was chosen — native <select> dropdowns open/close too fast to see.
+  const selectedText = (await locator.evaluate(((el: unknown) => {
+    const sel = el as HTMLSelectElement;
+    const opt = sel.selectedOptions[0];
+    return opt ? (opt.textContent?.trim() ?? opt.value) : null;
+  }) as (...args: unknown[]) => unknown)) as string | null;
+  if (selectedText) await showSelectOverlay(ctx.page, selectedText);
+
   events.push(
     buildEvent({
       action: "select",
@@ -132,6 +145,14 @@ export const handleSelectFirstNonPlaceholder: ActionHandler = async (
 
   await locator.selectOption({ value: firstValue }, { timeout: timeoutMs });
 
+  // Show which option was chosen — native <select> dropdowns open/close too fast to see.
+  const selectedText = (await locator.evaluate(((el: unknown) => {
+    const sel = el as HTMLSelectElement;
+    const opt = sel.selectedOptions[0];
+    return opt ? (opt.textContent?.trim() ?? opt.value) : null;
+  }) as (...args: unknown[]) => unknown)) as string | null;
+  if (selectedText) await showSelectOverlay(ctx.page, selectedText);
+
   events.push(
     buildEvent({
       action: "selectFirstNonPlaceholder",
@@ -162,6 +183,11 @@ export const handleUpload: ActionHandler = async (ctx, step, events, stepIndex) 
   await ctx.moveCursorTo(box);
   await flashSpotlight(ctx.page, box);
   await pulseFocus(ctx.page, box);
+
+  // Show a file-picker overlay so the viewer understands a file is being selected.
+  const fileNames = files.map((f) => path.basename(f));
+  await showFilePickerOverlay(ctx.page, fileNames);
+
   try {
     await locator.setInputFiles(files, { timeout: timeoutMs });
   } catch (err) {

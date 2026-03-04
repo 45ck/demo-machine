@@ -24,6 +24,7 @@ chapters:
       - action: type
         selector: "[data-testid='search']"
         text: "Ada"
+        narration: "Type a name to filter the results instantly."
       - action: assert
         selector: "[data-testid='count']"
         text: "1"

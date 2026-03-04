@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SeededAPI - Notes</title>
+    <style>
+      :root {
+        --bg: #070a14;
+        --panel: rgba(255, 255, 255, 0.06);
+        --panel2: rgba(255, 255, 255, 0.08);
+        --border: rgba(255, 255, 255, 0.12);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.7);
+        --accent: #7c5cff;
+        --accent2: #33d69f;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+        background:
+          radial-gradient(900px 650px at 18% 12%, #1a3a5e 0%, transparent 60%),
+          radial-gradient(900px 650px at 85% 20%, #1a1f5e 0%, transparent 60%),
+          var(--bg);
+        display: grid;
+        place-items: center;
+        padding: 26px;
+      }
+      .shell {
+        width: min(760px, 100%);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        align-items: start;
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: linear-gradient(180deg, var(--panel), rgba(255, 255, 255, 0.03));
+        box-shadow: 0 22px 70px rgba(0, 0, 0, 0.45);
+        padding: 22px;
+      }
+      .card-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 17px;
+        letter-spacing: 0.2px;
+      }
+      h2 {
+        margin: 0;
+        font-size: 14px;
+        letter-spacing: 0.1px;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        background: rgba(51, 214, 159, 0.15);
+        border: 1px solid rgba(51, 214, 159, 0.3);
+        color: var(--accent2);
+      }
+      .note-list {
+        display: grid;
+        gap: 8px;
+      }
+      .note-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+        border-radius: 11px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.03);
+        cursor: pointer;
+        font-size: 14px;
+        transition: border-color 0.12s, background 0.12s;
+      }
+      .note-item:hover {
+        border-color: rgba(124, 92, 255, 0.4);
+        background: rgba(124, 92, 255, 0.06);
+      }
+      .note-item.active {
+        border-color: rgba(124, 92, 255, 0.7);
+        background: rgba(124, 92, 255, 0.1);
+      }
+      .note-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: var(--accent);
+        flex-shrink: 0;
+      }
+      .empty-state {
+        padding: 24px 0;
+        color: var(--muted);
+        font-size: 13px;
+        text-align: center;
+      }
+      .detail-card {
+        display: none;
+      }
+      .detail-card.visible {
+        display: block;
+      }
+      .detail-content {
+        padding: 6px 0;
+      }
+      .detail-title {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.14px;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+      .detail-text {
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 1.4;
+        margin-bottom: 14px;
+      }
+      .detail-meta {
+        font-size: 12px;
+        color: var(--muted);
+        border-top: 1px solid var(--border);
+        padding-top: 12px;
+      }
+      .error-banner {
+        display: none;
+        margin-bottom: 14px;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 77, 125, 0.3);
+        background: rgba(255, 77, 125, 0.08);
+        font-size: 13px;
+        color: rgba(255, 77, 125, 0.9);
+      }
+      .error-banner.visible {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <!-- Notes list -->
+      <div class="card">
+        <div class="card-header">
+          <h1 data-testid="page-title">Notes</h1>
+          <span class="badge" data-testid="note-count" id="noteCount">0 notes</span>
+        </div>
+
+        <div class="error-banner" id="errorBanner" data-testid="error-banner">
+          Could not load notes — is the API running?
+        </div>
+
+        <div class="note-list" id="noteList" data-testid="note-list">
+          <div class="empty-state" data-testid="empty-state">Loading notes…</div>
+        </div>
+      </div>
+
+      <!-- Detail panel -->
+      <div class="card detail-card" id="detailCard" data-testid="detail-card">
+        <h2>Note Detail</h2>
+        <div class="detail-content">
+          <div class="detail-title">Content</div>
+          <div class="detail-text" id="detailText" data-testid="note-detail">—</div>
+          <div class="detail-meta" id="detailMeta">—</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const noteCount = document.getElementById("noteCount");
+      const noteList = document.getElementById("noteList");
+      const errorBanner = document.getElementById("errorBanner");
+      const detailCard = document.getElementById("detailCard");
+      const detailText = document.getElementById("detailText");
+      const detailMeta = document.getElementById("detailMeta");
+
+      let notesData = [];
+
+      function renderNotes(notes) {
+        noteList.innerHTML = "";
+        const count = notes.length;
+        noteCount.textContent = `${String(count)} ${count === 1 ? "note" : "notes"}`;
+
+        if (count === 0) {
+          const empty = document.createElement("div");
+          empty.className = "empty-state";
+          empty.dataset.testid = "empty-state";
+          empty.textContent = "No notes yet.";
+          noteList.appendChild(empty);
+          return;
+        }
+
+        notes.forEach((text, i) => {
+          const item = document.createElement("div");
+          item.className = "note-item";
+          item.dataset.testid = `note-${String(i)}`;
+          item.innerHTML = `<span class="note-dot"></span><span>${text}</span>`;
+          item.addEventListener("click", () => {
+            document.querySelectorAll(".note-item").forEach((n) => n.classList.remove("active"));
+            item.classList.add("active");
+            detailText.textContent = text;
+            detailMeta.textContent = `Note ${String(i + 1)} of ${String(count)} — index ${String(i)}`;
+            detailCard.classList.add("visible");
+          });
+          noteList.appendChild(item);
+        });
+      }
+
+      async function loadNotes() {
+        try {
+          const resp = await fetch("/api/notes");
+          if (!resp.ok) throw new Error(`HTTP ${String(resp.status)}`);
+          const data = await resp.json();
+          notesData = Array.isArray(data.notes) ? data.notes : [];
+          renderNotes(notesData);
+        } catch {
+          errorBanner.classList.add("visible");
+          noteList.innerHTML = "";
+          noteCount.textContent = "0 notes";
+        }
+      }
+
+      loadNotes();
+    </script>
+  </body>
+</html>

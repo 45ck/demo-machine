@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FileUploader - Upload Preview</title>
+    <style>
+      :root {
+        --bg: #070a14;
+        --panel: rgba(255, 255, 255, 0.06);
+        --panel2: rgba(255, 255, 255, 0.08);
+        --border: rgba(255, 255, 255, 0.12);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.7);
+        --accent: #7c5cff;
+        --accent2: #33d69f;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+        background:
+          radial-gradient(900px 650px at 18% 12%, #1a1f5e 0%, transparent 60%),
+          radial-gradient(900px 650px at 85% 20%, #3a0b1e 0%, transparent 60%),
+          var(--bg);
+        display: grid;
+        place-items: center;
+        padding: 26px;
+      }
+      .shell {
+        width: min(600px, 100%);
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: linear-gradient(180deg, var(--panel), rgba(255, 255, 255, 0.03));
+        box-shadow: 0 22px 70px rgba(0, 0, 0, 0.45);
+        padding: 24px;
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 18px;
+        letter-spacing: 0.2px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0 0 20px;
+      }
+      .upload-zone {
+        border: 2px dashed rgba(255, 255, 255, 0.2);
+        border-radius: 14px;
+        padding: 24px;
+        background: rgba(255, 255, 255, 0.03);
+      }
+      label[for="fileInput"] {
+        display: block;
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.88);
+        margin-bottom: 10px;
+        font-weight: 500;
+      }
+      input[type="file"] {
+        display: block;
+        width: 100%;
+        height: 44px;
+        border-radius: 10px;
+        padding: 0 10px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        outline: none;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      input[type="file"]:focus {
+        border-color: rgba(124, 92, 255, 0.7);
+        box-shadow: 0 0 0 4px rgba(124, 92, 255, 0.14);
+      }
+      .file-list-section {
+        margin-top: 20px;
+      }
+      .file-list-section h2 {
+        margin: 0 0 10px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+        letter-spacing: 0.14px;
+        text-transform: uppercase;
+      }
+      .file-list {
+        display: grid;
+        gap: 6px;
+        min-height: 48px;
+      }
+      .file-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--panel2);
+        font-size: 13px;
+      }
+      .file-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        background: rgba(124, 92, 255, 0.2);
+        border: 1px solid rgba(124, 92, 255, 0.3);
+        display: grid;
+        place-items: center;
+        font-size: 11px;
+        color: rgba(124, 92, 255, 0.9);
+        flex-shrink: 0;
+      }
+      .file-name {
+        font-weight: 500;
+        color: var(--text);
+      }
+      .file-size {
+        margin-left: auto;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .empty-hint {
+        color: var(--muted);
+        font-size: 13px;
+        padding: 12px 0;
+      }
+      .count-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 9px;
+        border-radius: 999px;
+        background: rgba(51, 214, 159, 0.15);
+        border: 1px solid rgba(51, 214, 159, 0.3);
+        font-size: 12px;
+        color: var(--accent2);
+        margin-left: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="card">
+        <h1 data-testid="title">FileUploader</h1>
+        <p class="muted">Select files to preview them before uploading. Supports multiple files.</p>
+
+        <div class="upload-zone">
+          <label for="fileInput">Choose files</label>
+          <input
+            id="fileInput"
+            data-testid="file-input"
+            type="file"
+            multiple
+            aria-label="Choose files"
+          />
+        </div>
+
+        <div class="file-list-section">
+          <h2>
+            Selected files
+            <span class="count-badge" data-testid="file-count" id="fileCount">0</span>
+          </h2>
+          <div class="file-list" id="fileList" data-testid="file-list">
+            <div class="empty-hint" id="emptyHint">No files selected yet.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const fileInput = document.getElementById("fileInput");
+      const fileList = document.getElementById("fileList");
+      const fileCount = document.getElementById("fileCount");
+      const emptyHint = document.getElementById("emptyHint");
+
+      function formatBytes(bytes) {
+        if (bytes < 1024) return `${String(bytes)} B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+      }
+
+      function getExt(name) {
+        const parts = name.split(".");
+        return parts.length > 1 ? parts[parts.length - 1].toUpperCase() : "?";
+      }
+
+      fileInput.addEventListener("change", () => {
+        const files = Array.from(fileInput.files || []);
+        fileCount.textContent = String(files.length);
+
+        if (files.length === 0) {
+          fileList.innerHTML = "";
+          fileList.appendChild(emptyHint);
+          return;
+        }
+
+        fileList.innerHTML = "";
+        for (const file of files) {
+          const item = document.createElement("div");
+          item.className = "file-item";
+          item.dataset.testid = `file-item-${file.name}`;
+          item.innerHTML = `
+            <div class="file-icon">${getExt(file.name)}</div>
+            <span class="file-name">${file.name}</span>
+            <span class="file-size">${formatBytes(file.size)}</span>
+          `;
+          fileList.appendChild(item);
+        }
+      });
+    </script>
+  </body>
+</html>

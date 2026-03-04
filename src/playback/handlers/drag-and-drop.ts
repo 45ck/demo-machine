@@ -32,18 +32,28 @@ export const handleDragAndDrop: ActionHandler = async (ctx, step, events, stepIn
   await ensureTargetReady(toResolved.locator, timeoutMs);
 
   const fromBox = await fromResolved.locator.boundingBox();
+  const toBox = await toResolved.locator.boundingBox();
+
   await ctx.moveCursorTo(fromBox);
   await flashSpotlight(ctx.page, fromBox);
   await pulseFocus(ctx.page, fromBox);
 
-  try {
-    await fromResolved.locator.dragTo(toResolved.locator, { timeout: timeoutMs });
-  } catch (err) {
-    throw new Error(
-      `dragAndDrop failed from "${fromResolved.selectorForEvent}" to "${toResolved.selectorForEvent}": ${err instanceof Error ? err.message : String(err)}`,
-      { cause: err },
-    );
-  }
+  // Animate cursor toward destination concurrently with the drag so it appears
+  // to carry the element rather than teleporting after the drop completes.
+  await Promise.all([
+    ctx.moveCursorTo(toBox),
+    fromResolved.locator
+      .dragTo(toResolved.locator, { timeout: timeoutMs })
+      .catch((err: unknown) => {
+        throw new Error(
+          `dragAndDrop failed from "${fromResolved.selectorForEvent}" to "${toResolved.selectorForEvent}": ${err instanceof Error ? err.message : String(err)}`,
+          { cause: err },
+        );
+      }),
+  ]);
+
+  await flashSpotlight(ctx.page, toBox);
+  await pulseFocus(ctx.page, toBox);
 
   events.push(
     buildEvent({

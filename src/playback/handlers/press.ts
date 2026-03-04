@@ -1,10 +1,13 @@
 import type { ActionHandler } from "../action-core.js";
 import { buildEvent } from "../action-core.js";
 import { selectorForEvent } from "../selector.js";
+import { showKeyBadge } from "../visuals.js";
 
 export const handlePress: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "press") return;
+
+  await showKeyBadge(ctx.page, step.key);
 
   try {
     await ctx.page.keyboard.press(step.key);

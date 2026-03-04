@@ -113,8 +113,38 @@ const RIPPLE_CSS = `
 }
 `.trim();
 
+const KEY_BADGE_CSS = `
+#dm-key-badge {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  pointer-events: none;
+  z-index: ${CURSOR_Z_INDEX};
+  background: rgba(10, 14, 30, 0.92);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  border-bottom-width: 3px;
+  border-radius: 10px;
+  padding: 7px 18px;
+  font-family: ui-monospace, 'Cascadia Code', 'SFMono-Regular', monospace;
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transform: translateX(-50%) translateY(6px);
+  transition: opacity 0.14s ease, transform 0.14s ease;
+  white-space: nowrap;
+}
+#dm-key-badge.dm-kb-show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+`.trim();
+
 export function getCursorCSS(): string {
-  return [ROOT_CSS, CURSOR_CSS, FOCUS_RING_CSS, SPOTLIGHT_CSS, RIPPLE_CSS].join("\n\n");
+  return [ROOT_CSS, CURSOR_CSS, FOCUS_RING_CSS, SPOTLIGHT_CSS, RIPPLE_CSS, KEY_BADGE_CSS].join(
+    "\n\n",
+  );
 }
 
 interface CursorMoveParams {

@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DragSort - Reorder Tasks</title>
+    <style>
+      :root {
+        --bg: #070a14;
+        --panel: rgba(255, 255, 255, 0.06);
+        --border: rgba(255, 255, 255, 0.12);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.7);
+        --accent: #7c5cff;
+        --accent2: #33d69f;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+        background:
+          radial-gradient(900px 650px at 18% 12%, #1a1f5e 0%, transparent 60%),
+          radial-gradient(900px 650px at 85% 20%, #0b3a3b 0%, transparent 60%),
+          var(--bg);
+        display: grid;
+        place-items: center;
+        padding: 26px;
+      }
+      .shell {
+        width: min(560px, 100%);
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: linear-gradient(180deg, var(--panel), rgba(255, 255, 255, 0.03));
+        box-shadow: 0 22px 70px rgba(0, 0, 0, 0.45);
+        padding: 24px;
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 18px;
+        letter-spacing: 0.2px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0 0 20px;
+      }
+      .task-list {
+        display: grid;
+        gap: 8px;
+      }
+      .task-card {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 14px 16px;
+        cursor: grab;
+        user-select: none;
+        font-size: 14px;
+        transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+      }
+      .task-card:active {
+        cursor: grabbing;
+      }
+      .task-card.drag-over {
+        border-color: rgba(124, 92, 255, 0.7);
+        background: rgba(124, 92, 255, 0.12);
+        box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.18);
+      }
+      .task-card.dragging {
+        opacity: 0.4;
+      }
+      .status {
+        margin-top: 20px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.22);
+        padding: 12px 14px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .status strong {
+        color: var(--text);
+        display: block;
+        font-size: 11px;
+        letter-spacing: 0.14px;
+        margin-bottom: 4px;
+        opacity: 0.6;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="card">
+        <h1 data-testid="title">DragSort</h1>
+        <p class="muted">Drag task cards to reorder them. Drop onto another card to swap positions.</p>
+
+        <div class="task-list" id="taskList">
+          <div class="task-card" data-testid="card-0" draggable="true">Build landing page</div>
+          <div class="task-card" data-testid="card-1" draggable="true">Review PRs</div>
+          <div class="task-card" data-testid="card-2" draggable="true">Write API docs</div>
+          <div class="task-card" data-testid="card-3" draggable="true">Deploy to production</div>
+        </div>
+
+        <div class="status">
+          <strong>STATUS</strong>
+          <span id="statusMsg" data-testid="status-msg">Ready — drag a card onto another to swap them.</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const cards = Array.from(document.querySelectorAll(".task-card"));
+      const statusMsg = document.getElementById("statusMsg");
+      let draggedIdx = null;
+
+      cards.forEach((card, i) => {
+        card.addEventListener("dragstart", () => {
+          draggedIdx = i;
+          card.classList.add("dragging");
+          statusMsg.textContent = `Dragging: "${card.textContent}"`;
+        });
+
+        card.addEventListener("dragend", () => {
+          card.classList.remove("dragging");
+          cards.forEach((c) => c.classList.remove("drag-over"));
+          draggedIdx = null;
+        });
+
+        card.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          if (draggedIdx !== null && draggedIdx !== i) {
+            card.classList.add("drag-over");
+          }
+        });
+
+        card.addEventListener("dragleave", () => {
+          card.classList.remove("drag-over");
+        });
+
+        card.addEventListener("drop", (e) => {
+          e.preventDefault();
+          card.classList.remove("drag-over");
+          if (draggedIdx !== null && draggedIdx !== i) {
+            const fromCard = cards[draggedIdx];
+            const fromText = fromCard.textContent;
+            fromCard.textContent = card.textContent;
+            card.textContent = fromText;
+            statusMsg.textContent = `Swapped positions ${String(draggedIdx)} and ${String(i)}.`;
+          }
+          draggedIdx = null;
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,7 +1,6 @@
 import type { ActionHandler } from "../action-core.js";
 import { buildEvent, stepTimeoutMs, isTimeoutLikeError } from "../action-core.js";
 import { resolveStepLocator } from "../selector.js";
-import { flashSpotlight, pulseFocus } from "../visuals.js";
 import type { PlaywrightLocator } from "../playwright.js";
 
 function truncateText(value: string | null | undefined, maxLen = 160): string {
@@ -51,23 +50,6 @@ async function assertTextContains(params: {
   );
 }
 
-async function resolveBoundingBox(
-  locator: PlaywrightLocator,
-  expectsHidden: boolean,
-): Promise<{
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-} | null> {
-  if (expectsHidden) return null;
-  try {
-    return await locator.boundingBox();
-  } catch {
-    return null;
-  }
-}
-
 export const handleAssert: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "assert") return;
@@ -95,20 +77,11 @@ export const handleAssert: ActionHandler = async (ctx, step, events, stepIndex) 
     });
   }
 
-  // Hidden assertions commonly point to absent nodes; avoid forcing a boundingBox lookup in that case.
-  const box = await resolveBoundingBox(locator, step.visible === false);
-
-  if (box) {
-    await flashSpotlight(ctx.page, box);
-    await pulseFocus(ctx.page, box);
-  }
-
   events.push(
     buildEvent({
       action: "assert",
       startTime: start,
       selector: resolved.selectorForEvent,
-      boundingBox: box,
       narration: step.narration,
     }),
   );

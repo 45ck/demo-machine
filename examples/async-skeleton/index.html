@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AsyncSkeleton - Metrics Dashboard</title>
+    <style>
+      :root {
+        --bg: #070a14;
+        --panel: rgba(255, 255, 255, 0.06);
+        --panel2: rgba(255, 255, 255, 0.08);
+        --border: rgba(255, 255, 255, 0.12);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.7);
+        --accent: #7c5cff;
+        --accent2: #33d69f;
+        --danger: #ff4d7d;
+        --shimmer-from: rgba(255, 255, 255, 0.04);
+        --shimmer-to: rgba(255, 255, 255, 0.10);
+      }
+      @keyframes shimmer {
+        0% { background-position: -400px 0; }
+        100% { background-position: 400px 0; }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+        background:
+          radial-gradient(900px 650px at 18% 12%, #1a1f5e 0%, transparent 60%),
+          radial-gradient(900px 650px at 85% 20%, #0b3a2b 0%, transparent 60%),
+          var(--bg);
+        display: grid;
+        place-items: center;
+        padding: 26px;
+      }
+      .shell {
+        width: min(900px, 100%);
+      }
+      header {
+        margin-bottom: 20px;
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 22px;
+        letter-spacing: 0.2px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-bottom: 20px;
+      }
+      .metric-card {
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: linear-gradient(180deg, var(--panel), rgba(255, 255, 255, 0.03));
+        padding: 20px;
+        cursor: pointer;
+        transition: border-color 0.15s, box-shadow 0.15s;
+        position: relative;
+        min-height: 120px;
+      }
+      .metric-card:hover {
+        border-color: rgba(124, 92, 255, 0.4);
+        box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.1);
+      }
+      .metric-card.active {
+        border-color: rgba(124, 92, 255, 0.7);
+        box-shadow: 0 0 0 4px rgba(124, 92, 255, 0.18);
+      }
+
+      /* Skeleton styles */
+      .skeleton-block {
+        border-radius: 8px;
+        background: linear-gradient(
+          90deg,
+          var(--shimmer-from) 25%,
+          var(--shimmer-to) 50%,
+          var(--shimmer-from) 75%
+        );
+        background-size: 800px 100%;
+        animation: shimmer 1.4s infinite linear;
+      }
+      .skel-label {
+        height: 13px;
+        width: 60%;
+        margin-bottom: 14px;
+      }
+      .skel-value {
+        height: 32px;
+        width: 80%;
+        margin-bottom: 8px;
+      }
+      .skel-sub {
+        height: 11px;
+        width: 45%;
+      }
+
+      /* Real metric styles */
+      .metric-label {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.14px;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 10px;
+      }
+      .metric-value {
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        margin-bottom: 6px;
+      }
+      .metric-sub {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .metric-sub.up { color: var(--accent2); }
+      .metric-sub.down { color: var(--danger); }
+
+      /* Detail panel */
+      .detail-panel {
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: linear-gradient(180deg, var(--panel2), rgba(255, 255, 255, 0.03));
+        padding: 22px;
+        display: none;
+      }
+      .detail-panel.visible {
+        display: block;
+      }
+      .detail-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.14px;
+        margin-bottom: 12px;
+      }
+      .detail-value {
+        font-size: 36px;
+        font-weight: 800;
+        letter-spacing: -1px;
+        margin-bottom: 8px;
+      }
+      .detail-rows {
+        display: grid;
+        gap: 6px;
+        margin-top: 14px;
+      }
+      .detail-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--border);
+        color: var(--muted);
+      }
+      .detail-row span:last-child {
+        color: var(--text);
+        font-weight: 500;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <h1 data-testid="page-title">Analytics Dashboard</h1>
+        <p class="muted">Metrics load asynchronously — skeletons shown while data is fetching.</p>
+      </header>
+
+      <div class="metrics-grid">
+        <!-- Revenue card -->
+        <div class="metric-card" id="card-revenue" data-testid="card-revenue">
+          <div class="skeleton-wrapper" data-testid="skeleton-0" id="skel-revenue">
+            <div class="skeleton-block skel-label"></div>
+            <div class="skeleton-block skel-value"></div>
+            <div class="skeleton-block skel-sub"></div>
+          </div>
+          <div class="metric-content" data-testid="metric-revenue" id="content-revenue" style="display:none">
+            <div class="metric-label">Revenue</div>
+            <div class="metric-value">$124,500</div>
+            <div class="metric-sub up">↑ 12.4% vs last month</div>
+          </div>
+        </div>
+
+        <!-- Users card -->
+        <div class="metric-card" id="card-users" data-testid="card-users">
+          <div class="skeleton-wrapper" data-testid="skeleton-1" id="skel-users">
+            <div class="skeleton-block skel-label"></div>
+            <div class="skeleton-block skel-value"></div>
+            <div class="skeleton-block skel-sub"></div>
+          </div>
+          <div class="metric-content" data-testid="metric-users" id="content-users" style="display:none">
+            <div class="metric-label">Active Users</div>
+            <div class="metric-value">8,240</div>
+            <div class="metric-sub up">↑ 7.2% vs last month</div>
+          </div>
+        </div>
+
+        <!-- Churn card -->
+        <div class="metric-card" id="card-churn" data-testid="card-churn">
+          <div class="skeleton-wrapper" data-testid="skeleton-2" id="skel-churn">
+            <div class="skeleton-block skel-label"></div>
+            <div class="skeleton-block skel-value"></div>
+            <div class="skeleton-block skel-sub"></div>
+          </div>
+          <div class="metric-content" data-testid="metric-churn" id="content-churn" style="display:none">
+            <div class="metric-label">Churn Rate</div>
+            <div class="metric-value">2.1%</div>
+            <div class="metric-sub down">↑ 0.3pp vs last month</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail panel — revealed on card click -->
+      <div class="detail-panel" id="detailPanel" data-testid="detail-panel">
+        <div class="detail-title" id="detailTitle">—</div>
+        <div class="detail-value" id="detailValue">—</div>
+        <div class="detail-rows" id="detailRows"></div>
+      </div>
+    </div>
+
+    <script>
+      const METRICS = {
+        revenue: {
+          label: "Revenue",
+          value: "$124,500",
+          rows: [
+            { label: "MRR", value: "$124,500" },
+            { label: "ARR (projected)", value: "$1,494,000" },
+            { label: "Top plan", value: "Pro ($79/mo)" },
+            { label: "New MRR", value: "+$8,200" },
+          ],
+        },
+        users: {
+          label: "Active Users",
+          value: "8,240",
+          rows: [
+            { label: "DAU", value: "1,830" },
+            { label: "MAU", value: "8,240" },
+            { label: "Avg session", value: "4m 12s" },
+            { label: "New signups", value: "+320" },
+          ],
+        },
+        churn: {
+          label: "Churn Rate",
+          value: "2.1%",
+          rows: [
+            { label: "Churned users", value: "173" },
+            { label: "Avg tenure (churned)", value: "6.4 mo" },
+            { label: "Primary reason", value: "Pricing" },
+            { label: "Recovered", value: "28" },
+          ],
+        },
+      };
+
+      const DELAY_MS = 3000;
+
+      const skels = {
+        revenue: document.getElementById("skel-revenue"),
+        users: document.getElementById("skel-users"),
+        churn: document.getElementById("skel-churn"),
+      };
+      const contents = {
+        revenue: document.getElementById("content-revenue"),
+        users: document.getElementById("content-users"),
+        churn: document.getElementById("content-churn"),
+      };
+      const detailPanel = document.getElementById("detailPanel");
+      const detailTitle = document.getElementById("detailTitle");
+      const detailValue = document.getElementById("detailValue");
+      const detailRows = document.getElementById("detailRows");
+
+      // Simulate async data load
+      setTimeout(() => {
+        for (const key of Object.keys(METRICS)) {
+          skels[key].style.display = "none";
+          contents[key].style.display = "block";
+        }
+      }, DELAY_MS);
+
+      // Click handler on metric cards
+      for (const [key, meta] of Object.entries(METRICS)) {
+        const cardEl = document.getElementById(`card-${key}`);
+        cardEl.addEventListener("click", () => {
+          document.querySelectorAll(".metric-card").forEach((c) => c.classList.remove("active"));
+          cardEl.classList.add("active");
+
+          detailTitle.textContent = meta.label;
+          detailValue.textContent = meta.value;
+          detailRows.innerHTML = meta.rows
+            .map(
+              (r) =>
+                `<div class="detail-row"><span>${r.label}</span><span>${r.value}</span></div>`,
+            )
+            .join("");
+          detailPanel.classList.add("visible");
+        });
+      }
+    </script>
+  </body>
+</html>

@@ -11,22 +11,39 @@ export interface TimedSegment {
 }
 
 export function adjustTiming(segmentFiles: TimedSegment[], leadInBufferMs = 0): void {
+  // Save original action timestamps before shifting them.
+  const actionTimestamps = segmentFiles.map((s) => s.startMs);
+
   // Shift narration to lead into the action: audio finishes leadInBufferMs before the action.
   for (let i = 0; i < segmentFiles.length; i++) {
     const seg = segmentFiles[i]!;
-    const actionMs = seg.startMs;
+    const actionMs = actionTimestamps[i]!;
     seg.startMs = Math.max(0, actionMs - seg.durationMs - leadInBufferMs);
     logger.debug(
       `Segment ${i + 1}: action at ${actionMs}ms, narration ${seg.durationMs}ms buffer ${leadInBufferMs}ms → starts at ${seg.startMs}ms`,
     );
   }
 
-  // Prevent overlap: if a segment starts before the previous one finishes, push it forward
+  // Prevent overlap: if a segment starts before the previous one finishes, push it forward.
   for (let i = 1; i < segmentFiles.length; i++) {
     const prev = segmentFiles[i - 1]!;
     const prevEndMs = prev.startMs + prev.durationMs + GAP_MS;
     if (segmentFiles[i]!.startMs < prevEndMs) {
       segmentFiles[i]!.startMs = prevEndMs;
+    }
+  }
+
+  // Safety cap: never push a segment past its own action timestamp.
+  // When actions are very close together, overlap prevention can push narration AFTER the action
+  // it describes. Accepting overlap is less wrong than narrating a step that already happened.
+  for (let i = 0; i < segmentFiles.length; i++) {
+    const seg = segmentFiles[i]!;
+    const actionMs = actionTimestamps[i]!;
+    if (seg.startMs > actionMs) {
+      logger.debug(
+        `Segment ${i + 1}: capped startMs from ${seg.startMs}ms to action timestamp ${actionMs}ms`,
+      );
+      seg.startMs = actionMs;
     }
   }
 }

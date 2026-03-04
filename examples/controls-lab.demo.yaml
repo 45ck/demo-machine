@@ -11,6 +11,7 @@ chapters:
     steps:
       - action: navigate
         url: "/"
+        narration: "Welcome to ControlRoom. Let's exercise common UI controls."
       - action: assert
         target:
           by: testId
@@ -26,11 +27,13 @@ chapters:
           text: "Plan"
         option:
           label: "Pro"
+        narration: "Select the Pro plan from the dropdown."
       - action: upload
         target:
           by: label
           text: "Upload logo"
         file: "./controls-lab/assets/sample.txt"
+        narration: "Upload a logo file using the accessible label."
       - action: assert
         target:
           by: testId
@@ -48,6 +51,7 @@ chapters:
           target:
             by: testId
             testId: "drop-zone"
+        narration: "Drag the Alpha card into the drop zone."
       - action: assert
         target:
           by: testId

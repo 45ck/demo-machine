@@ -56,7 +56,9 @@
     "Fagan",
     "embedders",
     "presteps",
-    "prestep"
+    "prestep",
+    "Cascadia",
+    "teleporting"
   ],
   "ignorePaths": ["node_modules", "dist", "pnpm-lock.yaml", "*.json"]
 }

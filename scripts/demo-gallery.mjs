@@ -29,6 +29,18 @@ const SHOWCASE = [
     spec: "examples/selector-stress.demo.yaml",
     title: "SelectorGym (nth)",
   },
+  { slug: "drag-sort", spec: "examples/drag-sort.demo.yaml", title: "DragSort (Reorder)" },
+  {
+    slug: "file-uploader",
+    spec: "examples/file-uploader.demo.yaml",
+    title: "FileUploader (Preview)",
+  },
+  {
+    slug: "async-skeleton",
+    spec: "examples/async-skeleton.demo.yaml",
+    title: "AsyncSkeleton (Dashboard)",
+  },
+  { slug: "seeded-api", spec: "examples/seeded-api.demo.yaml", title: "SeededAPI (Notes)" },
 ];
 
 function parseArgs(argv) {

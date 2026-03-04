@@ -18,5 +18,6 @@ chapters:
         narration: "Inputs can be blurred during recording to protect sensitive values."
       - action: click
         selector: "[data-testid='open-modal']"
+        narration: "Open the modal to reveal the blurred email input."
       - action: wait
         timeout: 900
