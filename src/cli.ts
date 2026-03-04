@@ -71,7 +71,16 @@ program
       return n;
     },
     0,
-  );
+  )
+  .option("--resolution <WxH>", "Override spec resolution for capture (e.g. 1280x720)", (v) => {
+    const m = /^(\d+)x(\d+)$/.exec(v);
+    if (!m) throw new InvalidArgumentError("--resolution must be in WxH format, e.g. 1280x720.");
+    const w = Number(m[1]);
+    const h = Number(m[2]);
+    if (w < 1 || h < 1)
+      throw new InvalidArgumentError("--resolution width and height must be positive.");
+    return { width: w, height: h };
+  });
 
 program
   .command("validate <spec>")

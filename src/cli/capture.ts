@@ -211,7 +211,7 @@ async function captureWithBrowser(params: {
 }): Promise<CaptureResult> {
   const captureOpts = {
     outputDir: params.opts.output,
-    resolution: params.spec.meta.resolution,
+    resolution: params.opts.resolutionOverride ?? params.spec.meta.resolution,
     strictGeometry: params.opts.strictGeometry,
   };
   const recording = await params.captureMod.createRecordingContext(

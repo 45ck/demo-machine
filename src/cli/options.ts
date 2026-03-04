@@ -14,6 +14,7 @@ export interface GlobalOptions {
   fromChapter?: string | undefined;
   fromStep?: number | undefined;
   trimStartMs: number;
+  resolutionOverride?: { width: number; height: number } | undefined;
 }
 
 export function applyGlobalOptions(opts: GlobalOptions): void {

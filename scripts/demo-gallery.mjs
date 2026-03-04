@@ -190,10 +190,11 @@ async function ffprobeImageDimensions(imgPath, { cwd }) {
   return { width: w, height: h };
 }
 
-function screenshotTimes(durationSec, count) {
+function screenshotTimes(durationSec, count, startOffsetSec = 0) {
   const times = [];
+  const available = durationSec - startOffsetSec;
   for (let i = 1; i <= count; i++) {
-    const t = (durationSec * i) / (count + 1);
+    const t = startOffsetSec + (available * i) / (count + 1);
     times.push(Math.max(0, Math.min(durationSec - 0.05, t)));
   }
   return times;
@@ -222,7 +223,7 @@ async function generateWebpFrame({ mp4Path, outPath, timeSec, cwd }) {
       "-frames:v",
       "1",
       "-vf",
-      "crop=1280:720:320:180,scale=960:-2:flags=lanczos",
+      "scale=960:-2:flags=lanczos",
       "-c:v",
       "libwebp",
       "-q:v",
@@ -235,9 +236,9 @@ async function generateWebpFrame({ mp4Path, outPath, timeSec, cwd }) {
 }
 
 async function generateGif({ mp4Path, outPath, startSec, lenSec, cwd }) {
-  // High-quality GIF: center-crop to focus on UI content, 15fps, full-palette dither.
+  // High-quality GIF: captured at 1280x720, scale to 960px wide, full-palette dither.
   const vf =
-    "crop=1280:720:320:180,fps=15,scale=960:-2:flags=lanczos,split[s0][s1];" +
+    "fps=15,scale=960:-2:flags=lanczos,split[s0][s1];" +
     "[s0]palettegen=stats_mode=full:max_colors=256[p];" +
     "[s1][p]paletteuse=dither=sierra2_4a";
 
@@ -318,14 +319,24 @@ async function main() {
 
     const mp4Path = path.join(tmpOut, "output.mp4");
     if (opts.regen || !(await fileExists(mp4Path))) {
-      const args = ["dist/cli.js", "run", specPath, "--output", tmpOut, "--no-narration"];
+      const args = [
+        "dist/cli.js",
+        "run",
+        specPath,
+        "--output",
+        tmpOut,
+        "--no-narration",
+        "--resolution",
+        "1280x720",
+      ];
       if (opts.headed) args.push("--no-headless");
       const code = await run("node", args, { cwd: root });
       if (code !== 0) process.exit(code);
     }
 
     const durationSec = await ffprobeDurationSeconds(mp4Path, { cwd: root });
-    const times = screenshotTimes(durationSec, 5);
+    const { start: gifStart } = gifWindow(durationSec);
+    const times = screenshotTimes(durationSec, 5, gifStart);
     const frames = [];
     for (let i = 0; i < times.length; i++) {
       const n = String(i + 1).padStart(2, "0");
