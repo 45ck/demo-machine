@@ -13,7 +13,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Tests](https://img.shields.io/badge/Tests-172%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-335%20passing-brightgreen)](tests/)
 [![Playwright](https://img.shields.io/badge/Playwright-Browser%20Automation-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev)
 [![FFmpeg](https://img.shields.io/badge/FFmpeg-Video%20Rendering-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org)
 
@@ -136,6 +136,10 @@ These are **compressed GIF previews** generated from real rendered MP4s. For the
   <a href="examples/chart-tooltips.demo.yaml"><img src="assets/demo-gallery/chart-tooltips.gif" width="49%" alt="ChartLab tooltips demo preview (GIF)" /></a>
   <a href="examples/virtual-table.demo.yaml"><img src="assets/demo-gallery/virtual-table.gif" width="49%" alt="GridV virtualized table demo preview (GIF)" /></a>
   <a href="examples/selector-stress.demo.yaml"><img src="assets/demo-gallery/selector-stress.gif" width="49%" alt="SelectorGym demo preview (GIF)" /></a>
+  <a href="examples/drag-sort.demo.yaml"><img src="assets/demo-gallery/drag-sort.gif" width="49%" alt="DragSort reorder demo preview (GIF)" /></a>
+  <a href="examples/file-uploader.demo.yaml"><img src="assets/demo-gallery/file-uploader.gif" width="49%" alt="FileUploader preview demo (GIF)" /></a>
+  <a href="examples/async-skeleton.demo.yaml"><img src="assets/demo-gallery/async-skeleton.gif" width="49%" alt="AsyncSkeleton dashboard demo (GIF)" /></a>
+  <a href="examples/seeded-api.demo.yaml"><img src="assets/demo-gallery/seeded-api.gif" width="49%" alt="SeededAPI notes demo (GIF)" /></a>
 </div>
 
 To regenerate the gallery assets (GIFs + 5 screenshots per demo): `pnpm demo:gallery`.

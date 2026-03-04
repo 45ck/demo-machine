@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-18T06:50:43.189Z",
+  "generatedAt": "2026-03-04T02:09:54.941Z",
   "results": [
     {
       "slug": "todo-app",
@@ -165,6 +165,66 @@
         "assets/demo-gallery/selector-stress-05.webp"
       ],
       "durationSec": 4.24
+    },
+    {
+      "slug": "drag-sort",
+      "spec": "examples/drag-sort.demo.yaml",
+      "title": "DragSort (Reorder)",
+      "mp4": "output/demo-gallery/drag-sort/output.mp4",
+      "gif": "assets/demo-gallery/drag-sort.gif",
+      "frames": [
+        "assets/demo-gallery/drag-sort-01.webp",
+        "assets/demo-gallery/drag-sort-02.webp",
+        "assets/demo-gallery/drag-sort-03.webp",
+        "assets/demo-gallery/drag-sort-04.webp",
+        "assets/demo-gallery/drag-sort-05.webp"
+      ],
+      "durationSec": 5.45
+    },
+    {
+      "slug": "file-uploader",
+      "spec": "examples/file-uploader.demo.yaml",
+      "title": "FileUploader (Preview)",
+      "mp4": "output/demo-gallery/file-uploader/output.mp4",
+      "gif": "assets/demo-gallery/file-uploader.gif",
+      "frames": [
+        "assets/demo-gallery/file-uploader-01.webp",
+        "assets/demo-gallery/file-uploader-02.webp",
+        "assets/demo-gallery/file-uploader-03.webp",
+        "assets/demo-gallery/file-uploader-04.webp",
+        "assets/demo-gallery/file-uploader-05.webp"
+      ],
+      "durationSec": 9.71
+    },
+    {
+      "slug": "async-skeleton",
+      "spec": "examples/async-skeleton.demo.yaml",
+      "title": "AsyncSkeleton (Dashboard)",
+      "mp4": "output/demo-gallery/async-skeleton/output.mp4",
+      "gif": "assets/demo-gallery/async-skeleton.gif",
+      "frames": [
+        "assets/demo-gallery/async-skeleton-01.webp",
+        "assets/demo-gallery/async-skeleton-02.webp",
+        "assets/demo-gallery/async-skeleton-03.webp",
+        "assets/demo-gallery/async-skeleton-04.webp",
+        "assets/demo-gallery/async-skeleton-05.webp"
+      ],
+      "durationSec": 11.64
+    },
+    {
+      "slug": "seeded-api",
+      "spec": "examples/seeded-api.demo.yaml",
+      "title": "SeededAPI (Notes)",
+      "mp4": "output/demo-gallery/seeded-api/output.mp4",
+      "gif": "assets/demo-gallery/seeded-api.gif",
+      "frames": [
+        "assets/demo-gallery/seeded-api-01.webp",
+        "assets/demo-gallery/seeded-api-02.webp",
+        "assets/demo-gallery/seeded-api-03.webp",
+        "assets/demo-gallery/seeded-api-04.webp",
+        "assets/demo-gallery/seeded-api-05.webp"
+      ],
+      "durationSec": 6.88
     }
   ]
 }
