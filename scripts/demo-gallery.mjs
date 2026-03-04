@@ -200,7 +200,8 @@ function screenshotTimes(durationSec, count) {
 }
 
 function gifWindow(durationSec) {
-  const start = Math.min(2, durationSec * 0.15);
+  // Start late enough to skip chapter-title overlays (shown for ~2-3s at start).
+  const start = Math.min(3.5, durationSec * 0.22);
   const maxLen = 8;
   const len = Math.min(maxLen, Math.max(4, durationSec - start - 0.25));
   return { start, len };
@@ -221,7 +222,7 @@ async function generateWebpFrame({ mp4Path, outPath, timeSec, cwd }) {
       "-frames:v",
       "1",
       "-vf",
-      "scale=960:-2:flags=lanczos",
+      "crop=1280:720:320:180,scale=960:-2:flags=lanczos",
       "-c:v",
       "libwebp",
       "-q:v",
@@ -234,11 +235,11 @@ async function generateWebpFrame({ mp4Path, outPath, timeSec, cwd }) {
 }
 
 async function generateGif({ mp4Path, outPath, startSec, lenSec, cwd }) {
-  // High-quality GIF using palette generation.
+  // High-quality GIF: center-crop to focus on UI content, 15fps, full-palette dither.
   const vf =
-    "fps=12,scale=960:-2:flags=lanczos,split[s0][s1];" +
-    "[s0]palettegen=stats_mode=diff[p];" +
-    "[s1][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle";
+    "crop=1280:720:320:180,fps=15,scale=960:-2:flags=lanczos,split[s0][s1];" +
+    "[s0]palettegen=stats_mode=full:max_colors=256[p];" +
+    "[s1][p]paletteuse=dither=sierra2_4a";
 
   const code = await run(
     "ffmpeg",
