@@ -223,7 +223,7 @@ async function generateWebpFrame({ mp4Path, outPath, timeSec, cwd }) {
       "-frames:v",
       "1",
       "-vf",
-      "scale=960:-2:flags=lanczos",
+      "scale=960:540:flags=lanczos",
       "-c:v",
       "libwebp",
       "-q:v",
@@ -236,9 +236,9 @@ async function generateWebpFrame({ mp4Path, outPath, timeSec, cwd }) {
 }
 
 async function generateGif({ mp4Path, outPath, startSec, lenSec, cwd }) {
-  // High-quality GIF: captured at 1280x720, scale to 960px wide, full-palette dither.
+  // High-quality GIF: captured at 960x540, native resolution output, full-palette dither.
   const vf =
-    "fps=15,scale=960:-2:flags=lanczos,split[s0][s1];" +
+    "fps=15,scale=960:540:flags=lanczos,split[s0][s1];" +
     "[s0]palettegen=stats_mode=full:max_colors=256[p];" +
     "[s1][p]paletteuse=dither=sierra2_4a";
 
@@ -327,7 +327,7 @@ async function main() {
         tmpOut,
         "--no-narration",
         "--resolution",
-        "1280x720",
+        "960x540",
       ];
       if (opts.headed) args.push("--no-headless");
       const code = await run("node", args, { cwd: root });
