@@ -86,4 +86,18 @@ describe("format-spec tool", () => {
     expect(result.isError).toBe(true);
     expect(result.content[0]!.text).toContain("File not found");
   });
+
+  it("stringifies non-Error thrown values", async () => {
+    const { loadSpec } = await import("../../../src/spec/loader.js");
+    vi.mocked(loadSpec).mockRejectedValue("raw string error");
+
+    const handler = registeredTools.get("format-spec")!.handler;
+    const result = (await handler({ specPath: "bad.yaml", format: "json" })) as {
+      content: Array<{ type: string; text: string }>;
+      isError?: boolean;
+    };
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0]!.text).toContain("raw string error");
+  });
 });

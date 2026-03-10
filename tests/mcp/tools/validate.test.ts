@@ -75,4 +75,19 @@ describe("validate-spec tool", () => {
     expect(parsed["error"]).toContain("Invalid spec file");
     expect(result.isError).toBe(true);
   });
+
+  it("stringifies non-Error thrown values", async () => {
+    const { loadSpec } = await import("../../../src/spec/loader.js");
+    vi.mocked(loadSpec).mockRejectedValue("raw string error");
+
+    const handler = registeredTools.get("validate-spec")!.handler;
+    const result = (await handler({ specPath: "bad.demo.yaml" })) as {
+      content: Array<{ type: string; text: string }>;
+      isError?: boolean;
+    };
+    const parsed = JSON.parse(result.content[0]!.text) as Record<string, unknown>;
+    expect(parsed["valid"]).toBe(false);
+    expect(parsed["error"]).toContain("raw string error");
+    expect(result.isError).toBe(true);
+  });
 });

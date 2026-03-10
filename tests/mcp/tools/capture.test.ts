@@ -95,4 +95,18 @@ describe("capture-spec tool", () => {
     expect(result.isError).toBe(true);
     expect(result.content[0]!.text).toContain("Browser launch failed");
   });
+
+  it("stringifies non-Error thrown values", async () => {
+    const { captureFromSpec } = await import("../../../src/pipeline.js");
+    vi.mocked(captureFromSpec).mockRejectedValue("raw string error");
+
+    const handler = registeredTools.get("capture-spec")!.handler;
+    const result = (await handler({ specPath: "test.demo.yaml" })) as {
+      content: Array<{ type: string; text: string }>;
+      isError?: boolean;
+    };
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0]!.text).toContain("raw string error");
+  });
 });

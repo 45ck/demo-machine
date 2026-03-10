@@ -81,4 +81,18 @@ describe("list-voices tool", () => {
     expect(result.isError).toBe(true);
     expect(result.content[0]!.text).toContain("Config corrupt");
   });
+
+  it("stringifies non-Error thrown values", async () => {
+    const { listVoices } = await import("../../../src/narration/voice-config.js");
+    vi.mocked(listVoices).mockRejectedValue("raw string error");
+
+    const handler = registeredTools.get("list-voices")!.handler;
+    const result = (await handler({})) as {
+      content: Array<{ type: string; text: string }>;
+      isError?: boolean;
+    };
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0]!.text).toContain("raw string error");
+  });
 });
