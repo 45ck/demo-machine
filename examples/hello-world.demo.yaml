@@ -4,15 +4,15 @@ meta:
     width: 1920
     height: 1080
   branding:
-    logo: "./assets/logo.png"
+    logo: "./hello-world/assets/logo.svg"
     colors:
       primary: "#3B82F6"
       background: "#000000"
 
 runner:
-  command: "pnpm dev"
-  url: "http://localhost:3000"
-  healthcheck: "http://localhost:3000/api/health"
+  command: "node examples/hello-world/serve.mjs"
+  url: "http://localhost:4574"
+  healthcheck: "http://localhost:4574/api/health"
   timeout: 30000
 
 redaction:

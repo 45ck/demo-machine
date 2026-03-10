@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ControlRoom - Inputs & Interactions</title>
+    <style>
+      :root {
+        --bg: #070a14;
+        --panel: rgba(255, 255, 255, 0.06);
+        --panel2: rgba(255, 255, 255, 0.08);
+        --border: rgba(255, 255, 255, 0.12);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.7);
+        --accent: #7c5cff;
+        --accent2: #33d69f;
+        --danger: #ff4d7d;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Arial;
+        background:
+          radial-gradient(900px 650px at 18% 12%, #1a1f5e 0%, transparent 60%),
+          radial-gradient(900px 650px at 85% 20%, #0b3a3b 0%, transparent 60%),
+          radial-gradient(1000px 700px at 50% 95%, #3a1430 0%, transparent 60%), var(--bg);
+        display: grid;
+        place-items: center;
+        padding: 26px;
+      }
+      .shell {
+        width: min(1040px, 100%);
+        display: grid;
+        grid-template-columns: 1fr 360px;
+        gap: 16px;
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: linear-gradient(180deg, var(--panel), rgba(255, 255, 255, 0.03));
+        box-shadow: 0 22px 70px rgba(0, 0, 0, 0.45);
+        padding: 18px;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 18px;
+        letter-spacing: 0.2px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 12px;
+      }
+      .panel {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        background: linear-gradient(180deg, var(--panel2), rgba(255, 255, 255, 0.03));
+        padding: 14px;
+      }
+      .panel h2 {
+        margin: 0;
+        font-size: 14px;
+      }
+      label {
+        display: grid;
+        gap: 6px;
+        margin-top: 10px;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.88);
+      }
+      input[type="file"],
+      select {
+        height: 44px;
+        border-radius: 12px;
+        padding: 0 10px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        outline: none;
+      }
+      select:focus,
+      input[type="file"]:focus {
+        border-color: rgba(124, 92, 255, 0.7);
+        box-shadow: 0 0 0 4px rgba(124, 92, 255, 0.14);
+      }
+      .toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .toggle input {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--accent2);
+      }
+      .status {
+        margin-top: 12px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.22);
+        padding: 12px;
+        display: grid;
+        gap: 6px;
+      }
+      .status strong {
+        font-size: 12px;
+        letter-spacing: 0.18px;
+        color: rgba(255, 255, 255, 0.72);
+      }
+      .status code {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+          monospace;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.92);
+      }
+      .lane {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .pool,
+      .drop {
+        min-height: 240px;
+        border-radius: 16px;
+        border: 1px dashed rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.04);
+        padding: 12px;
+      }
+      .drop {
+        border-style: solid;
+        border-color: rgba(51, 214, 159, 0.4);
+        background: linear-gradient(180deg, rgba(51, 214, 159, 0.12), rgba(255, 255, 255, 0.03));
+      }
+      .card-item {
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.06);
+        padding: 10px 10px;
+        margin-top: 10px;
+        cursor: grab;
+        user-select: none;
+      }
+      .card-item:active {
+        cursor: grabbing;
+      }
+      .hint {
+        margin-top: 10px;
+        color: rgba(255, 255, 255, 0.65);
+        font-size: 12px;
+      }
+      .drop.active {
+        box-shadow: 0 0 0 4px rgba(51, 214, 159, 0.18);
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.05);
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.86);
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--accent2);
+        box-shadow: 0 0 0 6px rgba(51, 214, 159, 0.12);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="card">
+        <header>
+          <div>
+            <h1 data-testid="title">ControlRoom</h1>
+            <div class="muted">
+              A mini app to validate selectors for any UI: checkboxes, selects, uploads, drag and
+              drop.
+            </div>
+          </div>
+          <div class="pill" data-testid="build-pill">
+            <span class="dot"></span> demo machine ready
+          </div>
+        </header>
+
+        <div class="grid">
+          <div class="panel">
+            <h2>Account Settings</h2>
+            <div class="toggle">
+              <input id="alerts" data-testid="alerts-checkbox" type="checkbox" />
+              <label for="alerts">Enable alerts</label>
+            </div>
+
+            <label for="planSelect">Plan</label>
+            <select id="planSelect" data-testid="plan-select" aria-label="Plan">
+              <option value="starter">Starter</option>
+              <option value="pro">Pro</option>
+              <option value="enterprise">Enterprise</option>
+            </select>
+
+            <label for="logo">Upload logo</label>
+            <input id="logo" data-testid="logo-input" type="file" aria-label="Upload logo" />
+          </div>
+
+          <div class="panel">
+            <h2>Drag and Drop</h2>
+            <div class="lane">
+              <div class="pool" data-testid="pool">
+                <div class="muted">Pool</div>
+                <div
+                  class="card-item"
+                  draggable="true"
+                  data-testid="card-alpha"
+                  id="card-alpha"
+                  aria-label="Alpha card"
+                >
+                  Alpha card
+                </div>
+                <div
+                  class="card-item"
+                  draggable="true"
+                  data-testid="card-beta"
+                  id="card-beta"
+                  aria-label="Beta card"
+                >
+                  Beta card
+                </div>
+                <div class="hint">Drag a card into the drop zone.</div>
+              </div>
+              <div class="drop" id="dropZone" data-testid="drop-zone" aria-label="Drop zone">
+                <div class="muted">Drop zone</div>
+                <div class="hint" data-testid="drop-hint">Nothing dropped yet.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="status" data-testid="status">
+          <strong>STATUS</strong>
+          <code id="statusText" data-testid="status-text">Waiting for input...</code>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="margin: 0; font-size: 14px">What this app proves</h2>
+        <div class="muted" style="margin-top: 10px">
+          Demo-machine can target resiliently using labels, roles, and test IDs. This page includes:
+          a checkbox, a select, a file input, and HTML5 drag and drop.
+        </div>
+        <div class="muted" style="margin-top: 12px">
+          Tip: Use `target.by: role` or `target.by: label` first. Keep CSS selectors as a last
+          resort.
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const status = document.getElementById("statusText");
+      const alerts = document.getElementById("alerts");
+      const plan = document.getElementById("planSelect");
+      const logo = document.getElementById("logo");
+      const dropZone = document.getElementById("dropZone");
+      const dropHint = document.querySelector("[data-testid='drop-hint']");
+
+      function setStatus(msg) {
+        status.textContent = msg;
+      }
+
+      alerts.addEventListener("change", () => {
+        setStatus(`Alerts: ${alerts.checked ? "enabled" : "disabled"}`);
+      });
+
+      plan.addEventListener("change", () => {
+        const label = plan.options[plan.selectedIndex]?.textContent || plan.value;
+        setStatus(`Plan: ${label}`);
+      });
+
+      logo.addEventListener("change", () => {
+        const f = logo.files && logo.files[0] ? logo.files[0].name : "none";
+        setStatus(`Uploaded: ${f}`);
+      });
+
+      let dragId = null;
+      document.querySelectorAll(".card-item").forEach((el) => {
+        el.addEventListener("dragstart", (e) => {
+          dragId = el.id;
+          e.dataTransfer.setData("text/plain", el.id);
+          e.dataTransfer.effectAllowed = "move";
+        });
+      });
+
+      dropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropZone.classList.add("active");
+        e.dataTransfer.dropEffect = "move";
+      });
+
+      dropZone.addEventListener("dragleave", () => {
+        dropZone.classList.remove("active");
+      });
+
+      dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropZone.classList.remove("active");
+        const id = e.dataTransfer.getData("text/plain") || dragId;
+        const el = id ? document.getElementById(id) : null;
+        if (!el) {
+          setStatus("Drop: failed");
+          return;
+        }
+        dropHint.textContent = `Dropped: ${el.textContent.trim()}`;
+        setStatus(`Dropped: ${el.textContent.trim()}`);
+      });
+    </script>
+  </body>
+</html>

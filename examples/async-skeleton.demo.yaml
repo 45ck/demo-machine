@@ -1,0 +1,100 @@
+meta:
+  title: "AsyncSkeleton - Metrics Dashboard"
+
+runner:
+  command: "node examples/async-skeleton/serve.mjs"
+  url: "http://localhost:4583"
+  timeout: 10000
+
+chapters:
+  - title: "Skeleton Loading"
+    steps:
+      - action: navigate
+        url: "/"
+        narration: "Metrics load asynchronously — the skeleton shows while data fetches."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "page-title"
+        visible: true
+
+      # Real metric content is hidden while the skeleton shows — assert it is NOT yet visible
+      - action: assert
+        target:
+          by: testId
+          testId: "metric-revenue"
+        visible: false
+        timeoutMs: 2000
+
+      # Wait for the async data to load (delay is 3000ms, wait 3500ms to be safe)
+      - action: wait
+        timeout: 3500
+
+      # After the wait, all three metric cards should now show real data
+      - action: assert
+        target:
+          by: testId
+          testId: "metric-revenue"
+        visible: true
+        timeoutMs: 5000
+
+      - action: assert
+        target:
+          by: testId
+          testId: "metric-users"
+        visible: true
+        timeoutMs: 3000
+
+      - action: assert
+        target:
+          by: testId
+          testId: "metric-churn"
+        visible: true
+        timeoutMs: 3000
+
+      - action: screenshot
+        name: "metrics-loaded"
+
+  - title: "Metric Detail"
+    steps:
+      # Click a metric card to reveal the detail panel
+      - action: click
+        target:
+          by: testId
+          testId: "card-revenue"
+        narration: "Click a metric card to open the detail panel."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "detail-panel"
+        visible: true
+        timeoutMs: 3000
+
+      - action: assert
+        target:
+          by: testId
+          testId: "detail-panel"
+        text: "$124,500"
+        timeoutMs: 3000
+
+      - action: screenshot
+        name: "detail-panel-revenue"
+
+      # Click a different metric
+      - action: click
+        target:
+          by: testId
+          testId: "card-users"
+        narration: "Switch to the Users metric for a different view."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "detail-panel"
+        text: "8,240"
+        timeoutMs: 3000
+
+      - action: screenshot
+        name: "detail-panel-users"

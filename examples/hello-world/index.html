@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HelloWorld - Quickstart</title>
+    <style>
+      :root {
+        --bg: #070a14;
+        --panel: rgba(255, 255, 255, 0.06);
+        --border: rgba(255, 255, 255, 0.12);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.7);
+        --accent: #3b82f6;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Arial;
+        background:
+          radial-gradient(900px 650px at 20% 15%, #1a2b66 0%, transparent 60%),
+          radial-gradient(900px 650px at 85% 25%, #083b45 0%, transparent 60%),
+          radial-gradient(1000px 700px at 50% 95%, #2c163d 0%, transparent 60%), var(--bg);
+        display: grid;
+        place-items: center;
+        padding: 26px;
+      }
+      .card {
+        width: min(920px, 100%);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: linear-gradient(180deg, var(--panel), rgba(255, 255, 255, 0.03));
+        box-shadow: 0 22px 70px rgba(0, 0, 0, 0.45);
+        padding: 18px;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .logo {
+        width: 40px;
+        height: 40px;
+        border-radius: 14px;
+        background: radial-gradient(
+          circle at 30% 30%,
+          #fff 0%,
+          #8cf 18%,
+          #3b82f6 55%,
+          #0b2350 100%
+        );
+        box-shadow: 0 14px 34px rgba(59, 130, 246, 0.24);
+      }
+      h1 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+      .body {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .panel {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.04);
+        padding: 14px;
+      }
+      .panel h2 {
+        margin: 0;
+        font-size: 14px;
+      }
+      button {
+        height: 44px;
+        border-radius: 12px;
+        border: 1px solid rgba(59, 130, 246, 0.55);
+        background: linear-gradient(180deg, rgba(59, 130, 246, 0.24), rgba(59, 130, 246, 0.06));
+        color: var(--text);
+        padding: 0 14px;
+        cursor: pointer;
+      }
+      label {
+        display: grid;
+        gap: 6px;
+        margin-top: 10px;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.86);
+      }
+      input[type="email"] {
+        height: 44px;
+        border-radius: 12px;
+        padding: 0 12px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        outline: none;
+      }
+      input[type="email"]:focus {
+        border-color: rgba(59, 130, 246, 0.7);
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14);
+      }
+      .welcome-message {
+        margin-top: 12px;
+        display: none;
+        border-radius: 14px;
+        border: 1px solid rgba(51, 214, 159, 0.45);
+        background: rgba(51, 214, 159, 0.12);
+        padding: 12px 14px;
+      }
+      .user-email {
+        filter: blur(0px);
+      }
+      [data-sensitive] {
+        filter: blur(0px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <header>
+        <div class="brand">
+          <div class="logo" aria-hidden="true"></div>
+          <div>
+            <h1>HelloWorld</h1>
+            <div class="muted">A tiny app used by demo-machine tests and capture suite.</div>
+          </div>
+        </div>
+        <div class="muted user-email" data-sensitive>demo@example.com</div>
+      </header>
+
+      <div class="body">
+        <div class="panel">
+          <h2>Quickstart</h2>
+          <div class="muted" style="margin-top: 8px">
+            Click get started, enter an email, and watch the welcome message appear.
+          </div>
+          <div style="margin-top: 12px">
+            <button id="get-started" type="button">Get started</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Signup</h2>
+          <label for="email-input">Email</label>
+          <input id="email-input" type="email" placeholder="name@company.com" />
+
+          <div class="welcome-message" aria-live="polite">
+            Welcome aboard. Your email is <span class="user-email">demo@example.com</span>.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const btn = document.getElementById("get-started");
+      const input = document.getElementById("email-input");
+      const msg = document.querySelector(".welcome-message");
+      const emailSpans = document.querySelectorAll(".user-email");
+
+      function update() {
+        const email = input.value || "demo@example.com";
+        emailSpans.forEach((el) => (el.textContent = email));
+        if (btn.dataset.started === "1" && email.length > 3) {
+          msg.style.display = "block";
+        } else {
+          msg.style.display = "none";
+        }
+      }
+
+      btn.addEventListener("click", () => {
+        btn.dataset.started = "1";
+        update();
+      });
+      input.addEventListener("input", update);
+    </script>
+  </body>
+</html>

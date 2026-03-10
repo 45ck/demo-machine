@@ -1,0 +1,81 @@
+meta:
+  title: "AuthFlow - OTP Sign-In Demo"
+  resolution:
+    width: 1920
+    height: 1080
+
+runner:
+  command: "node examples/auth-otp/serve.mjs"
+  url: "http://localhost:4575"
+  healthcheck: "http://localhost:4575/api/health"
+  timeout: 10000
+
+chapters:
+  - title: "Start"
+    steps:
+      - action: navigate
+        url: "http://localhost:4575"
+        narration: "This is a typical OTP sign-in flow: email, then a six-digit code."
+      - action: assert
+        target:
+          by: testId
+          testId: "state-text"
+        text: "ready"
+
+  - title: "Send Code"
+    steps:
+      - action: click
+        target:
+          by: label
+          text: "Work email"
+        narration: "We can target form inputs by their label, not by CSS."
+      - action: type
+        target:
+          by: testId
+          testId: "email"
+        text: "demo@company.com"
+      - action: click
+        target:
+          by: role
+          role: "button"
+          name: "Send code"
+        narration: "Send the code to reveal the OTP entry UI."
+      - action: assert
+        target:
+          by: testId
+          testId: "otp-panel"
+        visible: true
+      - action: assert
+        target:
+          by: testId
+          testId: "state-text"
+        text: "code-sent"
+
+  - title: "Enter OTP"
+    steps:
+      - action: click
+        target:
+          by: testId
+          testId: "otp-0"
+        narration: "Now we can type the full OTP into the first digit and let the UI auto-advance."
+      - action: type
+        target:
+          by: testId
+          testId: "otp-0"
+        text: "123456"
+      - action: click
+        target:
+          by: role
+          role: "button"
+          name: "Verify"
+        narration: "And verify to finish the sign-in."
+      - action: assert
+        target:
+          by: testId
+          testId: "status"
+        text: "signed-in"
+      - action: assert
+        target:
+          by: testId
+          testId: "state-text"
+        text: "signed-in"

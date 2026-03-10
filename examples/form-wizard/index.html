@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FlowForm - Wizard</title>
+    <style>
+      :root {
+        --bg: #0b0f1a;
+        --panel: rgba(255, 255, 255, 0.06);
+        --panel2: rgba(255, 255, 255, 0.09);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.68);
+        --accent: #35d8ff;
+        --danger: #ff4d7d;
+        --ok: #33d69f;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        color: var(--text);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Arial,
+          "Apple Color Emoji",
+          "Segoe UI Emoji";
+        background:
+          radial-gradient(1000px 600px at 20% 10%, #1a2b66 0%, transparent 55%),
+          radial-gradient(900px 700px at 85% 35%, #083b45 0%, transparent 52%),
+          radial-gradient(900px 800px at 50% 90%, #2c163d 0%, transparent 55%), var(--bg);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .shell {
+        width: min(980px, 100%);
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        gap: 18px;
+      }
+      .sidebar,
+      .card {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        background: linear-gradient(180deg, var(--panel), rgba(255, 255, 255, 0.03));
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+      }
+      .sidebar {
+        padding: 18px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      .logo {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        background: radial-gradient(circle at 30% 30%, #fff 0%, #8cf 18%, #0bf 55%, #057 100%);
+        box-shadow: 0 10px 26px rgba(53, 216, 255, 0.25);
+      }
+      .brand h1 {
+        font-size: 18px;
+        margin: 0;
+        letter-spacing: 0.2px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.35;
+      }
+      .steps {
+        margin-top: 16px;
+        display: grid;
+        gap: 10px;
+      }
+      .step {
+        padding: 12px 12px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.04);
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.25);
+      }
+      .step.active {
+        background: rgba(53, 216, 255, 0.12);
+        border: 1px solid rgba(53, 216, 255, 0.35);
+      }
+      .step.active .dot {
+        background: var(--accent);
+      }
+      .card {
+        padding: 18px;
+        overflow: hidden;
+      }
+      .header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+      .header h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .pill {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.8);
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 8px;
+      }
+      label {
+        display: grid;
+        gap: 6px;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.82);
+      }
+      input[type="text"],
+      input[type="email"] {
+        height: 44px;
+        border-radius: 12px;
+        padding: 0 12px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        outline: none;
+      }
+      input:focus {
+        border-color: rgba(53, 216, 255, 0.55);
+        box-shadow: 0 0 0 4px rgba(53, 216, 255, 0.12);
+      }
+      .row {
+        margin-top: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+      .error {
+        color: rgba(255, 255, 255, 0.92);
+        background: rgba(255, 77, 125, 0.15);
+        border: 1px solid rgba(255, 77, 125, 0.35);
+        padding: 10px 12px;
+        border-radius: 12px;
+        font-size: 13px;
+        display: none;
+      }
+      .plans {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .plan {
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.05);
+        padding: 12px;
+        cursor: pointer;
+      }
+      .plan input {
+        display: none;
+      }
+      .plan strong {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 6px;
+      }
+      .plan span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .plan.selected {
+        border-color: rgba(53, 216, 255, 0.55);
+        background: rgba(53, 216, 255, 0.12);
+      }
+      .buttons {
+        display: flex;
+        gap: 10px;
+      }
+      button {
+        height: 44px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        padding: 0 14px;
+        cursor: pointer;
+      }
+      button.primary {
+        border-color: rgba(53, 216, 255, 0.55);
+        background: linear-gradient(180deg, rgba(53, 216, 255, 0.2), rgba(53, 216, 255, 0.06));
+      }
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+      }
+      .review {
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.05);
+        padding: 12px;
+        color: rgba(255, 255, 255, 0.86);
+      }
+      .toast {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: rgba(51, 214, 159, 0.16);
+        border: 1px solid rgba(51, 214, 159, 0.45);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+        display: none;
+      }
+      .secret {
+        margin-top: 14px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px dashed rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.04);
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+          monospace;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.78);
+      }
+      @media (max-width: 900px) {
+        .shell {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="logo" aria-hidden="true"></div>
+          <div>
+            <h1>FlowForm</h1>
+            <div class="muted">A tiny, polished onboarding wizard.</div>
+          </div>
+        </div>
+        <div class="steps" data-testid="wizard-steps">
+          <div class="step active" data-step="1">
+            <div class="dot" aria-hidden="true"></div>
+            <div>
+              <div>Profile</div>
+              <div class="muted">Basics and contact</div>
+            </div>
+          </div>
+          <div class="step" data-step="2">
+            <div class="dot" aria-hidden="true"></div>
+            <div>
+              <div>Plan</div>
+              <div class="muted">Pick what you need</div>
+            </div>
+          </div>
+          <div class="step" data-step="3">
+            <div class="dot" aria-hidden="true"></div>
+            <div>
+              <div>Review</div>
+              <div class="muted">Confirm and submit</div>
+            </div>
+          </div>
+        </div>
+        <div class="secret secret-key" data-testid="fake-secret">
+          API Key (demo): sk-demo-1234567890
+        </div>
+      </aside>
+
+      <main class="card">
+        <div class="header">
+          <h2 id="title">Create your workspace</h2>
+          <div class="pill" data-testid="step-pill">Step 1 of 3</div>
+        </div>
+
+        <div class="error" id="error" data-testid="error-banner">
+          Please enter a name and a valid email.
+        </div>
+
+        <section id="step-1">
+          <div class="grid">
+            <label>
+              Name
+              <input id="name" data-testid="name" type="text" placeholder="Ada Lovelace" />
+            </label>
+            <label>
+              Email
+              <input id="email" data-testid="email" type="email" placeholder="ada@company.com" />
+            </label>
+          </div>
+        </section>
+
+        <section id="step-2" style="display: none">
+          <div class="muted">Choose a plan that fits your team.</div>
+          <div class="plans" role="radiogroup" aria-label="Plan">
+            <label class="plan" data-testid="plan-basic">
+              <input type="radio" name="plan" value="Basic" />
+              <strong>Basic</strong>
+              <span>For personal projects</span>
+            </label>
+            <label class="plan" data-testid="plan-pro">
+              <input type="radio" name="plan" value="Pro" />
+              <strong>Pro</strong>
+              <span>For growing teams</span>
+            </label>
+            <label class="plan" data-testid="plan-enterprise">
+              <input type="radio" name="plan" value="Enterprise" />
+              <strong>Enterprise</strong>
+              <span>SSO and controls</span>
+            </label>
+          </div>
+        </section>
+
+        <section id="step-3" style="display: none">
+          <div class="muted">Review your details.</div>
+          <div class="review" data-testid="review">
+            <div><strong>Name:</strong> <span data-testid="review-name"></span></div>
+            <div><strong>Email:</strong> <span data-testid="review-email"></span></div>
+            <div><strong>Plan:</strong> <span data-testid="review-plan"></span></div>
+          </div>
+        </section>
+
+        <div class="row">
+          <div class="buttons">
+            <button id="back" data-testid="back" type="button">Back</button>
+          </div>
+          <div class="buttons">
+            <button id="next" data-testid="next" class="primary" type="button">Next</button>
+            <button
+              id="submit"
+              data-testid="submit"
+              class="primary"
+              type="button"
+              style="display: none"
+            >
+              Submit
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" data-testid="toast">Submitted successfully</div>
+
+    <script>
+      const state = { step: 1, name: "", email: "", plan: "Pro" };
+
+      const $ = (s) => document.querySelector(s);
+      const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+      const title = $("#title");
+      const pill = $("[data-testid='step-pill']");
+      const error = $("#error");
+      const next = $("#next");
+      const back = $("#back");
+      const submit = $("#submit");
+      const toast = $("#toast");
+      const nameInput = $("#name");
+      const emailInput = $("#email");
+
+      function setStep(n) {
+        state.step = n;
+        $$("#step-1, #step-2, #step-3").forEach((el) => (el.style.display = "none"));
+        $("#step-" + n).style.display = "block";
+        $$(".step").forEach((el) => el.classList.toggle("active", el.dataset.step == String(n)));
+        pill.textContent = `Step ${n} of 3`;
+        error.style.display = "none";
+
+        back.disabled = n === 1;
+        next.style.display = n === 3 ? "none" : "inline-flex";
+        submit.style.display = n === 3 ? "inline-flex" : "none";
+
+        if (n === 1) {
+          title.textContent = "Create your workspace";
+          validateStep1();
+        }
+        if (n === 2) {
+          title.textContent = "Select a plan";
+          next.disabled = false;
+        }
+        if (n === 3) {
+          title.textContent = "Review and submit";
+          $("[data-testid='review-name']").textContent = state.name || "-";
+          $("[data-testid='review-email']").textContent = state.email || "-";
+          $("[data-testid='review-plan']").textContent = state.plan;
+        }
+      }
+
+      function validateStep1() {
+        state.name = nameInput.value.trim();
+        state.email = emailInput.value.trim();
+        const ok = state.name.length > 1 && state.email.includes("@");
+        next.disabled = !ok;
+        return ok;
+      }
+
+      nameInput.addEventListener("input", validateStep1);
+      emailInput.addEventListener("input", validateStep1);
+
+      $$(".plan").forEach((el) => {
+        el.addEventListener("click", () => {
+          $$(".plan").forEach((p) => p.classList.remove("selected"));
+          el.classList.add("selected");
+          const input = el.querySelector("input");
+          input.checked = true;
+          state.plan = input.value;
+        });
+      });
+      $("[data-testid='plan-pro']").click();
+
+      next.addEventListener("click", () => {
+        if (state.step === 1 && !validateStep1()) {
+          error.style.display = "block";
+          return;
+        }
+        setStep(Math.min(3, state.step + 1));
+      });
+
+      back.addEventListener("click", () => setStep(Math.max(1, state.step - 1)));
+
+      submit.addEventListener("click", () => {
+        toast.style.display = "block";
+        setTimeout(() => (toast.style.display = "none"), 1200);
+      });
+
+      setStep(1);
+    </script>
+  </body>
+</html>

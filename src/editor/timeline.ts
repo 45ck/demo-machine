@@ -8,7 +8,11 @@ const OUTRO_DURATION_MS = 2000;
 const DEAD_TIME_THRESHOLD_MS = 3000;
 const DEAD_TIME_SPEED_FACTOR = 3;
 
-export function buildTimeline(events: ActionEvent[], spec: DemoSpec): Timeline {
+export function buildTimeline(
+  events: ActionEvent[],
+  spec: DemoSpec,
+  t0Override?: number,
+): Timeline {
   const segments: Segment[] = [];
 
   if (events.length === 0) {
@@ -20,7 +24,7 @@ export function buildTimeline(events: ActionEvent[], spec: DemoSpec): Timeline {
     return { segments, totalDurationMs: 0, resolution: spec.meta.resolution };
   }
 
-  const t0 = firstEvent.timestamp;
+  const t0 = t0Override ?? firstEvent.timestamp;
   const lastEvent = events[events.length - 1]!;
   const videoDurationMs = lastEvent.timestamp + lastEvent.duration - t0;
 

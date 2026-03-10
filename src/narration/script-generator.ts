@@ -4,10 +4,14 @@ import type { NarrationSegment } from "./types.js";
 
 const DEFAULT_STEP_DURATION_MS = 3000;
 
-export function generateScript(chapters: Chapter[], events: ActionEvent[]): NarrationSegment[] {
+export function generateScript(
+  chapters: Chapter[],
+  events: ActionEvent[],
+  t0Override?: number,
+): NarrationSegment[] {
   const segments: NarrationSegment[] = [];
   let eventIndex = 0;
-  const t0 = events[0]?.timestamp ?? 0;
+  const t0 = t0Override ?? events[0]?.timestamp ?? 0;
 
   for (const chapter of chapters) {
     for (const step of chapter.steps) {

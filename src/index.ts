@@ -8,6 +8,7 @@ export {
 } from "./spec/loader.js";
 export type { SerializeFormat } from "./spec/loader.js";
 export { demoSpecSchema } from "./spec/schema.js";
+export { preStepSchema, stepSchema } from "./spec/step-schema.js";
 export type {
   DemoSpec,
   Chapter,
@@ -17,6 +18,7 @@ export type {
   Resolution,
   Branding,
   Pacing,
+  PreStep,
 } from "./spec/types.js";
 
 // Runner
@@ -25,7 +27,9 @@ export type { RunnerHandle, RunnerOptions } from "./runner/types.js";
 
 // Playback
 export { PlaybackEngine } from "./playback/engine.js";
+export { PlaybackStepError } from "./playback/errors.js";
 export { actionHandlers } from "./playback/actions.js";
+export { runPreSteps } from "./playback/presteps.js";
 export type { PlaywrightPage, PlaybackContext } from "./playback/actions.js";
 export type {
   ActionEvent,
@@ -41,6 +45,7 @@ export type { CaptureOptions, CaptureBundle } from "./capture/types.js";
 
 // Editor
 export { buildTimeline, extendTimelineForNarration } from "./editor/timeline.js";
+export { applyTimelineTrim, resolveStartStepIndex, trimSpecFromStepIndex } from "./editor/trim.js";
 export { createRenderer, createRendererV2 } from "./editor/renderer.js";
 export type {
   Timeline,
@@ -52,11 +57,21 @@ export type {
 } from "./editor/types.js";
 export type { Renderer, RenderArgs, RenderResult } from "./editor/renderer-types.js";
 
+// CLI types
+export type { CaptureResult } from "./cli/capture.js";
+export type { NarrationSettings } from "./cli/narration.js";
+
 // Narration
 export { generateScript } from "./narration/script-generator.js";
 export { createTTSProvider } from "./narration/provider.js";
-export { mixNarrationAudio } from "./narration/audio-mixer.js";
+export { mixNarrationAudio, mixPreSynthesizedNarrationAudio } from "./narration/audio-mixer.js";
+export {
+  preSynthesizeNarration,
+  extractNarrationItems,
+  buildEstimatedNarrationTiming,
+} from "./narration/pre-synthesizer.js";
 export { generateVTT, generateSRT } from "./narration/subtitles.js";
+export { generateVTTFromTimed, generateSRTFromTimed } from "./narration/subtitles.js";
 export { cloneVoice } from "./narration/providers/elevenlabs-clone.js";
 export type {
   CloneVoiceOptions,
@@ -72,6 +87,25 @@ export type {
   TimedNarrationSegment,
   ElevenLabsVoiceSettings,
 } from "./narration/types.js";
+export type {
+  NarrationSyncMode,
+  NarrationSyncConfig,
+  SpecNarrationConfig,
+  NarrationTimingEntry,
+  NarrationTimingMap,
+  NarrationPreSynthesisResult,
+} from "./utils/narration-sync-types.js";
+
+// Pipeline
+export {
+  captureFromSpec,
+  runFullPipeline,
+  prepareNarration,
+  synthesizeAudio,
+  writeSubtitles,
+  extractBranding,
+} from "./pipeline.js";
+export type { PipelineOptions, CaptureResult as PipelineCaptureResult } from "./pipeline.js";
 
 // Redaction
 export { generateBlurStyles } from "./redaction/mask.js";

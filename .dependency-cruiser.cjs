@@ -58,6 +58,13 @@ module.exports = {
       to: { path: "^src/(?!spec/|redaction/|utils/)" },
     },
     {
+      name: "no-mcp-import",
+      severity: "error",
+      comment: "Library modules must not import from src/mcp/ (it is a top-level entry point)",
+      from: { path: "^src/(?!mcp/)" },
+      to: { path: "^src/mcp/" },
+    },
+    {
       name: "no-test-in-src",
       severity: "error",
       comment: "No test code imported from src",

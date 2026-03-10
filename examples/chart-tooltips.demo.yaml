@@ -1,0 +1,38 @@
+meta:
+  title: "ChartLab - Hover Tooltips Demo"
+  resolution:
+    width: 1920
+    height: 1080
+
+runner:
+  command: "node examples/chart-tooltips/serve.mjs"
+  url: "http://localhost:4576"
+  healthcheck: "http://localhost:4576/api/health"
+  timeout: 10000
+
+chapters:
+  - title: "Hover"
+    steps:
+      - action: navigate
+        url: "http://localhost:4576"
+        narration: "Hover interactions are critical for demos, especially charts and dashboards."
+      - action: assert
+        target:
+          by: testId
+          testId: "tooltip"
+        text: "hover a bar"
+      - action: hover
+        target:
+          by: testId
+          testId: "bar-q2"
+        narration: "We'll hover Q2 and watch a tooltip appear."
+      - action: assert
+        target:
+          by: testId
+          testId: "tooltip"
+        visible: true
+      - action: assert
+        target:
+          by: testId
+          testId: "tooltip"
+        text: "Q2: $42k"

@@ -34,6 +34,8 @@
     "vout",
     "boxcolor",
     "boxborderw",
+    "domcontentloaded",
+    "networkidle",
     "reinject",
     "reinjects",
     "adelay",
@@ -48,7 +50,16 @@
     "toml",
     "iarna",
     "tpad",
-    "multilingual"
+    "multilingual",
+    "statfs",
+    "bavail",
+    "Fagan",
+    "embedders",
+    "presteps",
+    "prestep",
+    "Cascadia",
+    "teleporting",
+    "modelcontextprotocol"
   ],
   "ignorePaths": ["node_modules", "dist", "pnpm-lock.yaml", "*.json"]
 }

@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ScrollForge - Infinite Scroll</title>
+    <style>
+      :root {
+        --bg: #081018;
+        --panel: rgba(255, 255, 255, 0.06);
+        --border: rgba(255, 255, 255, 0.12);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.68);
+        --accent: #6c7dff;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Arial;
+        background:
+          radial-gradient(1000px 650px at 20% 10%, #2a2f78 0%, transparent 55%),
+          radial-gradient(900px 650px at 85% 20%, #0a3a4f 0%, transparent 55%),
+          radial-gradient(1000px 700px at 50% 92%, #3b1b3f 0%, transparent 55%), var(--bg);
+        padding: 24px;
+      }
+      .wrap {
+        width: min(980px, 100%);
+        margin: 0 auto;
+      }
+      header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .panel {
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: linear-gradient(180deg, var(--panel), rgba(255, 255, 255, 0.03));
+        box-shadow: 0 22px 70px rgba(0, 0, 0, 0.45);
+        overflow: hidden;
+      }
+      .toolbar {
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .count {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+          monospace;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.78);
+      }
+      .list {
+        height: 640px;
+        overflow: auto;
+        padding: 10px 12px 16px;
+      }
+      .item {
+        padding: 12px 12px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.04);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .tag {
+        font-size: 12px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(108, 125, 255, 0.45);
+        background: rgba(108, 125, 255, 0.1);
+        color: rgba(255, 255, 255, 0.9);
+      }
+      .loading {
+        display: none;
+        padding: 12px;
+        border-radius: 14px;
+        border: 1px dashed rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.03);
+        color: rgba(255, 255, 255, 0.78);
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>ScrollForge</h1>
+        <div class="muted">An infinite list with deterministic loads.</div>
+      </header>
+
+      <div class="panel">
+        <div class="toolbar">
+          <div class="muted">Scroll to load more items.</div>
+          <div class="count" data-testid="count">items: 0</div>
+        </div>
+        <div class="list" id="list" data-testid="list">
+          <div class="loading" id="loading" data-testid="loading">Loading…</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const list = document.getElementById("list");
+      const loading = document.getElementById("loading");
+      const count = document.querySelector("[data-testid='count']");
+      let n = 0;
+      let busy = false;
+
+      function updateCount() {
+        count.textContent = `items: ${n}`;
+      }
+
+      function addItems(k) {
+        for (let i = 0; i < k; i++) {
+          n++;
+          const el = document.createElement("div");
+          el.className = "item";
+          el.setAttribute("data-testid", "item");
+          el.innerHTML = `<div>Item ${n}</div><div class="tag">#${String(n).padStart(
+            3,
+            "0",
+          )}</div>`;
+          list.insertBefore(el, loading);
+        }
+        updateCount();
+      }
+
+      async function loadMore() {
+        if (busy) return;
+        busy = true;
+        loading.style.display = "block";
+        await new Promise((r) => setTimeout(r, 550));
+        addItems(10);
+        loading.style.display = "none";
+        busy = false;
+      }
+
+      list.addEventListener("scroll", () => {
+        const nearBottom = list.scrollTop + list.clientHeight >= list.scrollHeight - 40;
+        if (nearBottom) loadMore();
+      });
+
+      // initial content
+      addItems(20);
+    </script>
+  </body>
+</html>

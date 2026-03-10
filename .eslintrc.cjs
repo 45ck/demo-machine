@@ -7,12 +7,7 @@ module.exports = {
     sourceType: "module",
     project: "./tsconfig.json",
   },
-  plugins: [
-    "@typescript-eslint",
-    "sonarjs",
-    "import",
-    "unused-imports",
-  ],
+  plugins: ["@typescript-eslint", "sonarjs", "import", "unused-imports"],
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",

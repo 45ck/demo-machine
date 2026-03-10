@@ -1,0 +1,95 @@
+meta:
+  title: "SeededAPI - Notes with preSteps"
+
+runner:
+  command: "node examples/seeded-api/serve.mjs"
+  url: "http://localhost:4584"
+  timeout: 10000
+
+# preSteps run before any chapter steps.
+# They hit the REST API to seed data and verify the count via saveResponseAs + valueFrom chaining.
+preSteps:
+  # 1. Seed the notes store via POST
+  - action: httpRequest
+    url: "http://localhost:4584/api/seed"
+    method: POST
+    body:
+      notes:
+        - "Deploy v2"
+        - "Write changelog"
+        - "Update docs"
+    expectStatus: 200
+
+  # 2. Verify the seeded data is retrievable; save response for chaining
+  - action: httpRequest
+    url: "http://localhost:4584/api/notes"
+    method: GET
+    saveResponseAs: notesResp
+    expectStatus: 200
+
+  # 3. Chain: store the note count into localStorage so the page can read it
+  - action: setLocalStorage
+    key: seeded_count
+    valueFrom:
+      source: notesResp
+      path: count
+    origin: "http://localhost:4584"
+
+chapters:
+  - title: "Notes List"
+    steps:
+      - action: navigate
+        url: "/"
+        narration: "preSteps seeded the API — the notes are ready before we arrive."
+
+      # The page fetches /api/notes on load; assert count badge
+      - action: assert
+        target:
+          by: testId
+          testId: "note-count"
+        text: "3 notes"
+        timeoutMs: 5000
+
+      # Assert first note rendered
+      - action: assert
+        target:
+          by: testId
+          testId: "note-0"
+        text: "Deploy v2"
+        timeoutMs: 5000
+
+      - action: screenshot
+        name: "notes-list"
+
+  - title: "Note Detail"
+    steps:
+      # Click first note to open detail panel
+      - action: click
+        target:
+          by: testId
+          testId: "note-0"
+        narration: "Click the first note to open its detail panel."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "note-detail"
+        text: "Deploy v2"
+        timeoutMs: 5000
+
+      # Click second note
+      - action: click
+        target:
+          by: testId
+          testId: "note-1"
+        narration: "Switch to the second note seamlessly."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "note-detail"
+        text: "Write changelog"
+        timeoutMs: 5000
+
+      - action: screenshot
+        name: "note-detail"

@@ -1,0 +1,2 @@
+Hello from demo-machine!
+This is sample.txt — a test file for the file-uploader adversarial example.

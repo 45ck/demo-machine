@@ -70,19 +70,32 @@ describe("adjustTiming", () => {
     expect(segments[1]!.durationMs).toBe(3000);
   });
 
-  it("handles cascading overlaps with 3+ segments", () => {
+  it("handles cascading overlaps with 3+ segments — caps to action timestamps", () => {
     const segments = makeSegments([
       { startMs: 1000, durationMs: 2000 },
       { startMs: 1500, durationMs: 2000 },
       { startMs: 2000, durationMs: 2000 },
     ]);
     adjustTiming(segments);
-    // First: max(0, 1000-2000) = 0, ends at 2000
+    // First: max(0, 1000-2000) = 0 — no cap needed (0 < 1000)
     expect(segments[0]!.startMs).toBe(0);
-    // Second: must start after 2000 + GAP_MS = 2200
-    expect(segments[1]!.startMs).toBe(2000 + GAP_MS);
-    // Third: must start after 2200 + 2000 + GAP_MS = 4400
-    expect(segments[2]!.startMs).toBe(2000 + GAP_MS + 2000 + GAP_MS);
+    // Second: overlap would push to 2200, but action is at 1500ms → capped to 1500
+    expect(segments[1]!.startMs).toBe(1500);
+    // Third: overlap would push to 4400, but action is at 2000ms → capped to 2000
+    expect(segments[2]!.startMs).toBe(2000);
+  });
+
+  it("caps a segment that overlap-prevention would push past its own action timestamp", () => {
+    // A long segment followed by a closely-spaced action: without the cap the second narration
+    // would play AFTER the second action has already happened in the video.
+    const segments = makeSegments([
+      { startMs: 1000, durationMs: 3000 }, // action at 1000ms, shifted to 0, ends at 3000
+      { startMs: 2000, durationMs: 2000 }, // action at 2000ms, overlap would push to 3200ms
+    ]);
+    adjustTiming(segments);
+    expect(segments[0]!.startMs).toBe(0);
+    // Without cap: 3200ms (past the 2000ms action). With cap: 2000ms.
+    expect(segments[1]!.startMs).toBe(2000);
   });
 
   it("handles zero-duration segment", () => {

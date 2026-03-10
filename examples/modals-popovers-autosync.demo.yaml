@@ -1,0 +1,38 @@
+meta:
+  title: "OverlayKit - Modals and Popovers (Auto-Sync)"
+
+runner:
+  command: "node examples/modals-popovers/serve.mjs"
+  url: "http://localhost:4570"
+  timeout: 10000
+
+narration:
+  sync:
+    mode: "auto-sync"
+    bufferMs: 450
+
+chapters:
+  - title: "Overlays"
+    steps:
+      - action: navigate
+        url: "http://localhost:4570"
+        narration: "OverlayKit shows the tricky UI: hover tooltips and modals."
+      - action: hover
+        selector: "[data-testid='info']"
+        narration: "Hover reveals a tooltip."
+      - action: wait
+        timeout: 500
+      - action: click
+        selector: "[data-testid='open-modal']"
+        narration: "Now we open the invite modal."
+      - action: click
+        selector: "[data-testid='invite-email']"
+      - action: type
+        selector: "[data-testid='invite-email']"
+        text: "new.user@company.com"
+        narration: "We type an email."
+      - action: click
+        selector: "[data-testid='send-invite']"
+        narration: "And send the invite."
+      - action: wait
+        timeout: 700

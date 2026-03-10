@@ -1,0 +1,32 @@
+meta:
+  title: "DashLite - Table Dashboard (Auto-Sync)"
+
+runner:
+  command: "node examples/dashboard-table/serve.mjs"
+  url: "http://localhost:4572"
+  timeout: 10000
+
+narration:
+  sync:
+    mode: "auto-sync"
+    bufferMs: 450
+
+chapters:
+  - title: "Dashboard"
+    steps:
+      - action: navigate
+        url: "http://localhost:4572"
+        narration: "DashLite is a realistic admin table: dense UI, fast interactions."
+      - action: click
+        selector: "[data-testid='search']"
+        narration: "We'll search by name."
+      - action: type
+        selector: "[data-testid='search']"
+        text: "Grace"
+      - action: wait
+        timeout: 450
+      - action: click
+        selector: "[data-testid='th-status']"
+        narration: "Then sort by status."
+      - action: wait
+        timeout: 600

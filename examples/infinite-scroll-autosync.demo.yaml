@@ -1,0 +1,28 @@
+meta:
+  title: "ScrollForge - Infinite Scroll (Auto-Sync)"
+
+runner:
+  command: "node examples/infinite-scroll/serve.mjs"
+  url: "http://localhost:4571"
+  timeout: 10000
+
+narration:
+  sync:
+    mode: "auto-sync"
+    bufferMs: 450
+
+chapters:
+  - title: "Scroll"
+    steps:
+      - action: navigate
+        url: "http://localhost:4571"
+        narration: "Infinite scrolling is common in modern apps."
+      - action: scroll
+        selector: "[data-testid='list']"
+        narration: "We'll scroll to trigger a deterministic load."
+      - action: wait
+        timeout: 900
+      - action: assert
+        selector: "[data-testid='count']"
+        text: "items: 30"
+        narration: "And we can assert the new content was added."

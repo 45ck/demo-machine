@@ -1,0 +1,2 @@
+Second sample file for multi-upload testing.
+This is sample2.txt — used in the files: array upload step.

@@ -1,0 +1,79 @@
+meta:
+  title: "FileUploader - Upload Preview"
+
+runner:
+  command: "node examples/file-uploader/serve.mjs"
+  url: "http://localhost:4582"
+  timeout: 10000
+
+chapters:
+  - title: "Upload Files"
+    steps:
+      - action: navigate
+        url: "/"
+        narration: "FileUploader demonstrates single and multi-file uploads."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "title"
+        visible: true
+
+      # Upload a single file targeted by label text
+      - action: upload
+        target:
+          by: label
+          text: "Choose files"
+        file: "./file-uploader/assets/sample.txt"
+        narration: "Upload a single file using the label as the target."
+
+      # Assert the filename appears in the file list
+      - action: assert
+        target:
+          by: testId
+          testId: "file-list"
+        text: "sample.txt"
+        timeoutMs: 5000
+
+      - action: assert
+        target:
+          by: testId
+          testId: "file-count"
+        text: "1"
+
+      - action: screenshot
+        name: "single-file-upload"
+
+      # Upload multiple files
+      - action: upload
+        target:
+          by: label
+          text: "Choose files"
+        files:
+          - "./file-uploader/assets/sample.txt"
+          - "./file-uploader/assets/sample2.txt"
+        narration: "Now upload two files at once using the files array."
+
+      # Assert both filenames appear
+      - action: assert
+        target:
+          by: testId
+          testId: "file-list"
+        text: "sample.txt"
+        timeoutMs: 5000
+
+      - action: assert
+        target:
+          by: testId
+          testId: "file-list"
+        text: "sample2.txt"
+        timeoutMs: 5000
+
+      - action: assert
+        target:
+          by: testId
+          testId: "file-count"
+        text: "2"
+
+      - action: screenshot
+        name: "multi-file-upload"

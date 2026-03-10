@@ -1,4 +1,4 @@
-export type SegmentType = "intro" | "chapter" | "content" | "callout" | "zoom" | "outro";
+export type SegmentType = "intro" | "chapter" | "content" | "callout" | "outro";
 
 export interface Segment {
   startMs: number;
@@ -26,6 +26,7 @@ export interface Timeline {
 export interface RenderOptions {
   outputPath: string;
   videoPath: string;
+  trimStartMs?: number | undefined;
   audioPath?: string | undefined;
   extendToMs?: number | undefined;
   resolution?: { width: number; height: number } | undefined;

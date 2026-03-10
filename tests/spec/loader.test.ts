@@ -38,7 +38,7 @@ describe("loadSpec", () => {
     const spec = await loadSpec(join(EXAMPLES_DIR, "hello-world.demo.yaml"));
     expect(spec.meta.title).toBe("Hello World Demo");
     expect(spec.meta.resolution).toEqual({ width: 1920, height: 1080 });
-    expect(spec.runner.url).toBe("http://localhost:3000");
+    expect(spec.runner.url).toBe("http://localhost:4574");
     expect(spec.chapters).toHaveLength(1);
     expect(spec.chapters[0]!.steps).toHaveLength(5);
   });
@@ -77,12 +77,12 @@ describe("loadSpec", () => {
 
     // Meta
     expect(spec.meta.branding).toBeDefined();
-    expect(spec.meta.branding!.logo).toBe("./assets/logo.png");
+    expect(spec.meta.branding!.logo).toBe("./hello-world/assets/logo.svg");
     expect(spec.meta.branding!.colors!.primary).toBe("#3B82F6");
 
     // Runner
-    expect(spec.runner.command).toBe("pnpm dev");
-    expect(spec.runner.healthcheck).toBe("http://localhost:3000/api/health");
+    expect(spec.runner.command).toBe("node examples/hello-world/serve.mjs");
+    expect(spec.runner.healthcheck).toBe("http://localhost:4574/api/health");
 
     // Redaction
     expect(spec.redaction).toBeDefined();

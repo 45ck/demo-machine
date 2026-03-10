@@ -39,7 +39,7 @@ With auto-sync, demo-machine automatically adjusts delays:
 
 ## Configuration
 
-### Auto-Sync Mode (Default)
+### Auto-Sync Mode (Recommended)
 
 Automatically adjusts delays to match narration:
 
@@ -52,7 +52,7 @@ narration:
   provider: kokoro # Local TTS
   sync:
     mode: auto-sync # ← Automatic timing adjustment
-    bufferMs: 500 # Natural pause after narration
+    bufferMs: 500 # Lead-in pause between narration end and the action
 ```
 
 ### Manual Mode
@@ -79,7 +79,7 @@ narration:
 
 ## CLI Usage
 
-### Run with Auto-Sync
+### Run with Auto-Sync (Opt-in)
 
 ```bash
 demo-machine run demo.yaml --narration-sync auto-sync

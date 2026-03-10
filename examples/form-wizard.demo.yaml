@@ -1,0 +1,69 @@
+meta:
+  title: "FlowForm - Onboarding Wizard"
+  resolution:
+    width: 1920
+    height: 1080
+
+runner:
+  command: "node examples/form-wizard/serve.mjs"
+  url: "http://localhost:4568"
+  timeout: 10000
+
+chapters:
+  - title: "Start the Wizard"
+    steps:
+      - action: navigate
+        url: "http://localhost:4568"
+        narration: "Welcome to FlowForm. Let's create a workspace in three quick steps."
+      - action: wait
+        timeout: 600
+
+  - title: "Profile Details"
+    steps:
+      - action: click
+        selector: "[data-testid='name']"
+        narration: "First, we'll enter a name and email."
+      - action: type
+        selector: "[data-testid='name']"
+        text: "Ada Lovelace"
+      - action: click
+        selector: "[data-testid='email']"
+      - action: type
+        selector: "[data-testid='email']"
+        text: "ada@company.com"
+      - action: click
+        target:
+          by: role
+          role: button
+          name: "Next"
+        narration: "Then we continue to plan selection."
+      - action: wait
+        timeout: 500
+
+  - title: "Choose a Plan"
+    steps:
+      - action: click
+        selector: "[data-testid='plan-pro']"
+        narration: "We'll choose the Pro plan for growing teams."
+      - action: click
+        target:
+          by: role
+          role: button
+          name: "Next"
+      - action: wait
+        timeout: 500
+
+  - title: "Review and Submit"
+    steps:
+      - action: assert
+        selector: "[data-testid='review-name']"
+        text: "Ada"
+        narration: "On the review step, we confirm the details."
+      - action: click
+        selector: "[data-testid='submit']"
+        narration: "And submit."
+      - action: assert
+        selector: "[data-testid='toast']"
+        visible: true
+      - action: wait
+        timeout: 600

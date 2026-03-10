@@ -5,15 +5,6 @@ import { createLogger } from "../utils/logger.js";
 
 const logger = createLogger("runner");
 
-function parseCommand(command: string): { cmd: string; args: string[] } {
-  const parts = command.split(/\s+/).filter(Boolean);
-  const cmd = parts[0];
-  if (!cmd) {
-    throw new Error("Empty command string");
-  }
-  return { cmd, args: parts.slice(1) };
-}
-
 export async function startRunner(options: RunnerOptions): Promise<RunnerHandle> {
   if (options.command) {
     return startWithCommand(options);
@@ -36,10 +27,11 @@ export function createRunnerOptions(config: RunnerConfig): RunnerOptions {
 }
 
 async function startWithCommand(options: RunnerOptions): Promise<RunnerHandle> {
-  const { cmd, args } = parseCommand(options.command!);
   logger.info(`Spawning: ${options.command!}`);
 
-  const { process: child } = spawnProcess(cmd, args);
+  // Runner commands are user-authored strings and often rely on shell resolution
+  // (e.g. pnpm, npm, env var expansion). Use a shell for consistent cross-platform behavior.
+  const { process: child } = spawnProcess(options.command!, [], { shell: true });
   const pid = child.pid;
 
   if (pid === undefined) {

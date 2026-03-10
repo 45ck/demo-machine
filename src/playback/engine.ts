@@ -1,11 +1,12 @@
 import type { Chapter } from "../spec/types.js";
-import { generateBlurStyles } from "../redaction/mask.js";
-import { scanForSecrets } from "../redaction/secrets.js";
 import { createLogger } from "../utils/logger.js";
 import type { PlaywrightPage, PlaybackContext } from "./actions.js";
 import { actionHandlers } from "./actions.js";
-import { getCursorCSS } from "./cursor.js";
+import { PlaybackStepError } from "./errors.js";
 import type { ActionEvent, BoundingBox, Pacing, PlaybackOptions, PlaybackResult } from "./types.js";
+import { selectorForEvent, selectorForEventFromInput, type Target } from "./selector.js";
+import { createNarrationWaiter } from "./narration-waiter.js";
+import { applyRedaction, checkSecrets, injectCursor } from "./overlays.js";
 
 const logger = createLogger("playback");
 
@@ -18,52 +19,168 @@ const NO_PACING: Pacing = {
   settleDelayMs: 0,
 };
 
-async function applyRedaction(page: PlaywrightPage, selectors: string[]): Promise<void> {
-  if (selectors.length === 0) return;
-  const css = generateBlurStyles(selectors);
-  await page.addStyleTag({ content: css });
-  logger.info(`Applied redaction to ${String(selectors.length)} selectors`);
-}
-
-async function injectCursor(page: PlaywrightPage): Promise<void> {
-  const css = getCursorCSS();
-  await page.addStyleTag({ content: css });
-  await page.evaluate((() => {
-    if (!document.getElementById("dm-cursor")) {
-      const cursor = document.createElement("div");
-      cursor.id = "dm-cursor";
-      cursor.style.left = "0px";
-      cursor.style.top = "0px";
-      document.body.appendChild(cursor);
-    }
-  }) as (...args: unknown[]) => unknown);
-  logger.info("Injected cursor CSS and element");
-}
-
-async function checkSecrets(page: PlaywrightPage, patterns: string[]): Promise<void> {
-  if (patterns.length === 0) return;
-  const text = (await page.evaluate(
-    (() => document.body.innerText) as (...args: unknown[]) => unknown,
-  )) as string;
-  const matches = scanForSecrets(text, patterns);
-  for (const match of matches) {
-    logger.warn(`Secret detected: pattern="${match.pattern}" text="${match.text}"`);
-  }
-}
-
 async function executeStep(
   ctx: PlaybackContext,
   step: Chapter["steps"][number],
-  events: ActionEvent[],
-  secretPatterns: string[],
+  params: { events: ActionEvent[]; secretPatterns: string[]; stepIndex: number },
 ): Promise<void> {
   const handler = actionHandlers[step.action];
   if (!handler) {
     throw new Error(`Unknown action: ${step.action}`);
   }
-  await handler(ctx, step, events);
+  await handler(ctx, step, params.events, params.stepIndex);
   if (step.action === "navigate") {
-    await checkSecrets(ctx.page, secretPatterns);
+    await checkSecrets(ctx.page, params.secretPatterns);
+  }
+}
+
+function selectorForError(step: Chapter["steps"][number]): string {
+  if (step.action !== "dragAndDrop") return selectorForEvent(step);
+  const from = selectorForEventFromInput(
+    {
+      selector: step.from.selector,
+      target: step.from.target as unknown as Target,
+      nth: step.from.nth,
+    },
+    "from(?)",
+  );
+  const to = selectorForEventFromInput(
+    {
+      selector: step.to.selector,
+      target: step.to.target as unknown as Target,
+      nth: step.to.nth,
+    },
+    "to(?)",
+  );
+  return `${from} -> ${to}`;
+}
+
+function raisePlaybackStepError(params: {
+  stepIndex: number;
+  chapterTitle: string;
+  step: Chapter["steps"][number];
+  selector: string;
+  events: ActionEvent[];
+  startTimestamp: number;
+  cause: unknown;
+}): never {
+  throw new PlaybackStepError({
+    stepIndex: params.stepIndex,
+    chapterTitle: params.chapterTitle,
+    step: params.step,
+    selectorForEvent: params.selector,
+    events: [...params.events],
+    startTimestamp: params.startTimestamp,
+    cause: params.cause,
+  });
+}
+
+async function executeStepOrRaise(params: {
+  ctx: PlaybackContext;
+  step: Chapter["steps"][number];
+  events: ActionEvent[];
+  secretPatterns: string[];
+  stepIndex: number;
+  chapterTitle: string;
+  selector: string;
+  startTimestamp: number;
+}): Promise<void> {
+  try {
+    await executeStep(params.ctx, params.step, {
+      events: params.events,
+      secretPatterns: params.secretPatterns,
+      stepIndex: params.stepIndex,
+    });
+  } catch (err) {
+    raisePlaybackStepError({
+      stepIndex: params.stepIndex,
+      chapterTitle: params.chapterTitle,
+      step: params.step,
+      selector: params.selector,
+      events: params.events,
+      startTimestamp: params.startTimestamp,
+      cause: err,
+    });
+  }
+}
+
+async function settleOrRaise(params: {
+  page: PlaywrightPage;
+  settleDelayMs: number;
+  stepIndex: number;
+  chapterTitle: string;
+  step: Chapter["steps"][number];
+  selector: string;
+  events: ActionEvent[];
+  startTimestamp: number;
+}): Promise<void> {
+  if (params.settleDelayMs <= 0) return;
+  try {
+    await params.page.waitForTimeout(params.settleDelayMs);
+  } catch (err) {
+    raisePlaybackStepError({
+      stepIndex: params.stepIndex,
+      chapterTitle: params.chapterTitle,
+      step: params.step,
+      selector: params.selector,
+      events: params.events,
+      startTimestamp: params.startTimestamp,
+      cause: err,
+    });
+  }
+}
+
+async function onStepCompleteMaybe(params: {
+  onStepComplete?: ((event: ActionEvent) => Promise<void>) | undefined;
+  events: ActionEvent[];
+}): Promise<void> {
+  if (!params.onStepComplete) return;
+  if (params.events.length === 0) return;
+  await params.onStepComplete(params.events[params.events.length - 1]!);
+}
+
+async function runChapters(params: {
+  chapters: Chapter[];
+  ctx: PlaybackContext;
+  page: PlaywrightPage;
+  secretPatterns: string[];
+  settleDelayMs: number;
+  onStepComplete?: ((event: ActionEvent) => Promise<void>) | undefined;
+  events: ActionEvent[];
+  startTimestamp: number;
+}): Promise<void> {
+  let stepIndex = 0;
+  for (const chapter of params.chapters) {
+    logger.info(`Starting chapter: ${chapter.title}`);
+    for (const step of chapter.steps) {
+      const selector = selectorForError(step);
+      await executeStepOrRaise({
+        ctx: params.ctx,
+        step,
+        events: params.events,
+        secretPatterns: params.secretPatterns,
+        stepIndex,
+        chapterTitle: chapter.title,
+        selector,
+        startTimestamp: params.startTimestamp,
+      });
+
+      // User callback errors should propagate as-is (caller-owned failure mode).
+      await onStepCompleteMaybe({ onStepComplete: params.onStepComplete, events: params.events });
+
+      await settleOrRaise({
+        page: params.page,
+        settleDelayMs: params.settleDelayMs,
+        stepIndex,
+        chapterTitle: chapter.title,
+        step,
+        selector,
+        events: params.events,
+        startTimestamp: params.startTimestamp,
+      });
+
+      stepIndex++;
+    }
   }
 }
 
@@ -75,6 +192,13 @@ export class PlaybackEngine {
   constructor(page: PlaywrightPage, options: PlaybackOptions) {
     this.page = page;
     this.options = options;
+  }
+
+  private async reinjectOverlays(): Promise<void> {
+    await applyRedaction(this.page, this.options.redactionSelectors ?? []);
+    if (this.options.pacing) {
+      await injectCursor(this.page);
+    }
   }
 
   private async moveCursorTo(box: BoundingBox | null): Promise<void> {
@@ -134,38 +258,46 @@ export class PlaybackEngine {
 
   async execute(chapters: Chapter[]): Promise<PlaybackResult> {
     const events: ActionEvent[] = [];
-    const startTime = Date.now();
+    const startTimestamp = Date.now();
     const pacing = this.options.pacing ?? NO_PACING;
+    const totalSteps = chapters.reduce((sum, ch) => sum + ch.steps.length, 0);
+    const narrationWaiter = createNarrationWaiter({
+      page: this.page,
+      pacing,
+      totalSteps,
+      narration: this.options.narration,
+    });
 
-    await applyRedaction(this.page, this.options.redactionSelectors ?? []);
+    await this.reinjectOverlays();
 
-    if (this.options.pacing) {
-      await injectCursor(this.page);
-    }
+    await narrationWaiter.maybeWaitBeforeFirstStep();
 
     const ctx: PlaybackContext = {
       page: this.page,
+      baseUrl: this.options.baseUrl,
+      outputDir: this.options.outputDir,
+      specDir: this.options.specDir,
       pacing,
       moveCursorTo: (box) => this.moveCursorTo(box),
-      reinjectCursor: () => (this.options.pacing ? injectCursor(this.page) : Promise.resolve()),
+      reinjectCursor: () => this.reinjectOverlays(),
+      waitAfterStep: (stepIndex, step) => narrationWaiter.waitAfterStep(stepIndex, step),
     };
 
-    for (const chapter of chapters) {
-      logger.info(`Starting chapter: ${chapter.title}`);
-      for (const step of chapter.steps) {
-        await executeStep(ctx, step, events, this.options.secretPatterns ?? []);
-        if (this.options.onStepComplete && events.length > 0) {
-          await this.options.onStepComplete(events[events.length - 1]!);
-        }
-        if (pacing.settleDelayMs > 0) {
-          await this.page.waitForTimeout(pacing.settleDelayMs);
-        }
-      }
-    }
+    await runChapters({
+      chapters,
+      ctx,
+      page: this.page,
+      secretPatterns: this.options.secretPatterns ?? [],
+      settleDelayMs: pacing.settleDelayMs,
+      onStepComplete: this.options.onStepComplete,
+      events,
+      startTimestamp,
+    });
 
     return {
       events,
-      durationMs: Date.now() - startTime,
+      durationMs: Date.now() - startTimestamp,
+      startTimestamp,
     };
   }
 }

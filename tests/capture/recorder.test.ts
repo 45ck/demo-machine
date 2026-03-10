@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createRecordingContext, finalizeCapture } from "../../src/capture/recorder.js";
 import type { CaptureOptions } from "../../src/capture/types.js";
 import type { ActionEvent } from "../../src/playback/types.js";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile, stat, mkdir } from "node:fs/promises";
 
 describe("recorder", () => {
   let tempDir: string;
@@ -28,6 +28,15 @@ describe("recorder", () => {
     const mockPage = {
       video: vi.fn().mockReturnValue({
         path: vi.fn().mockResolvedValue("/tmp/video.webm"),
+      }),
+      evaluate: vi.fn().mockResolvedValue({
+        innerWidth: 1920,
+        innerHeight: 1080,
+        outerWidth: 1920,
+        outerHeight: 1080,
+        availWidth: 1920,
+        availHeight: 1080,
+        devicePixelRatio: 1,
       }),
     };
 
@@ -65,6 +74,9 @@ describe("recorder", () => {
       await createRecordingContext(mockBrowser, options);
 
       expect(mockBrowser.newContext).toHaveBeenCalledWith({
+        viewport: options.resolution,
+        screen: options.resolution,
+        deviceScaleFactor: 1,
         recordVideo: {
           dir: options.outputDir,
           size: options.resolution,
@@ -83,6 +95,25 @@ describe("recorder", () => {
         snapshots: true,
       });
     });
+
+    it("fails when strictGeometry is enabled and viewport does not match", async () => {
+      const { mockBrowser, mockPage } = createMockBrowser();
+      const options = { ...makeOptions(), strictGeometry: true };
+
+      mockPage.evaluate.mockResolvedValueOnce({
+        innerWidth: 1280,
+        innerHeight: 720,
+        outerWidth: 1280,
+        outerHeight: 720,
+        availWidth: 1280,
+        availHeight: 720,
+        devicePixelRatio: 1.5,
+      });
+
+      await expect(createRecordingContext(mockBrowser, options)).rejects.toThrow(
+        "Strict geometry mismatch",
+      );
+    });
   });
 
   describe("finalizeCapture", () => {
@@ -100,6 +131,25 @@ describe("recorder", () => {
       expect(bundle.tracePath).toBe(join(options.outputDir, "trace.zip"));
       expect(bundle.eventLogPath).toBe(join(options.outputDir, "events.json"));
       expect(bundle.screenshots).toEqual([]);
+    });
+
+    it("normalizes video into outputDir/video.webm when the captured file is inside outputDir", async () => {
+      const { mockContext, mockPage } = createMockBrowser();
+      const options = makeOptions();
+
+      // Create a fake recorded video inside outputDir so finalizeCapture can move it.
+      await mkdir(options.outputDir, { recursive: true });
+      const recordedPath = join(options.outputDir, "pw-123.webm");
+      await writeFile(recordedPath, "fake", "utf-8");
+      mockPage.video.mockReturnValue({
+        path: vi.fn().mockResolvedValue(recordedPath),
+      });
+
+      const bundle = await finalizeCapture(mockContext, mockPage, [], options);
+
+      expect(bundle.videoPath).toBe(join(options.outputDir, "video.webm"));
+      const moved = await stat(bundle.videoPath);
+      expect(moved.size).toBeGreaterThan(0);
     });
 
     it("stops tracing and closes context", async () => {

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { preStepSchema, stepSchema } from "./step-schema.js";
 
 const resolutionSchema = z.object({
   width: z.number().int().positive(),
@@ -31,94 +32,30 @@ const runnerConfigSchema = z.object({
 });
 
 const redactionConfigSchema = z.object({
-  selectors: z.array(z.string()).optional().default([]),
-  secrets: z.array(z.string()).optional().default([]),
+  selectors: z.array(z.string().min(1)).optional().default([]),
+  secrets: z.array(z.string().min(1)).optional().default([]),
 });
 
 const pacingSchema = z.object({
-  cursorDurationMs: z.number().optional().default(600),
-  typeDelayMs: z.number().optional().default(50),
-  postClickDelayMs: z.number().optional().default(500),
-  postTypeDelayMs: z.number().optional().default(300),
-  postNavigateDelayMs: z.number().optional().default(1000),
-  settleDelayMs: z.number().optional().default(200),
+  cursorDurationMs: z.number().nonnegative().optional().default(600),
+  typeDelayMs: z.number().nonnegative().optional().default(50),
+  postClickDelayMs: z.number().nonnegative().optional().default(500),
+  postTypeDelayMs: z.number().nonnegative().optional().default(300),
+  postNavigateDelayMs: z.number().nonnegative().optional().default(1000),
+  settleDelayMs: z.number().nonnegative().optional().default(200),
 });
 
-const navigateStepSchema = z.object({
-  action: z.literal("navigate"),
-  url: z.string(),
-  narration: z.string().optional(),
+const narrationSyncSchema = z.object({
+  mode: z.enum(["auto-sync", "manual", "warn-only"]).optional().default("manual"),
+  bufferMs: z.number().int().nonnegative().optional().default(500),
 });
 
-const clickStepSchema = z.object({
-  action: z.literal("click"),
-  selector: z.string(),
-  delay: z.number().int().positive().optional(),
-  narration: z.string().optional(),
+const narrationSchema = z.object({
+  enabled: z.boolean().optional().default(true),
+  provider: z.string().optional(),
+  voice: z.string().optional(),
+  sync: narrationSyncSchema.optional().default({ mode: "manual", bufferMs: 500 }),
 });
-
-const typeStepSchema = z.object({
-  action: z.literal("type"),
-  selector: z.string(),
-  text: z.string(),
-  delay: z.number().int().positive().optional(),
-  narration: z.string().optional(),
-});
-
-const hoverStepSchema = z.object({
-  action: z.literal("hover"),
-  selector: z.string(),
-  delay: z.number().int().positive().optional(),
-  narration: z.string().optional(),
-});
-
-const scrollStepSchema = z.object({
-  action: z.literal("scroll"),
-  selector: z.string().optional(),
-  x: z.number().optional().default(0),
-  y: z.number().optional().default(0),
-  delay: z.number().int().positive().optional(),
-  narration: z.string().optional(),
-});
-
-const waitStepSchema = z.object({
-  action: z.literal("wait"),
-  timeout: z.number().int().positive(),
-  narration: z.string().optional(),
-});
-
-const assertStepSchema = z.object({
-  action: z.literal("assert"),
-  selector: z.string(),
-  visible: z.boolean().optional(),
-  text: z.string().optional(),
-  narration: z.string().optional(),
-});
-
-const screenshotStepSchema = z.object({
-  action: z.literal("screenshot"),
-  name: z.string().optional(),
-  narration: z.string().optional(),
-});
-
-const pressStepSchema = z.object({
-  action: z.literal("press"),
-  key: z.string(),
-  delay: z.number().int().positive().optional(),
-  narration: z.string().optional(),
-});
-
-const stepSchema = z.discriminatedUnion("action", [
-  navigateStepSchema,
-  clickStepSchema,
-  typeStepSchema,
-  hoverStepSchema,
-  scrollStepSchema,
-  waitStepSchema,
-  assertStepSchema,
-  screenshotStepSchema,
-  pressStepSchema,
-]);
 
 const chapterSchema = z.object({
   title: z.string().min(1),
@@ -129,7 +66,9 @@ const chapterSchema = z.object({
 export const demoSpecSchema = z.object({
   meta: metaSchema,
   runner: runnerConfigSchema.optional(),
+  preSteps: z.array(preStepSchema).optional(),
   redaction: redactionConfigSchema.optional(),
+  narration: narrationSchema.optional(),
   pacing: pacingSchema.optional().default({}),
   chapters: z.array(chapterSchema).min(1),
 });

@@ -2,12 +2,18 @@
 
 # demo-machine
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/banner.dark.png" />
+  <source media="(prefers-color-scheme: light)" srcset="assets/banner.light.png" />
+  <img src="assets/banner.light.png" alt="demo-machine banner" width="100%" />
+</picture>
+
 **Demo as code** — turn YAML specs into polished product demo videos.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Tests](https://img.shields.io/badge/Tests-172%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-335%20passing-brightgreen)](tests/)
 [![Playwright](https://img.shields.io/badge/Playwright-Browser%20Automation-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev)
 [![FFmpeg](https://img.shields.io/badge/FFmpeg-Video%20Rendering-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org)
 
@@ -114,6 +120,32 @@ chapters:
 
 </details>
 
+## Demo Gallery (GIF Previews)
+
+These are **compressed GIF previews** generated from real rendered MP4s. For the full acceptance matrix, see `docs/demo-anything.md`.
+
+<div align="center">
+  <a href="examples/todo-app.demo.yaml"><img src="assets/demo-gallery/todo-app.gif" width="49%" alt="TaskFlow demo preview (GIF)" /></a>
+  <a href="examples/form-wizard.demo.yaml"><img src="assets/demo-gallery/form-wizard.gif" width="49%" alt="FlowForm demo preview (GIF)" /></a>
+  <a href="examples/auth-otp.demo.yaml"><img src="assets/demo-gallery/auth-otp.gif" width="49%" alt="AuthFlow OTP demo preview (GIF)" /></a>
+  <a href="examples/modals-popovers.demo.yaml"><img src="assets/demo-gallery/modals-popovers.gif" width="49%" alt="OverlayKit demo preview (GIF)" /></a>
+  <a href="examples/spa-router.demo.yaml"><img src="assets/demo-gallery/spa-router.gif" width="49%" alt="RouteLab SPA demo preview (GIF)" /></a>
+  <a href="examples/infinite-scroll.demo.yaml"><img src="assets/demo-gallery/infinite-scroll.gif" width="49%" alt="ScrollForge demo preview (GIF)" /></a>
+  <a href="examples/dashboard-table.demo.yaml"><img src="assets/demo-gallery/dashboard-table.gif" width="49%" alt="DashLite table demo preview (GIF)" /></a>
+  <a href="examples/controls-lab.demo.yaml"><img src="assets/demo-gallery/controls-lab.gif" width="49%" alt="ControlRoom inputs demo preview (GIF)" /></a>
+  <a href="examples/chart-tooltips.demo.yaml"><img src="assets/demo-gallery/chart-tooltips.gif" width="49%" alt="ChartLab tooltips demo preview (GIF)" /></a>
+  <a href="examples/virtual-table.demo.yaml"><img src="assets/demo-gallery/virtual-table.gif" width="49%" alt="GridV virtualized table demo preview (GIF)" /></a>
+  <a href="examples/selector-stress.demo.yaml"><img src="assets/demo-gallery/selector-stress.gif" width="49%" alt="SelectorGym demo preview (GIF)" /></a>
+  <a href="examples/drag-sort.demo.yaml"><img src="assets/demo-gallery/drag-sort.gif" width="49%" alt="DragSort reorder demo preview (GIF)" /></a>
+  <a href="examples/file-uploader.demo.yaml"><img src="assets/demo-gallery/file-uploader.gif" width="49%" alt="FileUploader preview demo (GIF)" /></a>
+  <a href="examples/async-skeleton.demo.yaml"><img src="assets/demo-gallery/async-skeleton.gif" width="49%" alt="AsyncSkeleton dashboard demo (GIF)" /></a>
+  <a href="examples/seeded-api.demo.yaml"><img src="assets/demo-gallery/seeded-api.gif" width="49%" alt="SeededAPI notes demo (GIF)" /></a>
+</div>
+
+To regenerate the gallery assets (GIFs + 5 screenshots per demo): `pnpm demo:gallery`.
+
+For the frame-by-frame review output, see `docs/demo-gallery.md`.
+
 ## Why demo-machine?
 
 Tools like Screen Studio and Arcade require manual recording sessions. Every time your UI changes, you re-record. demo-machine takes a different approach:
@@ -188,6 +220,30 @@ demo-machine capture <spec.yaml>
 demo-machine edit <events.json>
 ```
 
+### Example Suite
+
+The repo includes multiple example apps and `.demo.yaml` specs under `examples/`.
+
+```bash
+# Validate all example specs
+pnpm examples:validate
+
+# Smoke-capture raw videos for all example specs (no narration, no post-processing)
+pnpm examples:capture
+
+# Filter to a subset (note the `--` for pnpm passthrough)
+pnpm examples:capture -- --filter spa-router
+```
+
+`capture` and `run` write these artifacts into `--output`:
+
+- `video.webm` (raw recording)
+- `events.json` (event log)
+- `metadata.json` (capture timing info used for accurate timelines)
+- `trace.zip` (Playwright trace)
+
+`edit` expects `video.webm` to be in the same directory as the `events.json` you pass. If `metadata.json` exists, it will be used automatically.
+
 ### Options
 
 | Flag                    | Default    | Description                                    |
@@ -220,21 +276,65 @@ chapters:
         selector: "#btn"
 ```
 
+`navigate.url` can be absolute (`https://...`) or relative (`/`). Relative URLs are resolved against `runner.url`.
+
 ### Action Types
 
-| Action       | Required Fields    | Description                                     |
-| ------------ | ------------------ | ----------------------------------------------- |
-| `navigate`   | `url`              | Go to a URL                                     |
-| `click`      | `selector`         | Click an element                                |
-| `type`       | `selector`, `text` | Type text character-by-character                |
-| `hover`      | `selector`         | Hover over an element                           |
-| `scroll`     | —                  | Scroll the page (`selector`, `x`, `y` optional) |
-| `wait`       | `timeout`          | Pause for milliseconds                          |
-| `press`      | `key`              | Press a keyboard key                            |
-| `assert`     | `selector`         | Assert visibility or text content               |
-| `screenshot` | —                  | Take a screenshot (`name` optional)             |
+| Action        | Required Fields                           | Description                                                                |
+| ------------- | ----------------------------------------- | -------------------------------------------------------------------------- |
+| `navigate`    | `url`                                     | Go to a URL                                                                |
+| `click`       | `selector` or `target`                    | Click an element                                                           |
+| `check`       | `selector` or `target`                    | Check a checkbox/toggle                                                    |
+| `uncheck`     | `selector` or `target`                    | Uncheck a checkbox/toggle                                                  |
+| `type`        | `selector` or `target`, `text`            | Type text character-by-character                                           |
+| `select`      | `selector` or `target`, `option`          | Select an option in a `<select>`                                           |
+| `upload`      | `selector` or `target`, `file` or `files` | Upload files into an `<input type="file">`                                 |
+| `hover`       | `selector` or `target`                    | Hover over an element                                                      |
+| `scroll`      | —                                         | Scroll the page or a container (`selector` or `target`, `x`, `y` optional) |
+| `wait`        | `timeout`                                 | Pause for milliseconds                                                     |
+| `press`       | `key`                                     | Press a keyboard key                                                       |
+| `back`        | —                                         | Go back in browser history                                                 |
+| `forward`     | —                                         | Go forward in browser history                                              |
+| `assert`      | `selector` or `target`                    | Assert visibility or text content                                          |
+| `screenshot`  | —                                         | Take a screenshot (`name` optional)                                        |
+| `dragAndDrop` | `from`, `to`                              | Drag from one target to another                                            |
 
 Every action supports an optional `narration` field for TTS and most support `delay` to override the default post-action pause.
+
+### Targeting (Selector-Free)
+
+For `click`, `type`, `hover`, `scroll` (container scroll), and `assert`, you can use a structured `target` instead of a raw CSS selector:
+
+```yaml
+- action: click
+  target:
+    by: role
+    role: button
+    name: "Next"
+```
+
+Supported strategies:
+
+- `css`: `{ by: css, selector: ".my-class" }`
+- `testId`: `{ by: testId, testId: "save-button" }` (uses `data-testid`)
+- `role`: `{ by: role, role: "button", name: "Save", exact: true }`
+- `text`: `{ by: text, text: "Settings", exact: true }`
+- `label`: `{ by: label, text: "Email", exact: true }`
+- `placeholder`: `{ by: placeholder, text: "Search", exact: true }`
+- `altText`: `{ by: altText, text: "Company logo", exact: true }`
+- `title`: `{ by: title, text: "Open menu", exact: true }`
+
+This makes specs more resilient across UI refactors (class name changes, DOM reshuffles) and aligns with accessibility.
+
+### Disambiguation (`nth`)
+
+When a selector/target matches multiple elements, you can pick the Nth match (0-based):
+
+```yaml
+- action: click
+  selector: "button"
+  nth: 1
+```
 
 ### Pacing
 

@@ -1,0 +1,69 @@
+meta:
+  title: "DragSort - Reorder Tasks"
+
+runner:
+  command: "node examples/drag-sort/serve.mjs"
+  url: "http://localhost:4581"
+  timeout: 10000
+
+chapters:
+  - title: "Drag to Reorder"
+    steps:
+      - action: navigate
+        url: "/"
+        narration: "DragSort shows task cards you can reorder by dragging."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "title"
+        visible: true
+
+      # Verify initial order
+      - action: assert
+        target:
+          by: testId
+          testId: "card-0"
+        text: "Build landing page"
+
+      - action: assert
+        target:
+          by: testId
+          testId: "card-2"
+        text: "Write API docs"
+
+      # Drag card-0 onto card-2 — they swap positions
+      - action: dragAndDrop
+        from:
+          target:
+            by: testId
+            testId: "card-0"
+        to:
+          target:
+            by: testId
+            testId: "card-2"
+        narration: "Dragging the first card to swap it with the third."
+
+      # After swap: card-0 should now hold the text that was at card-2
+      - action: assert
+        target:
+          by: testId
+          testId: "card-0"
+        text: "Write API docs"
+        timeoutMs: 5000
+
+      - action: assert
+        target:
+          by: testId
+          testId: "card-2"
+        text: "Build landing page"
+        timeoutMs: 5000
+
+      - action: assert
+        target:
+          by: testId
+          testId: "status-msg"
+        text: "Swapped positions"
+
+      - action: screenshot
+        name: "after-drag-swap"

@@ -1,0 +1,71 @@
+{
+  "repo_name": "demo-machine",
+  "tagline": "Demo as code",
+  "one_sentence_purpose": "Turn YAML specs into polished product demo videos with real browser automation, human-like interactions, and voice narration.",
+  "target_users": "Developer advocates, product teams, and open-source maintainers who need repeatable, high-quality demo videos without manual screen recording.",
+  "keywords": [
+    "demo",
+    "video automation",
+    "YAML",
+    "playwright",
+    "CLI",
+    "screen recording",
+    "product demo",
+    "developer tooling"
+  ],
+  "visual_metaphors": [
+    "film strip or clapperboard frame",
+    "terminal cursor blinking on a command line",
+    "play button morphing into a code bracket",
+    "timeline with keyframes"
+  ],
+  "avoid": [
+    "no mascots",
+    "no photorealism",
+    "no camera or webcam imagery",
+    "no overly playful or cartoonish style",
+    "no stock-photo aesthetics"
+  ],
+  "style_adjectives": [
+    "technical",
+    "cinematic",
+    "precise",
+    "modern",
+    "minimal",
+    "developer-focused"
+  ],
+  "palette_hint": {
+    "bg_light": "#ffffff",
+    "bg_dark": "#0d1117",
+    "primary": "#e44d26",
+    "accent": "#f5a623",
+    "ink": "#c9d1d9"
+  },
+  "assets_needed": [
+    {
+      "path": "assets/banner.light.png",
+      "type": "readme_banner",
+      "desc": "Wide banner on white background"
+    },
+    {
+      "path": "assets/banner.dark.png",
+      "type": "readme_banner",
+      "desc": "Wide banner on dark background (#0d1117)"
+    },
+    {
+      "path": "assets/logo.light.png",
+      "type": "square_logo",
+      "desc": "Square logo on white background"
+    },
+    {
+      "path": "assets/logo.dark.png",
+      "type": "square_logo",
+      "desc": "Square logo on dark background (#0d1117)"
+    },
+    {
+      "path": "assets/social-preview.png",
+      "type": "github_social_preview",
+      "desc": "GitHub social preview card (landscape)"
+    }
+  ]
+}
