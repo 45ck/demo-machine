@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { resolve } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerPrompts } from "../../src/mcp/prompts.js";
 
@@ -12,6 +13,7 @@ describe("MCP prompts", () => {
   >;
 
   beforeEach(() => {
+    vi.clearAllMocks();
     server = new McpServer({ name: "test", version: "0.0.1" }, { capabilities: { prompts: {} } });
     registeredPrompts = new Map();
     const origPrompt = server.prompt.bind(server);
@@ -61,7 +63,7 @@ describe("MCP prompts", () => {
 
   it("debug-demo includes spec path and error message", async () => {
     const { readFile } = await import("node:fs/promises");
-    vi.mocked(readFile).mockResolvedValueOnce("meta:\n  title: My Demo\n" as never);
+    vi.mocked(readFile).mockResolvedValueOnce("meta:\n  title: My Demo\n" as unknown as Buffer);
 
     const handler = registeredPrompts.get("debug-demo")!.handler;
     const result = (await handler({
@@ -77,7 +79,7 @@ describe("MCP prompts", () => {
 
   it("debug-demo works without optional error message", async () => {
     const { readFile } = await import("node:fs/promises");
-    vi.mocked(readFile).mockResolvedValueOnce("meta:\n  title: My Demo\n" as never);
+    vi.mocked(readFile).mockResolvedValueOnce("meta:\n  title: My Demo\n" as unknown as Buffer);
 
     const handler = registeredPrompts.get("debug-demo")!.handler;
     const result = (await handler({ specPath: "my.demo.yaml" })) as {
@@ -92,7 +94,7 @@ describe("MCP prompts", () => {
 
   it("debug-demo falls back gracefully when spec file cannot be read", async () => {
     const { readFile } = await import("node:fs/promises");
-    vi.mocked(readFile).mockRejectedValueOnce(new Error("ENOENT") as never);
+    vi.mocked(readFile).mockRejectedValueOnce(new Error("ENOENT"));
 
     const handler = registeredPrompts.get("debug-demo")!.handler;
     const result = (await handler({ specPath: "missing.demo.yaml" })) as {
@@ -100,7 +102,7 @@ describe("MCP prompts", () => {
     };
 
     const text = result.messages[0]!.content.text;
-    expect(text).toContain("could not read file: missing.demo.yaml");
+    expect(text).toContain(`could not read file: ${resolve("missing.demo.yaml")}`);
     expect(text).not.toContain("ENOENT");
   });
 });

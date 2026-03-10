@@ -1,8 +1,12 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { createServer } from "../../src/mcp/server.js";
 
 describe("createServer", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("returns an McpServer instance", () => {
     const server = createServer();
     expect(server).toBeDefined();
@@ -21,7 +25,6 @@ describe("createServer", () => {
     expect(toolNames).toContain("capture-spec");
     expect(toolNames).toContain("list-voices");
     expect(toolNames).toContain("format-spec");
-    vi.restoreAllMocks();
   });
 
   it("registers all 3 resources and 2 prompts", () => {
@@ -38,6 +41,5 @@ describe("createServer", () => {
       expect.arrayContaining(["basic-template", "actions-docs", "spec-format-docs"]),
     );
     expect(promptNames).toEqual(expect.arrayContaining(["create-demo-spec", "debug-demo"]));
-    vi.restoreAllMocks();
   });
 });

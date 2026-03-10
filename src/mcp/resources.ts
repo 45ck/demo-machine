@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-const TEXT_PLAIN = "text/plain";
 const TEXT_MARKDOWN = "text/markdown";
+const TEXT_YAML = "text/yaml";
 
 const BASIC_TEMPLATE = `meta:
   title: "My App Demo"
@@ -110,13 +110,13 @@ export function registerResources(server: McpServer): void {
   server.resource(
     "basic-template",
     "demo-machine://templates/basic",
-    { mimeType: TEXT_PLAIN, description: "A basic demo spec template" },
+    { mimeType: TEXT_YAML, description: "A basic demo spec template" },
     () =>
       Promise.resolve({
         contents: [
           {
             uri: "demo-machine://templates/basic",
-            mimeType: TEXT_PLAIN,
+            mimeType: TEXT_YAML,
             text: BASIC_TEMPLATE,
           },
         ],

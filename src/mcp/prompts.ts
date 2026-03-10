@@ -9,11 +9,14 @@ async function debugDemoHandler({
   errorMessage: string | undefined;
 }): Promise<{ messages: Array<{ role: "user"; content: { type: "text"; text: string } }> }> {
   const { readFile } = await import("node:fs/promises");
+  const path = await import("node:path");
+  // MCP server runs with user permissions; any path accessible to the process is valid.
+  const resolvedPath = path.resolve(specPath);
   let specContent: string;
   try {
-    specContent = await readFile(specPath, "utf8");
+    specContent = await readFile(resolvedPath, "utf8");
   } catch {
-    specContent = `(could not read file: ${specPath})`;
+    specContent = `(could not read file: ${resolvedPath})`;
   }
   return {
     messages: [
@@ -23,7 +26,7 @@ async function debugDemoHandler({
           type: "text" as const,
           text: [
             "Debug this failing demo-machine spec:",
-            `Spec file: ${specPath}`,
+            `Spec file: ${resolvedPath}`,
             errorMessage ? `Error: ${errorMessage}` : "No error message provided.",
             "",
             "Spec content:",

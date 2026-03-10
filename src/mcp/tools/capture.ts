@@ -12,7 +12,9 @@ export function registerCaptureTool(server: McpServer): void {
       narration: z
         .boolean()
         .optional()
-        .describe("Enable narration pre-synthesis during capture (default false)"),
+        .describe(
+          "Enable narration pre-synthesis during capture (default false). Use run-pipeline for a full narrated workflow.",
+        ),
       ttsProvider: z
         .string()
         .optional()

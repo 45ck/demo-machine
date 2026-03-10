@@ -5,7 +5,6 @@ import { createServer } from "./mcp/server.js";
 async function main(): Promise<void> {
   const server = createServer();
   const transport = new StdioServerTransport();
-  await server.connect(transport);
 
   const shutdown = async (): Promise<void> => {
     try {
@@ -21,6 +20,8 @@ async function main(): Promise<void> {
   process.once("SIGTERM", () => {
     void shutdown();
   });
+
+  await server.connect(transport);
 }
 
 main().catch((err) => {
