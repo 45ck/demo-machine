@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 const TEXT_PLAIN = "text/plain";
+const TEXT_MARKDOWN = "text/markdown";
 
 const BASIC_TEMPLATE = `meta:
   title: "My App Demo"
@@ -125,13 +126,13 @@ export function registerResources(server: McpServer): void {
   server.resource(
     "actions-docs",
     "demo-machine://docs/actions",
-    { mimeType: TEXT_PLAIN, description: "Documentation for available step actions" },
+    { mimeType: TEXT_MARKDOWN, description: "Documentation for available step actions" },
     () =>
       Promise.resolve({
         contents: [
           {
             uri: "demo-machine://docs/actions",
-            mimeType: TEXT_PLAIN,
+            mimeType: TEXT_MARKDOWN,
             text: ACTIONS_DOCS,
           },
         ],
@@ -141,13 +142,13 @@ export function registerResources(server: McpServer): void {
   server.resource(
     "spec-format-docs",
     "demo-machine://docs/spec-format",
-    { mimeType: TEXT_PLAIN, description: "Documentation for the demo spec format" },
+    { mimeType: TEXT_MARKDOWN, description: "Documentation for the demo spec format" },
     () =>
       Promise.resolve({
         contents: [
           {
             uri: "demo-machine://docs/spec-format",
-            mimeType: TEXT_PLAIN,
+            mimeType: TEXT_MARKDOWN,
             text: SPEC_FORMAT_DOCS,
           },
         ],

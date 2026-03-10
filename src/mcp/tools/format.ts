@@ -11,8 +11,11 @@ export function registerFormatTool(server: McpServer): void {
     },
     async ({ specPath, format: rawFormat }) => {
       try {
+        // MCP server runs with user permissions; any path accessible to the process is valid.
+        const path = await import("node:path");
+        const resolvedPath = path.resolve(specPath);
         const { loadSpec, serializeSpec } = await import("../../spec/loader.js");
-        const spec = await loadSpec(specPath);
+        const spec = await loadSpec(resolvedPath);
 
         let targetFormat: "json" | "yaml";
         if (rawFormat === "json") {

@@ -18,8 +18,11 @@ export function registerRunTool(server: McpServer): void {
     },
     async (args) => {
       try {
+        // MCP server runs with user permissions; any path accessible to the process is valid.
+        const path = await import("node:path");
+        const resolvedPath = path.resolve(args.specPath);
         const { runFullPipeline } = await import("../../pipeline.js");
-        await runFullPipeline(args.specPath, {
+        await runFullPipeline(resolvedPath, {
           output: args.output ?? "./output",
           narration: args.narration ?? true,
           edit: true,

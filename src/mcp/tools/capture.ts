@@ -4,11 +4,15 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 export function registerCaptureTool(server: McpServer): void {
   server.tool(
     "capture-spec",
-    "Capture raw video from a demo spec (no editing)",
+    "Capture raw video from a demo spec (no editing, no narration synthesis by default)",
     {
       specPath: z.string().describe("Path to the .demo.yaml spec file"),
       output: z.string().optional().describe("Output directory"),
       headless: z.boolean().optional().describe("Run browser in headless mode (default true)"),
+      narration: z
+        .boolean()
+        .optional()
+        .describe("Enable narration pre-synthesis during capture (default false)"),
       ttsProvider: z
         .string()
         .optional()
@@ -16,10 +20,13 @@ export function registerCaptureTool(server: McpServer): void {
     },
     async (args) => {
       try {
+        // MCP server runs with user permissions; any path accessible to the process is valid.
+        const path = await import("node:path");
+        const resolvedPath = path.resolve(args.specPath);
         const { captureFromSpec } = await import("../../pipeline.js");
-        const result = await captureFromSpec(args.specPath, {
+        const result = await captureFromSpec(resolvedPath, {
           output: args.output ?? "./output",
-          narration: true,
+          narration: args.narration ?? false,
           edit: false,
           renderer: "ffmpeg",
           ttsProvider: args.ttsProvider ?? "kokoro",

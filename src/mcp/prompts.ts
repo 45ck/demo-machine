@@ -1,6 +1,50 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
+async function debugDemoHandler({
+  specPath,
+  errorMessage,
+}: {
+  specPath: string;
+  errorMessage: string | undefined;
+}): Promise<{ messages: Array<{ role: "user"; content: { type: "text"; text: string } }> }> {
+  const { readFile } = await import("node:fs/promises");
+  let specContent: string;
+  try {
+    specContent = await readFile(specPath, "utf8");
+  } catch {
+    specContent = `(could not read file: ${specPath})`;
+  }
+  return {
+    messages: [
+      {
+        role: "user" as const,
+        content: {
+          type: "text" as const,
+          text: [
+            "Debug this failing demo-machine spec:",
+            `Spec file: ${specPath}`,
+            errorMessage ? `Error: ${errorMessage}` : "No error message provided.",
+            "",
+            "Spec content:",
+            "```yaml",
+            specContent,
+            "```",
+            "",
+            "Common issues to check:",
+            "1. Selector not found - element may have changed or need a wait",
+            "2. Timing issues - add wait steps after animations",
+            "3. Navigation errors - check URL and runner config",
+            "4. Missing runner command - app may not be started",
+            "",
+            "Diagnose the issue and suggest fixes.",
+          ].join("\n"),
+        },
+      },
+    ],
+  };
+}
+
 export function registerPrompts(server: McpServer): void {
   server.prompt(
     "create-demo-spec",
@@ -49,29 +93,6 @@ export function registerPrompts(server: McpServer): void {
       specPath: z.string().describe("Path to the failing spec file"),
       errorMessage: z.string().optional().describe("The error message from the failed run"),
     },
-    ({ specPath, errorMessage }) =>
-      Promise.resolve({
-        messages: [
-          {
-            role: "user" as const,
-            content: {
-              type: "text" as const,
-              text: [
-                "Debug this failing demo-machine spec:",
-                `Spec file: ${specPath}`,
-                errorMessage ? `Error: ${errorMessage}` : "No error message provided.",
-                "",
-                "Common issues to check:",
-                "1. Selector not found - element may have changed or need a wait",
-                "2. Timing issues - add wait steps after animations",
-                "3. Navigation errors - check URL and runner config",
-                "4. Missing runner command - app may not be started",
-                "",
-                "Please read the spec file, diagnose the issue, and suggest fixes.",
-              ].join("\n"),
-            },
-          },
-        ],
-      }),
+    ({ specPath, errorMessage }) => debugDemoHandler({ specPath, errorMessage }),
   );
 }

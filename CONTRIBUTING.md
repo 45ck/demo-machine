@@ -55,8 +55,18 @@ examples/             # Example specs + demo apps
    ```bash
    pnpm validate
    ```
-   This runs lint, format check, spell check, typecheck, tests, knip, and dependency checks.
+   This is the main local quality gate and runs lint, format check, spell check, typecheck, tests, knip, and dependency checks.
 4. **Submit a PR** with a clear description
+
+## Quality Gates
+
+- Pull requests must pass the CI workflow, which currently runs `pnpm build` and `pnpm validate`.
+- GitHub CodeQL runs separately to catch security-oriented JavaScript/TypeScript issues that the local toolchain will not always surface.
+- If you touch parser, redaction, playback orchestration, or timing logic, consider running mutation testing before opening the PR:
+  ```bash
+  pnpm mutation
+  ```
+- `pnpm mutation` is a heavier full-repo Stryker run, so use it selectively for logic-heavy changes rather than as a blanket requirement for every docs-only or wiring-only change.
 
 ## Code Style
 

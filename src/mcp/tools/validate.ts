@@ -8,8 +8,11 @@ export function registerValidateTool(server: McpServer): void {
     { specPath: z.string().describe("Path to the .demo.yaml spec file") },
     async ({ specPath }) => {
       try {
+        // MCP server runs with user permissions; any path accessible to the process is valid.
+        const path = await import("node:path");
+        const resolvedPath = path.resolve(specPath);
         const { loadSpec } = await import("../../spec/loader.js");
-        const spec = await loadSpec(specPath);
+        const spec = await loadSpec(resolvedPath);
         const totalSteps = spec.chapters.reduce((sum, ch) => sum + ch.steps.length, 0);
         return {
           content: [
