@@ -16,11 +16,15 @@
         --accent2: #33d69f;
         --danger: #ff4d7d;
         --shimmer-from: rgba(255, 255, 255, 0.04);
-        --shimmer-to: rgba(255, 255, 255, 0.10);
+        --shimmer-to: rgba(255, 255, 255, 0.1);
       }
       @keyframes shimmer {
-        0% { background-position: -400px 0; }
-        100% { background-position: 400px 0; }
+        0% {
+          background-position: -400px 0;
+        }
+        100% {
+          background-position: 400px 0;
+        }
       }
       * {
         box-sizing: border-box;
@@ -29,11 +33,16 @@
         margin: 0;
         min-height: 100vh;
         color: var(--text);
-        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Arial;
         background:
           radial-gradient(900px 650px at 18% 12%, #1a1f5e 0%, transparent 60%),
-          radial-gradient(900px 650px at 85% 20%, #0b3a2b 0%, transparent 60%),
-          var(--bg);
+          radial-gradient(900px 650px at 85% 20%, #0b3a2b 0%, transparent 60%), var(--bg);
         display: grid;
         place-items: center;
         padding: 26px;
@@ -65,7 +74,9 @@
         background: linear-gradient(180deg, var(--panel), rgba(255, 255, 255, 0.03));
         padding: 20px;
         cursor: pointer;
-        transition: border-color 0.15s, box-shadow 0.15s;
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
         position: relative;
         min-height: 120px;
       }
@@ -124,8 +135,12 @@
         font-size: 12px;
         color: var(--muted);
       }
-      .metric-sub.up { color: var(--accent2); }
-      .metric-sub.down { color: var(--danger); }
+      .metric-sub.up {
+        color: var(--accent2);
+      }
+      .metric-sub.down {
+        color: var(--danger);
+      }
 
       /* Detail panel */
       .detail-panel {
@@ -186,7 +201,12 @@
             <div class="skeleton-block skel-value"></div>
             <div class="skeleton-block skel-sub"></div>
           </div>
-          <div class="metric-content" data-testid="metric-revenue" id="content-revenue" style="display:none">
+          <div
+            class="metric-content"
+            data-testid="metric-revenue"
+            id="content-revenue"
+            style="display: none"
+          >
             <div class="metric-label">Revenue</div>
             <div class="metric-value">$124,500</div>
             <div class="metric-sub up">↑ 12.4% vs last month</div>
@@ -200,7 +220,12 @@
             <div class="skeleton-block skel-value"></div>
             <div class="skeleton-block skel-sub"></div>
           </div>
-          <div class="metric-content" data-testid="metric-users" id="content-users" style="display:none">
+          <div
+            class="metric-content"
+            data-testid="metric-users"
+            id="content-users"
+            style="display: none"
+          >
             <div class="metric-label">Active Users</div>
             <div class="metric-value">8,240</div>
             <div class="metric-sub up">↑ 7.2% vs last month</div>
@@ -214,7 +239,12 @@
             <div class="skeleton-block skel-value"></div>
             <div class="skeleton-block skel-sub"></div>
           </div>
-          <div class="metric-content" data-testid="metric-churn" id="content-churn" style="display:none">
+          <div
+            class="metric-content"
+            data-testid="metric-churn"
+            id="content-churn"
+            style="display: none"
+          >
             <div class="metric-label">Churn Rate</div>
             <div class="metric-value">2.1%</div>
             <div class="metric-sub down">↑ 0.3pp vs last month</div>
@@ -300,8 +330,7 @@
           detailValue.textContent = meta.value;
           detailRows.innerHTML = meta.rows
             .map(
-              (r) =>
-                `<div class="detail-row"><span>${r.label}</span><span>${r.value}</span></div>`,
+              (r) => `<div class="detail-row"><span>${r.label}</span><span>${r.value}</span></div>`,
             )
             .join("");
           detailPanel.classList.add("visible");

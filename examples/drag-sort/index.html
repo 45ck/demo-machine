@@ -21,11 +21,16 @@
         margin: 0;
         min-height: 100vh;
         color: var(--text);
-        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Arial;
         background:
           radial-gradient(900px 650px at 18% 12%, #1a1f5e 0%, transparent 60%),
-          radial-gradient(900px 650px at 85% 20%, #0b3a3b 0%, transparent 60%),
-          var(--bg);
+          radial-gradient(900px 650px at 85% 20%, #0b3a3b 0%, transparent 60%), var(--bg);
         display: grid;
         place-items: center;
         padding: 26px;
@@ -62,7 +67,10 @@
         cursor: grab;
         user-select: none;
         font-size: 14px;
-        transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+        transition:
+          background 0.12s,
+          border-color 0.12s,
+          box-shadow 0.12s;
       }
       .task-card:active {
         cursor: grabbing;
@@ -98,7 +106,9 @@
     <div class="shell">
       <div class="card">
         <h1 data-testid="title">DragSort</h1>
-        <p class="muted">Drag task cards to reorder them. Drop onto another card to swap positions.</p>
+        <p class="muted">
+          Drag task cards to reorder them. Drop onto another card to swap positions.
+        </p>
 
         <div class="task-list" id="taskList">
           <div class="task-card" data-testid="card-0" draggable="true">Build landing page</div>
@@ -109,7 +119,9 @@
 
         <div class="status">
           <strong>STATUS</strong>
-          <span id="statusMsg" data-testid="status-msg">Ready — drag a card onto another to swap them.</span>
+          <span id="statusMsg" data-testid="status-msg"
+            >Ready — drag a card onto another to swap them.</span
+          >
         </div>
       </div>
     </div>

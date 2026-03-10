@@ -7,7 +7,7 @@ export default defineConfig({
       provider: "v8",
       include: ["src/**/*.ts"],
       // CLI modules are thin orchestration wrappers; we keep the coverage gate focused on core logic.
-      exclude: ["src/**/*.test.ts", "src/cli.ts", "src/cli/**/*.ts"],
+      exclude: ["src/**/*.test.ts", "src/cli.ts", "src/cli/**/*.ts", "src/mcp-server.ts"],
       thresholds: {
         branches: 70,
         statements: 55,

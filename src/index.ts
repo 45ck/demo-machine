@@ -96,6 +96,17 @@ export type {
   NarrationPreSynthesisResult,
 } from "./utils/narration-sync-types.js";
 
+// Pipeline
+export {
+  captureFromSpec,
+  runFullPipeline,
+  prepareNarration,
+  synthesizeAudio,
+  writeSubtitles,
+  extractBranding,
+} from "./pipeline.js";
+export type { PipelineOptions, CaptureResult as PipelineCaptureResult } from "./pipeline.js";
+
 // Redaction
 export { generateBlurStyles } from "./redaction/mask.js";
 export { scanForSecrets } from "./redaction/secrets.js";

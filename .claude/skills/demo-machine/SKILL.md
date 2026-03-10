@@ -70,6 +70,18 @@ chapters:
 
 Every action supports an optional `narration` field for voice-over.
 
+## MCP Tools
+
+When connected via MCP, the following tools are available:
+
+- `validate-spec` — validate a spec file and get a summary
+- `run-pipeline` — run the full capture + edit + narrate pipeline
+- `capture-spec` — capture raw video only (no editing)
+- `list-voices` — list configured TTS voices
+- `format-spec` — convert a spec between JSON and YAML
+
+Use `demo-machine://templates/basic` resource for a starter template.
+
 ## Steps
 
 1. **If creating a new spec**: Write a `.demo.yaml` file with chapters and steps that walk through the app's key features. Add `narration` text to important steps. Place narration on the step BEFORE the action you're describing (narration leads into the action).

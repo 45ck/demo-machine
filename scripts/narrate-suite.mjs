@@ -24,10 +24,22 @@ function parseArgs(argv) {
   const opts = { filter: null, provider: "kokoro", voice: null, concurrency: 1 };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === "--filter")   { opts.filter   = argv[++i] ?? null; continue; }
-    if (a === "--provider") { opts.provider = argv[++i] ?? "kokoro"; continue; }
-    if (a === "--voice")    { opts.voice    = argv[++i] ?? null; continue; }
-    if (a === "--concurrency") { opts.concurrency = Number(argv[++i] ?? 1); continue; }
+    if (a === "--filter") {
+      opts.filter = argv[++i] ?? null;
+      continue;
+    }
+    if (a === "--provider") {
+      opts.provider = argv[++i] ?? "kokoro";
+      continue;
+    }
+    if (a === "--voice") {
+      opts.voice = argv[++i] ?? null;
+      continue;
+    }
+    if (a === "--concurrency") {
+      opts.concurrency = Number(argv[++i] ?? 1);
+      continue;
+    }
   }
   return opts;
 }
@@ -40,27 +52,32 @@ function run(cmd, args, { cwd } = { cwd: root }) {
 }
 
 async function exists(p) {
-  try { await access(p); return true; } catch { return false; }
+  try {
+    await access(p);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
 
   const examplesDir = path.join(root, "examples");
-  const outRoot     = path.join(root, "output", "example-suite");
+  const outRoot = path.join(root, "output", "example-suite");
 
   const entries = await readdir(examplesDir, { withFileTypes: true });
   let specs = entries
-    .filter(e => e.isFile() && /\.demo\.ya?ml$/i.test(e.name))
-    .map(e => ({
-      name:     e.name.replace(/\.demo\.ya?ml$/i, ""),
+    .filter((e) => e.isFile() && /\.demo\.ya?ml$/i.test(e.name))
+    .map((e) => ({
+      name: e.name.replace(/\.demo\.ya?ml$/i, ""),
       specPath: path.join(examplesDir, e.name),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
   if (opts.filter) {
     const f = opts.filter.toLowerCase();
-    specs = specs.filter(s => s.name.toLowerCase().includes(f));
+    specs = specs.filter((s) => s.name.toLowerCase().includes(f));
   }
 
   if (specs.length === 0) {
@@ -79,7 +96,7 @@ async function main() {
     const tasks = batch.map(async ({ name, specPath }) => {
       const captureDir = path.join(outRoot, name);
       const eventsPath = path.join(captureDir, "events.json");
-      const videoPath  = path.join(captureDir, "video.webm");
+      const videoPath = path.join(captureDir, "video.webm");
 
       if (!(await exists(eventsPath)) || !(await exists(videoPath))) {
         console.error(`  [SKIP] ${name} — no capture found (run examples-suite capture first)`);
@@ -89,10 +106,15 @@ async function main() {
       console.log(`  [START] ${name}`);
 
       const args = [
-        "dist/cli.js", "edit", eventsPath,
-        "--spec", specPath,
-        "--output", captureDir,
-        "--tts-provider", opts.provider,
+        "dist/cli.js",
+        "edit",
+        eventsPath,
+        "--spec",
+        specPath,
+        "--output",
+        captureDir,
+        "--tts-provider",
+        opts.provider,
       ];
       if (opts.voice) args.push("--tts-voice", opts.voice);
 
@@ -106,11 +128,14 @@ async function main() {
     });
 
     const results = await Promise.all(tasks);
-    failures += results.filter(c => c !== 0).length;
+    failures += results.filter((c) => c !== 0).length;
   }
 
   console.log(`\n${specs.length - failures}/${specs.length} succeeded.\n`);
   process.exit(failures === 0 ? 0 : 1);
 }
 
-main().catch(err => { console.error(err?.stack ?? String(err)); process.exit(1); });
+main().catch((err) => {
+  console.error(err?.stack ?? String(err));
+  process.exit(1);
+});

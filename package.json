@@ -4,7 +4,8 @@
   "description": "Demo as code — automate polished product demo videos from YAML specs",
   "type": "module",
   "bin": {
-    "demo-machine": "./dist/cli.js"
+    "demo-machine": "./dist/cli.js",
+    "demo-machine-mcp": "./dist/mcp-server.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -38,6 +39,7 @@
   },
   "dependencies": {
     "@iarna/toml": "^2.2.5",
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "commander": "^13.1.0",
     "json5": "^2.2.3",
     "kokoro-js": "^1.2.1",

@@ -1,4 +1,5 @@
 {
+  "entry": ["src/cli.ts", "src/mcp-server.ts", "src/index.ts"],
   "project": ["src/**/*.ts"],
   "ignore": ["**/*.test.ts"],
   "ignoreDependencies": ["kokoro-js", "openai", "json5", "@iarna/toml"]
