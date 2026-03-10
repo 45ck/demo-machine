@@ -72,7 +72,7 @@ describe("MCP prompts", () => {
     })) as { messages: Array<{ role: string; content: { type: string; text: string } }> };
 
     const text = result.messages[0]!.content.text;
-    expect(text).toContain("my.demo.yaml");
+    expect(text).toContain(resolve("my.demo.yaml"));
     expect(text).toContain("Timeout waiting for selector #btn");
     expect(text).toContain("meta:\n  title: My Demo");
   });
@@ -87,7 +87,7 @@ describe("MCP prompts", () => {
     };
 
     const text = result.messages[0]!.content.text;
-    expect(text).toContain("my.demo.yaml");
+    expect(text).toContain(resolve("my.demo.yaml"));
     expect(text).toContain("No error message provided");
     expect(text).toContain("meta:\n  title: My Demo");
   });

@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 const TEXT_MARKDOWN = "text/markdown";
-const TEXT_YAML = "text/yaml";
+const TEXT_YAML = "application/yaml"; // RFC 9512 IANA-registered MIME type for YAML
 
 const BASIC_TEMPLATE = `meta:
   title: "My App Demo"

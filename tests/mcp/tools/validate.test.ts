@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { resolve } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerValidateTool } from "../../../src/mcp/tools/validate.js";
 
@@ -50,6 +51,7 @@ describe("validate-spec tool", () => {
     const result = (await handler({ specPath: "test.demo.yaml" })) as {
       content: Array<{ type: string; text: string }>;
     };
+    expect(loadSpec).toHaveBeenCalledWith(resolve("test.demo.yaml"));
     const parsed = JSON.parse(result.content[0]!.text) as Record<string, unknown>;
     expect(parsed["valid"]).toBe(true);
     expect(parsed["title"]).toBe("Test Demo");

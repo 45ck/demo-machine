@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { resolve } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerFormatTool } from "../../../src/mcp/tools/format.js";
 
@@ -44,6 +45,7 @@ describe("format-spec tool", () => {
       format: "json",
     })) as { content: Array<{ type: string; text: string }> };
 
+    expect(loadSpec).toHaveBeenCalledWith(resolve("test.demo.yaml"));
     expect(serializeSpec).toHaveBeenCalledWith(fakeSpec, "json");
     expect(result.content[0]!.text).toBe('{"meta":{}}');
   });
@@ -63,6 +65,7 @@ describe("format-spec tool", () => {
       format: undefined,
     })) as { content: Array<{ type: string; text: string }> };
 
+    expect(loadSpec).toHaveBeenCalledWith(resolve("test.demo.yaml"));
     expect(serializeSpec).toHaveBeenCalledWith(fakeSpec, "yaml");
     expect(result.content[0]!.text).toContain("meta:");
   });

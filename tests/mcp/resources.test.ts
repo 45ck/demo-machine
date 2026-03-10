@@ -37,6 +37,7 @@ describe("MCP resources", () => {
       contents: Array<{ uri: string; mimeType: string; text: string }>;
     };
     expect(result.contents[0]!.uri).toBe("demo-machine://templates/basic");
+    expect(result.contents[0]!.mimeType).toBe("application/yaml");
     expect(result.contents[0]!.text).toContain("meta:");
     expect(result.contents[0]!.text).toContain("chapters:");
   });

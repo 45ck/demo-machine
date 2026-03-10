@@ -34,7 +34,9 @@ pnpm test
 ```
 src/
   cli.ts              # CLI entry point (commander)
+  mcp-server.ts       # MCP server entry point (Claude tool integration)
   index.ts            # Public API exports
+  mcp/                # MCP server: tools, resources, prompts
   spec/               # YAML spec parsing + Zod validation
   runner/             # App server lifecycle (spawn, healthcheck, stop)
   playback/           # Browser automation (cursor, typing, pacing)
