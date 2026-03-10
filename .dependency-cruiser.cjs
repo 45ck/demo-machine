@@ -61,7 +61,7 @@ module.exports = {
       name: "no-mcp-import",
       severity: "error",
       comment: "Library modules must not import from src/mcp/ (it is a top-level entry point)",
-      from: { path: "^src/(?!mcp/)" },
+      from: { path: "^src/(?!mcp[-/])" },
       to: { path: "^src/mcp/" },
     },
     {
