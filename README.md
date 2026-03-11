@@ -11,9 +11,11 @@
 **Demo as code** — turn YAML specs into polished product demo videos.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/45ck/demo-machine/actions/workflows/ci.yml/badge.svg)](https://github.com/45ck/demo-machine/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/demo-machine)](https://www.npmjs.com/package/demo-machine)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Tests](https://img.shields.io/badge/Tests-335%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-758%20passing-brightgreen)](tests/)
 [![Playwright](https://img.shields.io/badge/Playwright-Browser%20Automation-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev)
 [![FFmpeg](https://img.shields.io/badge/FFmpeg-Video%20Rendering-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org)
 
@@ -225,6 +227,9 @@ demo-machine edit <events.json>
 The repo includes multiple example apps and `.demo.yaml` specs under `examples/`.
 
 ```bash
+# Verify the example/feature inventory and report known proof gaps
+pnpm quality:verify
+
 # Validate all example specs
 pnpm examples:validate
 
@@ -243,6 +248,8 @@ pnpm examples:capture -- --filter spa-router
 - `trace.zip` (Playwright trace)
 
 `edit` expects `video.webm` to be in the same directory as the `events.json` you pass. If `metadata.json` exists, it will be used automatically.
+
+`pnpm quality:verify` compares the machine-readable verification inventory in `docs/verification-inventory.json` with the example suite manifest in `examples/manifest.json`, then reports supported actions, target strategies, or quality signals that still lack example proof.
 
 ### Options
 
@@ -280,26 +287,35 @@ chapters:
 
 ### Action Types
 
-| Action        | Required Fields                           | Description                                                                |
-| ------------- | ----------------------------------------- | -------------------------------------------------------------------------- |
-| `navigate`    | `url`                                     | Go to a URL                                                                |
-| `click`       | `selector` or `target`                    | Click an element                                                           |
-| `check`       | `selector` or `target`                    | Check a checkbox/toggle                                                    |
-| `uncheck`     | `selector` or `target`                    | Uncheck a checkbox/toggle                                                  |
-| `type`        | `selector` or `target`, `text`            | Type text character-by-character                                           |
-| `select`      | `selector` or `target`, `option`          | Select an option in a `<select>`                                           |
-| `upload`      | `selector` or `target`, `file` or `files` | Upload files into an `<input type="file">`                                 |
-| `hover`       | `selector` or `target`                    | Hover over an element                                                      |
-| `scroll`      | —                                         | Scroll the page or a container (`selector` or `target`, `x`, `y` optional) |
-| `wait`        | `timeout`                                 | Pause for milliseconds                                                     |
-| `press`       | `key`                                     | Press a keyboard key                                                       |
-| `back`        | —                                         | Go back in browser history                                                 |
-| `forward`     | —                                         | Go forward in browser history                                              |
-| `assert`      | `selector` or `target`                    | Assert visibility or text content                                          |
-| `screenshot`  | —                                         | Take a screenshot (`name` optional)                                        |
-| `dragAndDrop` | `from`, `to`                              | Drag from one target to another                                            |
+| Action                      | Required Fields                           | Description                                                                |
+| --------------------------- | ----------------------------------------- | -------------------------------------------------------------------------- |
+| `navigate`                  | `url`                                     | Go to a URL                                                                |
+| `click`                     | `selector` or `target`                    | Click an element                                                           |
+| `clickFirstVisible`         | `selector`                                | Click the first visible matching element                                   |
+| `check`                     | `selector` or `target`                    | Check a checkbox/toggle                                                    |
+| `uncheck`                   | `selector` or `target`                    | Uncheck a checkbox/toggle                                                  |
+| `type`                      | `selector` or `target`, `text`            | Type text character-by-character                                           |
+| `select`                    | `selector` or `target`, `option`          | Select an option in a `<select>`                                           |
+| `selectFirstNonPlaceholder` | `selector` or `target`                    | Select the first non-placeholder option in a `<select>`                    |
+| `upload`                    | `selector` or `target`, `file` or `files` | Upload files into an `<input type="file">`                                 |
+| `hover`                     | `selector` or `target`                    | Hover over an element                                                      |
+| `scroll`                    | —                                         | Scroll the page or a container (`selector` or `target`, `x`, `y` optional) |
+| `wait`                      | `timeout`                                 | Pause for milliseconds                                                     |
+| `press`                     | `key`                                     | Press a keyboard key                                                       |
+| `back`                      | —                                         | Go back in browser history                                                 |
+| `forward`                   | —                                         | Go forward in browser history                                              |
+| `assert`                    | `selector` or `target`                    | Assert visibility or text content                                          |
+| `screenshot`                | —                                         | Take a screenshot (`name` optional)                                        |
+| `dragAndDrop`               | `from`, `to`                              | Drag from one target to another                                            |
 
 Every action supports an optional `narration` field for TTS and most support `delay` to override the default post-action pause.
+
+## Verification
+
+- `docs/demo-anything.md` defines the acceptance mindset and pattern matrix.
+- `docs/verification-matrix.md` defines the layered V&V model, release tiers, and visual review rubric.
+- `docs/verification-inventory.json` is the machine-readable inventory of supported actions, target strategies, patterns, and quality signals.
+- `examples/manifest.json` maps example suites to release tiers and verification intent.
 
 ### Targeting (Selector-Free)
 
@@ -428,15 +444,71 @@ src/
   narration/          # TTS providers + subtitles
   redaction/          # Blur + secret scanning
   utils/              # Logger, process helpers
-tests/                # 172 tests across 13 suites
+  mcp-server.ts       # MCP server entry point (demo-machine-mcp binary)
+  mcp/                # MCP tools, resources, and prompts
+tests/                # 758 tests across 62 files
 examples/             # Example specs + demo apps
 ```
+
+## Claude Integration (MCP)
+
+Claude can orchestrate demo creation conversationally via the built-in MCP server.
+
+### Claude Desktop Setup
+
+Add the following to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "demo-machine": {
+      "command": "npx",
+      "args": ["demo-machine-mcp"]
+    }
+  }
+}
+```
+
+### Tools
+
+| Tool            | Description                                                            |
+| --------------- | ---------------------------------------------------------------------- |
+| `validate-spec` | Parse & validate a `.demo.yaml`, return chapter/step counts or errors  |
+| `capture-spec`  | Run browser capture only (no render), returns event count + video path |
+| `run-pipeline`  | Full end-to-end pipeline: capture + render + optional narration        |
+| `format-spec`   | Reserialize a spec as YAML or JSON                                     |
+| `list-voices`   | List configured TTS voices                                             |
+
+### Resources
+
+| Resource         | URI                      | Description                |
+| ---------------- | ------------------------ | -------------------------- |
+| `basic-template` | `demo://templates/basic` | Starter YAML spec template |
+
+### Prompts
+
+| Prompt             | Description                                                  |
+| ------------------ | ------------------------------------------------------------ |
+| `create-demo-spec` | Generate a spec YAML given an app URL + description          |
+| `debug-demo`       | Embed a failing spec + error message, ask Claude to diagnose |
+
+## Narration Providers
+
+| Provider     | Type  | Setup                                            |
+| ------------ | ----- | ------------------------------------------------ |
+| `kokoro`     | Local | No API key — install via `pip install kokoro`    |
+| `piper`      | Local | No API key — install via `pip install piper-tts` |
+| `openai`     | Cloud | Set `OPENAI_API_KEY` env var                     |
+| `elevenlabs` | Cloud | Set `ELEVENLABS_API_KEY` env var                 |
+
+Pass `--tts-provider <name>` to `demo-machine run` to select a provider. To clone a voice for
+ElevenLabs narration, run `demo-machine narration clone`.
 
 ## Development
 
 ```bash
 pnpm build          # Compile TypeScript
-pnpm test           # Run 172 tests
+pnpm test           # Run 758 tests
 pnpm lint           # ESLint
 pnpm format         # Prettier check
 pnpm typecheck      # tsc --noEmit

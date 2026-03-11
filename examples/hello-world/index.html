@@ -54,6 +54,9 @@
         align-items: center;
         gap: 12px;
       }
+      .brand-mark {
+        display: block;
+      }
       .logo {
         width: 40px;
         height: 40px;
@@ -141,7 +144,7 @@
     <div class="card">
       <header>
         <div class="brand">
-          <div class="logo" aria-hidden="true"></div>
+          <img class="brand-mark logo" src="./assets/logo.svg" alt="HelloWorld logo" />
           <div>
             <h1>HelloWorld</h1>
             <div class="muted">A tiny app used by demo-machine tests and capture suite.</div>
@@ -157,7 +160,10 @@
             Click get started, enter an email, and watch the welcome message appear.
           </div>
           <div style="margin-top: 12px">
-            <button id="get-started" type="button">Get started</button>
+            <button class="start-cta" type="button" style="display: none">Hidden start</button>
+            <button id="get-started" class="start-cta" type="button" title="Launch quickstart">
+              Get started
+            </button>
           </div>
         </div>
 

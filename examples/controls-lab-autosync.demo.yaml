@@ -22,13 +22,23 @@ chapters:
           by: label
           text: "Enable alerts"
         narration: "First, we toggle a checkbox using its accessible label."
+      - action: uncheck
+        target:
+          by: label
+          text: "Enable alerts"
+        narration: "We can also drive the same checkbox back to its unchecked state."
+      - action: selectFirstNonPlaceholder
+        target:
+          by: label
+          text: "Plan"
+        narration: "Next, we select the first non-placeholder choice automatically."
       - action: select
         target:
           by: label
           text: "Plan"
         option:
           label: "Pro"
-        narration: "Next, we select a plan from a dropdown."
+        narration: "Then we pick a specific plan from the dropdown."
       - action: upload
         target:
           by: label

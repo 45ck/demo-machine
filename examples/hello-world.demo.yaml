@@ -28,11 +28,23 @@ chapters:
     steps:
       - action: navigate
         url: "/"
-      - action: click
-        selector: "#get-started"
-        narration: "Click the get started button."
+      - action: assert
+        target:
+          by: altText
+          text: "HelloWorld logo"
+        visible: true
+      - action: assert
+        target:
+          by: title
+          text: "Launch quickstart"
+        visible: true
+      - action: clickFirstVisible
+        selector: ".start-cta"
+        narration: "Click the first visible get started button."
       - action: type
-        selector: "#email-input"
+        target:
+          by: placeholder
+          text: "name@company.com"
         text: "demo@example.com"
         narration: "Enter your email address."
       - action: wait

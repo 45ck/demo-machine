@@ -57,18 +57,28 @@ examples/             # Example specs + demo apps
    ```bash
    pnpm validate
    ```
-   This is the main local quality gate and runs lint, format check, spell check, typecheck, tests, knip, and dependency checks.
-4. **Submit a PR** with a clear description
+   This is the main local quality gate and runs lint, format check, spell check, typecheck, tests, knip, dependency checks, and the machine-readable quality inventory check.
+4. **Review the verification inventory** when you add or expand a feature:
+   ```bash
+   pnpm quality:verify
+   ```
+   This reports supported actions, target strategies, and quality signals that still lack example proof.
+5. **Submit a PR** with a clear description
 
 ## Quality Gates
 
 - Pull requests must pass the CI workflow, which currently runs `pnpm build` and `pnpm validate`.
+- CI also validates the example suite definitions with:
+  ```bash
+  pnpm examples:validate -- --no-build
+  ```
 - GitHub CodeQL runs separately to catch security-oriented JavaScript/TypeScript issues that the local toolchain will not always surface.
 - If you touch parser, redaction, playback orchestration, or timing logic, consider running mutation testing before opening the PR:
   ```bash
   pnpm mutation
   ```
 - `pnpm mutation` is a heavier full-repo Stryker run, so use it selectively for logic-heavy changes rather than as a blanket requirement for every docs-only or wiring-only change.
+- The verification inventory is documented in `docs/verification-matrix.md`, with machine-readable sources in `docs/verification-inventory.json` and `examples/manifest.json`.
 
 ## Code Style
 

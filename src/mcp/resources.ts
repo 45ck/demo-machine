@@ -32,19 +32,20 @@ const ACTIONS_DOCS = `# Available Actions
 | Action           | Required Fields    | Description                              |
 |------------------|--------------------|------------------------------------------|
 | navigate         | url                | Go to a URL                              |
-| click            | selector           | Click an element                         |
+| click            | selector or target | Click an element                         |
 | clickFirstVisible| selector           | Click first visible match                |
-| type             | selector, text     | Type text character-by-character         |
-| hover            | selector           | Hover over an element                    |
-| scroll           | -                  | Scroll (selector, x, y optional)         |
+| type             | selector or target, text | Type text character-by-character   |
+| hover            | selector or target | Hover over an element                    |
+| scroll           | -                  | Scroll (selector or target, x, y optional)|
 | wait             | timeout            | Pause for milliseconds                   |
 | press            | key                | Press a keyboard key                     |
 | screenshot       | -                  | Take a screenshot                        |
-| assert           | selector           | Assert element visibility                |
-| check            | selector           | Check a checkbox                         |
-| uncheck          | selector           | Uncheck a checkbox                       |
-| select           | selector, option   | Select a dropdown option                 |
-| upload           | selector, file     | Upload a file                            |
+| assert           | selector or target | Assert element visibility or text        |
+| check            | selector or target | Check a checkbox                         |
+| uncheck          | selector or target | Uncheck a checkbox                       |
+| select           | selector or target, option | Select a dropdown option         |
+| selectFirstNonPlaceholder | selector or target | Select first non-placeholder option |
+| upload           | selector or target, file | Upload a file                         |
 | back             | -                  | Browser back                             |
 | forward          | -                  | Browser forward                          |
 | dragAndDrop      | from, to           | Drag and drop between elements           |

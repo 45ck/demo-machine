@@ -102,12 +102,15 @@ async function renderFromTimeline(params: {
 export async function runFullPipeline(params: {
   spec: DemoSpec;
   specPath?: string;
+  /** Explicit specDir override forwarded to captureFromSpec. */
+  specDir?: string | undefined;
   opts: GlobalOptions;
   settings: NarrationSettings;
 }): Promise<void> {
   const capture = await captureFromSpec({
     spec: params.spec,
     ...(params.specPath ? { specPath: params.specPath } : {}),
+    ...(params.specDir !== undefined ? { specDir: params.specDir } : {}),
     opts: params.opts,
     settings: params.settings,
   });

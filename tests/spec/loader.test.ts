@@ -40,7 +40,7 @@ describe("loadSpec", () => {
     expect(spec.meta.resolution).toEqual({ width: 1920, height: 1080 });
     expect(spec.runner.url).toBe("http://localhost:4574");
     expect(spec.chapters).toHaveLength(1);
-    expect(spec.chapters[0]!.steps).toHaveLength(5);
+    expect(spec.chapters[0]!.steps).toHaveLength(7);
   });
 
   it("applies default values from schema", async () => {
@@ -92,10 +92,12 @@ describe("loadSpec", () => {
     // Chapter steps
     const steps = spec.chapters[0]!.steps;
     expect(steps[0]!.action).toBe("navigate");
-    expect(steps[1]!.action).toBe("click");
-    expect(steps[2]!.action).toBe("type");
-    expect(steps[3]!.action).toBe("wait");
-    expect(steps[4]!.action).toBe("assert");
+    expect(steps[1]!.action).toBe("assert");
+    expect(steps[2]!.action).toBe("assert");
+    expect(steps[3]!.action).toBe("clickFirstVisible");
+    expect(steps[4]!.action).toBe("type");
+    expect(steps[5]!.action).toBe("wait");
+    expect(steps[6]!.action).toBe("assert");
   });
 });
 

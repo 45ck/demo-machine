@@ -50,12 +50,19 @@ function parseArgs(argv) {
   return opts;
 }
 
+function resolveCommand(cmd) {
+  if (process.platform !== "win32") return cmd;
+  if (cmd === "pnpm") return "pnpm.cmd";
+  if (cmd === "node") return "node.exe";
+  return cmd;
+}
+
 function run(cmd, args, { cwd }) {
   return new Promise((resolve) => {
-    const child = spawn(cmd, args, {
+    const child = spawn(resolveCommand(cmd), args, {
       cwd,
       stdio: "inherit",
-      shell: true, // makes pnpm/node resolution work consistently on Windows
+      shell: false,
     });
     child.on("close", (code) => resolve(code ?? 1));
   });

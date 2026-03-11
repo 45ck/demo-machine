@@ -30,12 +30,14 @@
     "knip": "knip",
     "dep-check": "dependency-cruiser src --config",
     "mutation": "stryker run",
+    "quality:verify": "node scripts/quality-verify.mjs",
+    "quality:verify:strict": "node scripts/quality-verify.mjs --strict-coverage",
     "examples:validate": "node scripts/examples-suite.mjs --mode validate",
     "examples:capture": "node scripts/examples-suite.mjs --mode capture",
     "demo:gallery": "node scripts/demo-gallery.mjs",
     "prepublishOnly": "pnpm build && pnpm test",
     "prepare": "husky",
-    "validate": "pnpm lint && pnpm format && pnpm spell && pnpm typecheck && pnpm test && pnpm knip && pnpm dep-check"
+    "validate": "pnpm lint && pnpm format && pnpm spell && pnpm typecheck && pnpm test && pnpm knip && pnpm dep-check && pnpm quality:verify:strict"
   },
   "dependencies": {
     "@iarna/toml": "^2.2.5",

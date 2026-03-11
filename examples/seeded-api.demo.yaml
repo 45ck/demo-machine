@@ -9,6 +9,12 @@ runner:
 # preSteps run before any chapter steps.
 # They hit the REST API to seed data and verify the count via saveResponseAs + valueFrom chaining.
 preSteps:
+  # 0. Set a session cookie so the app recognises this as an authenticated visitor
+  - action: setCookie
+    name: "demo-session"
+    value: "preview-token"
+    url: "http://localhost:4584"
+
   # 1. Seed the notes store via POST
   - action: httpRequest
     url: "http://localhost:4584/api/seed"

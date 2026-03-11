@@ -21,6 +21,14 @@ chapters:
         target:
           by: label
           text: "Enable alerts"
+      - action: uncheck
+        target:
+          by: label
+          text: "Enable alerts"
+      - action: selectFirstNonPlaceholder
+        target:
+          by: label
+          text: "Plan"
       - action: select
         target:
           by: label

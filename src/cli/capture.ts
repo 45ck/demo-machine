@@ -282,6 +282,8 @@ async function captureWithBrowser(params: {
 export async function captureFromSpec(params: {
   spec: DemoSpec;
   specPath?: string;
+  /** Explicit specDir override; takes precedence over the value derived from specPath. */
+  specDir?: string | undefined;
   opts: GlobalOptions;
   settings: NarrationSettings;
 }): Promise<CaptureResult> {
@@ -304,7 +306,7 @@ export async function captureFromSpec(params: {
         captureMod,
         PlaybackEngine,
         spec,
-        specDir: resolveSpecDir(params.specPath),
+        specDir: params.specDir ?? resolveSpecDir(params.specPath),
         opts: params.opts,
         settings: params.settings,
       });

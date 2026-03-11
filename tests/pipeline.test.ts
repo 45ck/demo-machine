@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { extractBranding } from "../src/pipeline.js";
+import type { PipelineOptions } from "../src/pipeline.js";
 import type { DemoSpec } from "../src/spec/types.js";
 
 function makeSpec(branding?: DemoSpec["meta"]["branding"]): DemoSpec {
@@ -17,6 +18,35 @@ function makeSpec(branding?: DemoSpec["meta"]["branding"]): DemoSpec {
     ],
   } as DemoSpec;
 }
+
+describe("PipelineOptions.specDir", () => {
+  it("accepts explicit specDir for upload path resolution", () => {
+    // Compile-time check: PipelineOptions must accept specDir.
+    // This test will fail to compile if specDir is removed from the interface.
+    const opts: PipelineOptions = {
+      output: "/tmp/out",
+      narration: false,
+      edit: false,
+      renderer: "ffmpeg",
+      ttsProvider: "kokoro",
+      headless: true,
+      specDir: "/custom/spec/dir",
+    };
+    expect(opts.specDir).toBe("/custom/spec/dir");
+  });
+
+  it("allows specDir to be omitted (derived from specPath automatically)", () => {
+    const opts: PipelineOptions = {
+      output: "/tmp/out",
+      narration: false,
+      edit: false,
+      renderer: "ffmpeg",
+      ttsProvider: "kokoro",
+      headless: true,
+    };
+    expect(opts.specDir).toBeUndefined();
+  });
+});
 
 describe("extractBranding", () => {
   it("returns undefined when no branding", () => {

@@ -1,0 +1,247 @@
+{
+  "version": 1,
+  "suites": [
+    {
+      "slug": "hello-world",
+      "canonicalSpec": "examples/hello-world.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "pr",
+      "visualBaseline": "none",
+      "patternTags": ["smoke"],
+      "qualitySignals": ["artifact-capture", "deterministic-data"]
+    },
+    {
+      "slug": "todo-app",
+      "canonicalSpec": "examples/todo-app.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "pr",
+      "visualBaseline": "gallery",
+      "patternTags": ["smoke", "forms"],
+      "qualitySignals": [
+        "artifact-capture",
+        "gallery-reviewed",
+        "subtitle-timing",
+        "cursor-overlays"
+      ]
+    },
+    {
+      "slug": "form-wizard",
+      "canonicalSpec": "examples/form-wizard.demo.yaml",
+      "variantSpecs": [
+        "examples/form-wizard-autosync.demo.yaml",
+        "examples/form-wizard-redaction.demo.yaml"
+      ],
+      "releaseTier": "nightly",
+      "visualBaseline": "gallery",
+      "patternTags": ["forms", "redaction"],
+      "qualitySignals": [
+        "artifact-capture",
+        "gallery-reviewed",
+        "narration-sync",
+        "redaction",
+        "subtitle-timing",
+        "cursor-overlays",
+        "deterministic-data",
+        "accessibility-targeting"
+      ]
+    },
+    {
+      "slug": "auth-otp",
+      "canonicalSpec": "examples/auth-otp.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "nightly",
+      "visualBaseline": "gallery",
+      "patternTags": ["auth", "forms"],
+      "qualitySignals": [
+        "artifact-capture",
+        "gallery-reviewed",
+        "cursor-overlays",
+        "selector-intent",
+        "accessibility-targeting"
+      ]
+    },
+    {
+      "slug": "modals-popovers",
+      "canonicalSpec": "examples/modals-popovers.demo.yaml",
+      "variantSpecs": [
+        "examples/modals-popovers-autosync.demo.yaml",
+        "examples/modals-popovers-redaction.demo.yaml"
+      ],
+      "releaseTier": "nightly",
+      "visualBaseline": "gallery",
+      "patternTags": ["overlays", "redaction"],
+      "qualitySignals": [
+        "artifact-capture",
+        "gallery-reviewed",
+        "narration-sync",
+        "redaction",
+        "cursor-overlays"
+      ]
+    },
+    {
+      "slug": "spa-router",
+      "canonicalSpec": "examples/spa-router.demo.yaml",
+      "variantSpecs": [
+        "examples/spa-router-autosync.demo.yaml",
+        "examples/spa-router-redaction.demo.yaml"
+      ],
+      "releaseTier": "pr",
+      "visualBaseline": "gallery",
+      "patternTags": ["spa-routing", "async-loading", "redaction"],
+      "qualitySignals": [
+        "artifact-capture",
+        "gallery-reviewed",
+        "narration-sync",
+        "redaction",
+        "cursor-overlays"
+      ]
+    },
+    {
+      "slug": "infinite-scroll",
+      "canonicalSpec": "examples/infinite-scroll.demo.yaml",
+      "variantSpecs": [
+        "examples/infinite-scroll-autosync.demo.yaml",
+        "examples/infinite-scroll-redaction.demo.yaml"
+      ],
+      "releaseTier": "nightly",
+      "visualBaseline": "gallery",
+      "patternTags": ["async-loading", "redaction"],
+      "qualitySignals": [
+        "artifact-capture",
+        "gallery-reviewed",
+        "narration-sync",
+        "redaction",
+        "cursor-overlays"
+      ]
+    },
+    {
+      "slug": "dashboard-table",
+      "canonicalSpec": "examples/dashboard-table.demo.yaml",
+      "variantSpecs": [
+        "examples/dashboard-table-autosync.demo.yaml",
+        "examples/dashboard-table-redaction.demo.yaml"
+      ],
+      "releaseTier": "nightly",
+      "visualBaseline": "gallery",
+      "patternTags": ["tables", "redaction"],
+      "qualitySignals": [
+        "artifact-capture",
+        "gallery-reviewed",
+        "narration-sync",
+        "redaction",
+        "cursor-overlays"
+      ]
+    },
+    {
+      "slug": "chart-tooltips",
+      "canonicalSpec": "examples/chart-tooltips.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "nightly",
+      "visualBaseline": "gallery",
+      "patternTags": ["charts", "overlays"],
+      "qualitySignals": [
+        "artifact-capture",
+        "gallery-reviewed",
+        "cursor-overlays",
+        "selector-intent"
+      ]
+    },
+    {
+      "slug": "virtual-table",
+      "canonicalSpec": "examples/virtual-table.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "nightly",
+      "visualBaseline": "gallery",
+      "patternTags": ["tables", "virtualization"],
+      "qualitySignals": ["artifact-capture", "gallery-reviewed", "selector-intent"]
+    },
+    {
+      "slug": "controls-lab",
+      "canonicalSpec": "examples/controls-lab.demo.yaml",
+      "variantSpecs": ["examples/controls-lab-autosync.demo.yaml"],
+      "releaseTier": "pr",
+      "visualBaseline": "gallery",
+      "patternTags": ["forms", "file-upload", "drag-drop"],
+      "qualitySignals": [
+        "artifact-capture",
+        "gallery-reviewed",
+        "narration-sync",
+        "selector-intent",
+        "accessibility-targeting",
+        "cursor-overlays"
+      ]
+    },
+    {
+      "slug": "selector-stress",
+      "canonicalSpec": "examples/selector-stress.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "nightly",
+      "visualBaseline": "gallery",
+      "patternTags": ["selector-disambiguation"],
+      "qualitySignals": [
+        "artifact-capture",
+        "gallery-reviewed",
+        "selector-intent",
+        "accessibility-targeting"
+      ]
+    },
+    {
+      "slug": "drag-sort",
+      "canonicalSpec": "examples/drag-sort.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "nightly",
+      "visualBaseline": "gallery",
+      "patternTags": ["drag-drop"],
+      "qualitySignals": [
+        "artifact-capture",
+        "gallery-reviewed",
+        "cursor-overlays",
+        "selector-intent"
+      ]
+    },
+    {
+      "slug": "file-uploader",
+      "canonicalSpec": "examples/file-uploader.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "nightly",
+      "visualBaseline": "gallery",
+      "patternTags": ["file-upload", "forms"],
+      "qualitySignals": [
+        "artifact-capture",
+        "gallery-reviewed",
+        "selector-intent",
+        "accessibility-targeting",
+        "cursor-overlays"
+      ]
+    },
+    {
+      "slug": "async-skeleton",
+      "canonicalSpec": "examples/async-skeleton.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "nightly",
+      "visualBaseline": "gallery",
+      "patternTags": ["async-loading", "tables"],
+      "qualitySignals": [
+        "artifact-capture",
+        "gallery-reviewed",
+        "selector-intent",
+        "cursor-overlays"
+      ]
+    },
+    {
+      "slug": "seeded-api",
+      "canonicalSpec": "examples/seeded-api.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "pr",
+      "visualBaseline": "gallery",
+      "patternTags": ["api-presteps"],
+      "qualitySignals": [
+        "artifact-capture",
+        "gallery-reviewed",
+        "deterministic-data",
+        "selector-intent",
+        "accessibility-targeting"
+      ]
+    }
+  ]
+}

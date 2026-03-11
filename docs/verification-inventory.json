@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "actions": [
+    { "id": "navigate", "proof": ["schema", "unit", "example"] },
+    { "id": "click", "proof": ["schema", "unit", "example"] },
+    { "id": "clickFirstVisible", "proof": ["schema", "unit", "example"] },
+    { "id": "type", "proof": ["schema", "unit", "example"] },
+    { "id": "hover", "proof": ["schema", "unit", "example"] },
+    { "id": "scroll", "proof": ["schema", "unit", "example"] },
+    { "id": "wait", "proof": ["schema", "unit", "example"] },
+    { "id": "assert", "proof": ["schema", "unit", "example"] },
+    { "id": "screenshot", "proof": ["schema", "unit", "example"] },
+    { "id": "press", "proof": ["schema", "unit", "example"] },
+    { "id": "back", "proof": ["schema", "unit", "example"] },
+    { "id": "forward", "proof": ["schema", "unit", "example"] },
+    { "id": "check", "proof": ["schema", "unit", "example"] },
+    { "id": "uncheck", "proof": ["schema", "unit", "example"] },
+    { "id": "select", "proof": ["schema", "unit", "example"] },
+    { "id": "selectFirstNonPlaceholder", "proof": ["schema", "unit", "example"] },
+    { "id": "upload", "proof": ["schema", "unit", "example"] },
+    { "id": "dragAndDrop", "proof": ["schema", "unit", "example"] }
+  ],
+  "preSteps": [
+    { "id": "httpRequest", "proof": ["schema", "unit", "example"] },
+    { "id": "setCookie", "proof": ["schema", "unit", "example"] },
+    { "id": "setLocalStorage", "proof": ["schema", "unit", "example"] }
+  ],
+  "targetStrategies": [
+    { "id": "css", "proof": ["schema", "unit", "example"] },
+    { "id": "text", "proof": ["schema", "unit", "example"] },
+    { "id": "role", "proof": ["schema", "unit", "example"] },
+    { "id": "testId", "proof": ["schema", "unit", "example"] },
+    { "id": "label", "proof": ["schema", "unit", "example"] },
+    { "id": "placeholder", "proof": ["schema", "unit", "example"] },
+    { "id": "altText", "proof": ["schema", "unit", "example"] },
+    { "id": "title", "proof": ["schema", "unit", "example"] }
+  ],
+  "patternTags": [
+    { "id": "smoke", "description": "Minimal end-to-end flow proving the basic pipeline." },
+    {
+      "id": "forms",
+      "description": "Text entry, field validation, and data submission workflows."
+    },
+    { "id": "auth", "description": "Authentication or gated-entry experiences." },
+    { "id": "overlays", "description": "Dialogs, popovers, tooltips, or transient layers." },
+    { "id": "spa-routing", "description": "Client-side routing and history traversal." },
+    { "id": "async-loading", "description": "Skeletons, delayed fetches, or loading transitions." },
+    { "id": "tables", "description": "Dense tabular layouts, dashboards, or data grids." },
+    { "id": "charts", "description": "Data visualizations and tooltip-driven interactions." },
+    {
+      "id": "virtualization",
+      "description": "Virtualized or windowed content where DOM membership changes."
+    },
+    {
+      "id": "selector-disambiguation",
+      "description": "Ambiguous locators resolved intentionally with nth or structure."
+    },
+    { "id": "file-upload", "description": "File input and upload-preview workflows." },
+    { "id": "drag-drop", "description": "Pointer-driven reordering or drop targets." },
+    { "id": "api-presteps", "description": "Pre-capture API setup and state seeding." },
+    { "id": "redaction", "description": "Sensitive content masking and secret scanning." }
+  ],
+  "qualitySignals": [
+    {
+      "id": "artifact-capture",
+      "description": "The suite contributes real capture artifacts or failure-debug expectations."
+    },
+    {
+      "id": "gallery-reviewed",
+      "description": "The canonical suite ships gallery assets for visual review."
+    },
+    { "id": "narration-sync", "description": "The suite has an auto-sync narration variant." },
+    { "id": "redaction", "description": "The suite has explicit redaction verification coverage." },
+    {
+      "id": "deterministic-data",
+      "description": "The suite depends on controlled, seeded, or fixed data."
+    },
+    {
+      "id": "selector-intent",
+      "description": "The suite prioritizes structured targeting over brittle selectors."
+    },
+    {
+      "id": "accessibility-targeting",
+      "description": "The suite proves role, label, or similar accessibility-aligned locators."
+    },
+    {
+      "id": "subtitle-timing",
+      "description": "The suite is suitable for narration/subtitle sync review."
+    },
+    {
+      "id": "cursor-overlays",
+      "description": "The suite is visually useful for cursor motion or overlay polish review."
+    }
+  ]
+}

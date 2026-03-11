@@ -17,6 +17,9 @@ export interface PipelineOptions {
   narrationSync?: string | undefined;
   narrationBuffer?: number | undefined;
   headless: boolean;
+  /** Override the directory used to resolve relative asset paths (e.g. upload files).
+   * When omitted, `specDir` is derived from `specPath` automatically. */
+  specDir?: string | undefined;
 }
 
 export interface CaptureResult {
@@ -176,6 +179,7 @@ export async function captureFromSpec(
   const bundle = await captureMod.captureFromSpec({
     spec,
     specPath,
+    ...(opts.specDir !== undefined ? { specDir: opts.specDir } : {}),
     opts: globalOpts,
     settings,
   });
@@ -204,6 +208,7 @@ export async function runFullPipeline(specPath: string, opts: PipelineOptions): 
   await pipelineMod.runFullPipeline({
     spec,
     specPath,
+    ...(opts.specDir !== undefined ? { specDir: opts.specDir } : {}),
     opts: globalOpts,
     settings,
   });
