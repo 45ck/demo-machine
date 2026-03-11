@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
-import { mkdir, readdir } from "node:fs/promises";
+import { access, mkdir, readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -85,6 +85,33 @@ function usage() {
   );
 }
 
+async function verifyCaptureArtifacts(outDir) {
+  const required = [
+    "video.webm",
+    "events.json",
+    "metadata.json",
+    "environment.json",
+    "verification.json",
+    "trace.zip",
+  ];
+
+  for (const file of required) {
+    try {
+      await access(path.join(outDir, file));
+    } catch {
+      throw new Error(`Missing required capture artifact: ${path.join(outDir, file)}`);
+    }
+  }
+
+  const verification = JSON.parse(await readFile(path.join(outDir, "verification.json"), "utf8"));
+  if (verification?.status !== "passed") {
+    throw new Error(`verification.json did not record a passed capture for ${outDir}`);
+  }
+  if (verification?.checks?.requiredArtifactsPresent !== true) {
+    throw new Error(`verification.json did not confirm required artifacts for ${outDir}`);
+  }
+}
+
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (opts.help) {
@@ -154,6 +181,17 @@ async function main() {
     if (code !== 0) {
       failures++;
       if (opts.failFast) process.exit(code);
+      continue;
+    }
+
+    if (opts.mode !== "validate") {
+      try {
+        await verifyCaptureArtifacts(outDir);
+      } catch (err) {
+        console.error(err?.stack ?? String(err));
+        failures++;
+        if (opts.failFast) process.exit(1);
+      }
     }
   }
 

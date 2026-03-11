@@ -48,6 +48,13 @@ chapters:
         url: "/"
         narration: "preSteps seeded the API — the notes are ready before we arrive."
 
+      - action: assert
+        target:
+          by: testId
+          testId: "session-state"
+        text: "Preview session active"
+        timeoutMs: 5000
+
       # The page fetches /api/notes on load; assert count badge
       - action: assert
         target:

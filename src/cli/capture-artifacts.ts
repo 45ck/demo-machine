@@ -12,10 +12,12 @@ import {
   writeCaptureVerification,
 } from "../capture/manifests.js";
 import type { CaptureBundle, CaptureGeometrySnapshot } from "../capture/types.js";
+import type { CaptureMetadata } from "../capture/metadata.js";
 import type { GlobalOptions } from "./options.js";
 import type { NarrationSettings } from "./narration.js";
 
 const log = createLogger("cli:capture:artifacts");
+type CaptureRecorderModule = typeof import("../capture/recorder.js");
 
 interface CaptureFailureSummary {
   name: string;
@@ -115,6 +117,39 @@ export async function writeFailureArtifacts(params: {
 
 function resolveSpecPath(specPath?: string): string | undefined {
   return specPath ? path.resolve(specPath) : undefined;
+}
+
+function createCaptureMetadata(specTitle: string, startTimestamp: number): CaptureMetadata {
+  return {
+    schemaVersion: 1,
+    startTimestamp,
+    createdAt: new Date().toISOString(),
+    specTitle,
+  };
+}
+
+export async function finalizeCaptureSafe(params: {
+  captureMod: CaptureRecorderModule;
+  recording: { context: unknown; page: unknown };
+  events: ActionEvent[];
+  captureOpts: { outputDir: string; resolution: DemoSpec["meta"]["resolution"] };
+  specTitle: string;
+  startTimestamp: number;
+}): Promise<CaptureBundle | undefined> {
+  try {
+    return await params.captureMod.finalizeCapture(
+      params.recording.context as never,
+      params.recording.page as never,
+      params.events,
+      {
+        ...params.captureOpts,
+        meta: createCaptureMetadata(params.specTitle, params.startTimestamp),
+      },
+    );
+  } catch (err) {
+    log.warn(`Failed to finalize capture: ${String(err)}`);
+    return undefined;
+  }
 }
 
 export async function writeCaptureEnvironmentArtifact(params: {

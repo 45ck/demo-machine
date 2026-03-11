@@ -27,6 +27,15 @@ export interface CaptureResult {
   events: ActionEvent[];
   spec: DemoSpec;
   startTimestamp: number;
+  artifacts?:
+    | {
+        tracePath: string;
+        eventLogPath: string;
+        metadataPath?: string | undefined;
+        environmentPath: string;
+        verificationPath: string;
+      }
+    | undefined;
 }
 
 export function extractBranding(
@@ -189,6 +198,7 @@ export async function captureFromSpec(
     events: bundle.events,
     spec: bundle.spec,
     startTimestamp: bundle.startTimestamp,
+    artifacts: bundle.artifacts,
   };
 }
 

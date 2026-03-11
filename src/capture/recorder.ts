@@ -1,4 +1,4 @@
-import type { CaptureOptions, CaptureBundle } from "./types.js";
+import type { CaptureOptions, CaptureBundle, CaptureGeometrySnapshot } from "./types.js";
 import type { ActionEvent } from "../playback/types.js";
 import { writeEventLog } from "./event-log.js";
 import type { CaptureMetadata } from "./metadata.js";
@@ -32,16 +32,6 @@ interface PlaywrightVideo {
 const logger = createLogger("capture:recorder");
 
 type FinalizeCaptureOptions = CaptureOptions & { meta?: CaptureMetadata };
-
-interface GeometrySnapshot {
-  innerWidth: number;
-  innerHeight: number;
-  outerWidth: number;
-  outerHeight: number;
-  availWidth: number;
-  availHeight: number;
-  devicePixelRatio: number;
-}
 
 async function safeUnlink(path: string): Promise<void> {
   try {
@@ -94,7 +84,7 @@ async function writeMetadataIfProvided(
   return metadataPath;
 }
 
-async function inspectGeometry(page: PlaywrightPage): Promise<GeometrySnapshot | undefined> {
+async function inspectGeometry(page: PlaywrightPage): Promise<CaptureGeometrySnapshot | undefined> {
   try {
     return (await page.evaluate((() => ({
       innerWidth: window.innerWidth,
@@ -104,7 +94,7 @@ async function inspectGeometry(page: PlaywrightPage): Promise<GeometrySnapshot |
       availWidth: window.screen?.availWidth ?? 0,
       availHeight: window.screen?.availHeight ?? 0,
       devicePixelRatio: window.devicePixelRatio,
-    })) as (...args: unknown[]) => unknown)) as GeometrySnapshot;
+    })) as (...args: unknown[]) => unknown)) as CaptureGeometrySnapshot;
   } catch (err) {
     logger.warn(`Failed to inspect capture geometry: ${String(err)}`);
     return undefined;
@@ -114,7 +104,11 @@ async function inspectGeometry(page: PlaywrightPage): Promise<GeometrySnapshot |
 export async function createRecordingContext(
   browser: PlaywrightBrowser,
   options: CaptureOptions,
-): Promise<{ context: PlaywrightContext; page: PlaywrightPage }> {
+): Promise<{
+  context: PlaywrightContext;
+  page: PlaywrightPage;
+  geometry?: CaptureGeometrySnapshot;
+}> {
   await mkdir(options.outputDir, { recursive: true });
   logger.info(`Output directory ready: ${options.outputDir}`);
 
@@ -153,7 +147,7 @@ export async function createRecordingContext(
   await context.tracing.start({ screenshots: true, snapshots: true });
   logger.info("Tracing started");
 
-  return { context, page };
+  return { context, page, ...(geometry ? { geometry } : {}) };
 }
 
 export async function finalizeCapture(

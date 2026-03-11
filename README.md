@@ -245,6 +245,8 @@ pnpm examples:capture -- --filter spa-router
 - `video.webm` (raw recording)
 - `events.json` (event log)
 - `metadata.json` (capture timing info used for accurate timelines)
+- `environment.json` (runtime/browser reproducibility manifest)
+- `verification.json` (machine-readable capture proof and artifact contract)
 - `trace.zip` (Playwright trace)
 
 `edit` expects `video.webm` to be in the same directory as the `events.json` you pass. If `metadata.json` exists, it will be used automatically.

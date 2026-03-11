@@ -78,6 +78,21 @@
         border: 1px solid rgba(51, 214, 159, 0.3);
         color: var(--accent2);
       }
+      .badge-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .session-badge {
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.16);
+      }
+      .session-badge.ready {
+        color: var(--accent2);
+        background: rgba(51, 214, 159, 0.15);
+        border-color: rgba(51, 214, 159, 0.3);
+      }
       .note-list {
         display: grid;
         gap: 8px;
@@ -167,7 +182,12 @@
       <div class="card">
         <div class="card-header">
           <h1 data-testid="page-title">Notes</h1>
-          <span class="badge" data-testid="note-count" id="noteCount">0 notes</span>
+          <div class="badge-row">
+            <span class="badge session-badge" data-testid="session-state" id="sessionState">
+              Guest session
+            </span>
+            <span class="badge" data-testid="note-count" id="noteCount">0 notes</span>
+          </div>
         </div>
 
         <div class="error-banner" id="errorBanner" data-testid="error-banner">
@@ -192,6 +212,7 @@
 
     <script>
       const noteCount = document.getElementById("noteCount");
+      const sessionState = document.getElementById("sessionState");
       const noteList = document.getElementById("noteList");
       const errorBanner = document.getElementById("errorBanner");
       const detailCard = document.getElementById("detailCard");
@@ -199,6 +220,16 @@
       const detailMeta = document.getElementById("detailMeta");
 
       let notesData = [];
+
+      function updateSessionState() {
+        const hasSession = document.cookie
+          .split(";")
+          .map((part) => part.trim())
+          .some((part) => part.startsWith("demo-session="));
+
+        sessionState.textContent = hasSession ? "Preview session active" : "Guest session";
+        sessionState.classList.toggle("ready", hasSession);
+      }
 
       function renderNotes(notes) {
         noteList.innerHTML = "";
@@ -244,6 +275,7 @@
         }
       }
 
+      updateSessionState();
       loadNotes();
     </script>
   </body>

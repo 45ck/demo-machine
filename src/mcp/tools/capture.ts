@@ -43,6 +43,7 @@ export function registerCaptureTool(server: McpServer): void {
                   videoPath: result.videoPath,
                   eventCount: result.events.length,
                   title: result.spec.meta.title,
+                  ...(result.artifacts ? { artifacts: result.artifacts } : {}),
                 },
                 null,
                 2,

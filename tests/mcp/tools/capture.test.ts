@@ -17,6 +17,13 @@ const fakeResult = {
     chapters: [],
   } as unknown as DemoSpec,
   startTimestamp: 1000,
+  artifacts: {
+    tracePath: "./output/trace.zip",
+    eventLogPath: "./output/events.json",
+    metadataPath: "./output/metadata.json",
+    environmentPath: "./output/environment.json",
+    verificationPath: "./output/verification.json",
+  },
 };
 
 describe("capture-spec tool", () => {
@@ -54,6 +61,7 @@ describe("capture-spec tool", () => {
     expect(parsed["videoPath"]).toBe("./output/output.mp4");
     expect(parsed["eventCount"]).toBe(2);
     expect(parsed["title"]).toBe("My Demo");
+    expect(parsed["artifacts"]).toEqual(fakeResult.artifacts);
   });
 
   it("defaults narration to false", async () => {

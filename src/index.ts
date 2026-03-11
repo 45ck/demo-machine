@@ -41,7 +41,17 @@ export type {
 // Capture
 export { createRecordingContext, finalizeCapture } from "./capture/recorder.js";
 export { writeEventLog, readEventLog } from "./capture/event-log.js";
-export type { CaptureOptions, CaptureBundle } from "./capture/types.js";
+export {
+  buildCaptureEnvironmentManifest,
+  buildCaptureVerificationManifest,
+  writeCaptureEnvironment,
+  writeCaptureVerification,
+} from "./capture/manifests.js";
+export type { CaptureOptions, CaptureBundle, CaptureGeometrySnapshot } from "./capture/types.js";
+export type {
+  CaptureEnvironmentManifest,
+  CaptureVerificationManifest,
+} from "./capture/manifests.js";
 
 // Editor
 export { buildTimeline, extendTimelineForNarration } from "./editor/timeline.js";

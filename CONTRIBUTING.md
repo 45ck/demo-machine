@@ -72,6 +72,8 @@ examples/             # Example specs + demo apps
   ```bash
   pnpm examples:validate -- --no-build
   ```
+- `pnpm examples:capture` now validates the raw capture artifact contract as well:
+  `video.webm`, `events.json`, `metadata.json`, `environment.json`, `verification.json`, and `trace.zip`.
 - GitHub CodeQL runs separately to catch security-oriented JavaScript/TypeScript issues that the local toolchain will not always surface.
 - If you touch parser, redaction, playback orchestration, or timing logic, consider running mutation testing before opening the PR:
   ```bash
