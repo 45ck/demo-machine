@@ -12,3 +12,4 @@ reports/
 *.wav
 *.mp3
 trace.zip
+test-output/

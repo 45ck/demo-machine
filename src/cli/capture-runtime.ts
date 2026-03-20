@@ -19,6 +19,9 @@ export function createPlaybackEngine(params: {
   specDir?: string | undefined;
   settings: NarrationSettings;
   timing?: import("../utils/narration-sync-types.js").NarrationTimingMap | undefined;
+  changeDetection?:
+    | import("../playback/change-detection/config.js").ChangeDetectionConfig
+    | undefined;
 }) {
   return new params.PlaybackEngine(params.page, {
     baseUrl: params.baseUrl,
@@ -36,6 +39,7 @@ export function createPlaybackEngine(params: {
           },
         }
       : {}),
+    ...(params.changeDetection ? { changeDetection: params.changeDetection } : {}),
   });
 }
 

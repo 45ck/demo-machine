@@ -1,5 +1,6 @@
 import type { Step } from "../spec/types.js";
 import type { ActionEvent } from "./types.js";
+import type { DetectorSignal } from "./change-detection/types.js";
 
 export class PlaybackStepError extends Error {
   public readonly stepIndex: number;
@@ -29,5 +30,29 @@ export class PlaybackStepError extends Error {
     this.selectorForEvent = params.selectorForEvent;
     this.events = params.events;
     this.startTimestamp = params.startTimestamp;
+  }
+}
+
+export class NoVisibleChangeError extends Error {
+  public readonly stepIndex: number;
+  public readonly chapterTitle: string;
+  public readonly step: Step;
+  public readonly signals: DetectorSignal[];
+
+  constructor(params: {
+    stepIndex: number;
+    chapterTitle: string;
+    step: Step;
+    signals: DetectorSignal[];
+  }) {
+    const signalSummary = params.signals.map((s) => `  [${s.detector}] ${s.details}`).join("\n");
+    super(
+      `No visible change detected at step ${String(params.stepIndex)} (${params.chapterTitle}): ${params.step.action}\n${signalSummary}`,
+    );
+    this.name = "NoVisibleChangeError";
+    this.stepIndex = params.stepIndex;
+    this.chapterTitle = params.chapterTitle;
+    this.step = params.step;
+    this.signals = params.signals;
   }
 }

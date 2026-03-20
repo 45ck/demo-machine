@@ -57,6 +57,16 @@ const narrationSchema = z.object({
   sync: narrationSyncSchema.optional().default({ mode: "manual", bufferMs: 500 }),
 });
 
+const changeDetectionSchema = z.object({
+  mode: z.enum(["error", "warn", "off"]).optional().default("error"),
+  detectors: z
+    .array(z.string().min(1))
+    .optional()
+    .default(["dom-mutation", "layout", "computed-style"]),
+  mutationWaitMs: z.number().nonnegative().optional().default(100),
+  screenshotThreshold: z.number().nonnegative().max(1).optional().default(0.001),
+});
+
 const chapterSchema = z.object({
   title: z.string().min(1),
   narration: z.string().optional(),
@@ -70,5 +80,6 @@ export const demoSpecSchema = z.object({
   redaction: redactionConfigSchema.optional(),
   narration: narrationSchema.optional(),
   pacing: pacingSchema.optional().default({}),
+  changeDetection: changeDetectionSchema.optional(),
   chapters: z.array(chapterSchema).min(1),
 });

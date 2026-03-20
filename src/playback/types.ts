@@ -46,4 +46,5 @@ export interface PlaybackOptions {
         timing: import("../utils/narration-sync-types.js").NarrationTimingMap;
       }
     | undefined;
+  changeDetection?: import("./change-detection/config.js").ChangeDetectionConfig | undefined;
 }

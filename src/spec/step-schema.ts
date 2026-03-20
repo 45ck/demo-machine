@@ -94,6 +94,7 @@ const clickStepSchema = z.object({
   timeoutMs: z.number().int().positive().optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
+  expectVisualChange: z.boolean().optional(),
 });
 
 const clickFirstVisibleStepSchema = z.object({
@@ -103,6 +104,7 @@ const clickFirstVisibleStepSchema = z.object({
   timeoutMs: z.number().int().positive().optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
+  expectVisualChange: z.boolean().optional(),
 });
 
 const typeStepSchema = z.object({
@@ -115,6 +117,7 @@ const typeStepSchema = z.object({
   timeoutMs: z.number().int().positive().optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
+  expectVisualChange: z.boolean().optional(),
 });
 
 const hoverStepSchema = z.object({
@@ -165,6 +168,7 @@ const checkStepSchema = z.object({
   timeoutMs: z.number().int().positive().optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
+  expectVisualChange: z.boolean().optional(),
 });
 
 const uncheckStepSchema = z.object({
@@ -175,6 +179,7 @@ const uncheckStepSchema = z.object({
   timeoutMs: z.number().int().positive().optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
+  expectVisualChange: z.boolean().optional(),
 });
 
 const selectOptionSchema = z.union([
@@ -192,6 +197,7 @@ const selectStepSchema = z.object({
   timeoutMs: z.number().int().positive().optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
+  expectVisualChange: z.boolean().optional(),
 });
 
 const selectFirstNonPlaceholderStepSchema = z.object({
@@ -202,6 +208,7 @@ const selectFirstNonPlaceholderStepSchema = z.object({
   timeoutMs: z.number().int().positive().optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
+  expectVisualChange: z.boolean().optional(),
 });
 
 const uploadStepSchema = z.object({
@@ -214,6 +221,7 @@ const uploadStepSchema = z.object({
   timeoutMs: z.number().int().positive().optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
+  expectVisualChange: z.boolean().optional(),
 });
 
 const dragEndpointSchema = z.object({
@@ -229,6 +237,7 @@ const dragAndDropStepSchema = z.object({
   timeoutMs: z.number().int().positive().optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
+  expectVisualChange: z.boolean().optional(),
 });
 
 const screenshotStepSchema = z.object({
@@ -244,19 +253,13 @@ const pressStepSchema = z.object({
   narration: z.string().optional(),
 });
 
-const backStepSchema = z.object({
-  action: z.literal("back"),
+const navTimingFields = {
   timeoutMs: z.number().int().positive().optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
-});
-
-const forwardStepSchema = z.object({
-  action: z.literal("forward"),
-  timeoutMs: z.number().int().positive().optional(),
-  delay: z.number().int().positive().optional(),
-  narration: z.string().optional(),
-});
+};
+const backStepSchema = z.object({ action: z.literal("back"), ...navTimingFields });
+const forwardStepSchema = z.object({ action: z.literal("forward"), ...navTimingFields });
 
 const clickStepSchemaValidated = clickStepSchema.refine((v) => v.selector || v.target, {
   message: "click requires selector or target",

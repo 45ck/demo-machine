@@ -1,4 +1,6 @@
 import { setLogLevel } from "../utils/logger.js";
+import type { ChangeDetectionMode } from "../playback/change-detection/types.js";
+
 export interface GlobalOptions {
   output: string;
   narration: boolean;
@@ -15,6 +17,7 @@ export interface GlobalOptions {
   fromStep?: number | undefined;
   trimStartMs: number;
   resolutionOverride?: { width: number; height: number } | undefined;
+  changeDetection?: ChangeDetectionMode | undefined;
 }
 
 export function applyGlobalOptions(opts: GlobalOptions): void {

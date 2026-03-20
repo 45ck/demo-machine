@@ -16,6 +16,10 @@ import {
 import { createPlaybackEngine, prepareNarrationTiming } from "./capture-runtime.js";
 import { runPreSteps } from "../playback/presteps.js";
 import * as path from "node:path";
+import {
+  DEFAULT_CHANGE_DETECTION_CONFIG,
+  type ChangeDetectionConfig,
+} from "../playback/change-detection/types.js";
 
 const log = createLogger("cli:capture");
 const DEFAULT_BASE_URL = "http://localhost:3000";
@@ -45,6 +49,26 @@ export interface CaptureResult {
 
 function resolveSpecDir(specPath?: string): string | undefined {
   return specPath ? path.dirname(path.resolve(specPath)) : undefined;
+}
+
+function resolveChangeDetectionConfig(
+  spec: DemoSpec,
+  opts: GlobalOptions,
+): ChangeDetectionConfig | undefined {
+  if (opts.changeDetection === "off") return undefined;
+  const specCfg = spec.changeDetection;
+  if (!specCfg && !opts.changeDetection) return undefined;
+  const base = specCfg
+    ? {
+        mode: specCfg.mode,
+        detectors: specCfg.detectors,
+        mutationWaitMs: specCfg.mutationWaitMs,
+        screenshotThreshold: specCfg.screenshotThreshold,
+      }
+    : { ...DEFAULT_CHANGE_DETECTION_CONFIG };
+  if (opts.changeDetection) base.mode = opts.changeDetection;
+  if (base.mode === "off") return undefined;
+  return base as ChangeDetectionConfig;
 }
 
 async function prepareCaptureSession(params: {
@@ -214,6 +238,8 @@ async function captureWithBrowser(params: {
     outputDir: params.opts.output,
   });
 
+  const changeDetection = resolveChangeDetectionConfig(params.spec, params.opts);
+
   const engine = createPlaybackEngine({
     PlaybackEngine: params.PlaybackEngine,
     page: session.page,
@@ -223,6 +249,7 @@ async function captureWithBrowser(params: {
     specDir: params.specDir,
     settings: params.settings,
     timing: narrationPrep.timing,
+    changeDetection,
   });
 
   try {

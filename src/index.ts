@@ -27,7 +27,7 @@ export type { RunnerHandle, RunnerOptions } from "./runner/types.js";
 
 // Playback
 export { PlaybackEngine } from "./playback/engine.js";
-export { PlaybackStepError } from "./playback/errors.js";
+export { PlaybackStepError, NoVisibleChangeError } from "./playback/errors.js";
 export { actionHandlers } from "./playback/actions.js";
 export { runPreSteps } from "./playback/presteps.js";
 export type { PlaywrightPage, PlaybackContext } from "./playback/actions.js";
@@ -37,6 +37,25 @@ export type {
   PlaybackResult,
   PlaybackOptions,
 } from "./playback/types.js";
+
+// Change Detection
+export {
+  ChangeDetectionOrchestrator,
+  DomMutationDetector,
+  LayoutDetector,
+  ComputedStyleDetector,
+  ScreenshotDiffDetector,
+  createDetectors,
+  KNOWN_DETECTOR_NAMES,
+  DEFAULT_CHANGE_DETECTION_CONFIG,
+  isInteractiveAction,
+} from "./playback/change-detection/index.js";
+export type {
+  ChangeDetector,
+  DetectorSignal,
+  ChangeDetectionMode,
+  ChangeDetectionConfig,
+} from "./playback/change-detection/index.js";
 
 // Capture
 export { createRecordingContext, finalizeCapture } from "./capture/recorder.js";

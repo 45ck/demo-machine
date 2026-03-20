@@ -51,6 +51,18 @@
     "yaml": "^2.7.0",
     "zod": "^3.24.2"
   },
+  "peerDependencies": {
+    "pixelmatch": ">=5.0.0",
+    "pngjs": ">=6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "pixelmatch": {
+      "optional": true
+    },
+    "pngjs": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@stryker-mutator/core": "^8.7.1",
     "@types/node": "^22.13.4",

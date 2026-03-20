@@ -72,6 +72,16 @@ program
     },
     0,
   )
+  .option(
+    "--change-detection <mode>",
+    "Change detection mode: error | warn | off (overrides spec-level config)",
+    (v) => {
+      if (v !== "error" && v !== "warn" && v !== "off") {
+        throw new InvalidArgumentError("--change-detection must be error, warn, or off.");
+      }
+      return v;
+    },
+  )
   .option("--resolution <WxH>", "Override spec resolution for capture (e.g. 1280x720)", (v) => {
     const m = /^(\d+)x(\d+)$/.exec(v);
     if (!m) throw new InvalidArgumentError("--resolution must be in WxH format, e.g. 1280x720.");

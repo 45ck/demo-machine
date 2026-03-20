@@ -7,6 +7,7 @@ import type { ActionEvent, BoundingBox, Pacing, PlaybackOptions, PlaybackResult 
 import { selectorForEvent, selectorForEventFromInput, type Target } from "./selector.js";
 import { createNarrationWaiter } from "./narration-waiter.js";
 import { applyRedaction, checkSecrets, injectCursor } from "./overlays.js";
+import { ChangeDetectionOrchestrator } from "./change-detection/orchestrator.js";
 
 const logger = createLogger("playback");
 
@@ -146,6 +147,7 @@ async function runChapters(params: {
   secretPatterns: string[];
   settleDelayMs: number;
   onStepComplete?: ((event: ActionEvent) => Promise<void>) | undefined;
+  changeDetection?: ChangeDetectionOrchestrator | undefined;
   events: ActionEvent[];
   startTimestamp: number;
 }): Promise<void> {
@@ -154,6 +156,13 @@ async function runChapters(params: {
     logger.info(`Starting chapter: ${chapter.title}`);
     for (const step of chapter.steps) {
       const selector = selectorForError(step);
+      const shouldCheck = params.changeDetection?.shouldCheck(step) ?? false;
+
+      // Pre-action: capture state for change detection.
+      if (shouldCheck && params.changeDetection) {
+        await params.changeDetection.before(params.page, step);
+      }
+
       await executeStepOrRaise({
         ctx: params.ctx,
         step,
@@ -178,6 +187,16 @@ async function runChapters(params: {
         events: params.events,
         startTimestamp: params.startTimestamp,
       });
+
+      // Post-action + settle: evaluate change detection signals.
+      if (shouldCheck && params.changeDetection) {
+        await params.changeDetection.after({
+          page: params.page,
+          step,
+          stepIndex,
+          chapterTitle: chapter.title,
+        });
+      }
 
       stepIndex++;
     }
@@ -272,6 +291,13 @@ export class PlaybackEngine {
 
     await narrationWaiter.maybeWaitBeforeFirstStep();
 
+    // Initialize change detection if configured.
+    let changeDetection: ChangeDetectionOrchestrator | undefined;
+    if (this.options.changeDetection && this.options.changeDetection.mode !== "off") {
+      changeDetection = new ChangeDetectionOrchestrator(this.options.changeDetection);
+      await changeDetection.setup(this.page);
+    }
+
     const ctx: PlaybackContext = {
       page: this.page,
       baseUrl: this.options.baseUrl,
@@ -290,6 +316,7 @@ export class PlaybackEngine {
       secretPatterns: this.options.secretPatterns ?? [],
       settleDelayMs: pacing.settleDelayMs,
       onStepComplete: this.options.onStepComplete,
+      changeDetection,
       events,
       startTimestamp,
     });
