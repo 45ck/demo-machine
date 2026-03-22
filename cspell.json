@@ -59,7 +59,8 @@
     "prestep",
     "Cascadia",
     "teleporting",
-    "modelcontextprotocol"
+    "modelcontextprotocol",
+    "navigations"
   ],
   "ignorePaths": ["node_modules", "dist", "pnpm-lock.yaml", "*.json"]
 }

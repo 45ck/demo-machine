@@ -107,6 +107,31 @@ chapters:
 \`\`\`
 `;
 
+const AI_PROMPTS_DOCS = `# AI Prompts
+
+Demo-machine provides MCP prompts that let AI assistants help with spec authoring, debugging, and review.
+
+## Available Prompts
+
+| Prompt | Description | Required Args | Optional Args |
+|--------|-------------|---------------|---------------|
+| \`create-demo-spec\` | Generate a demo spec YAML for a given application | \`appUrl\` | \`appDescription\` |
+| \`debug-demo\` | Diagnose and fix a failing demo spec | \`specPath\` | \`errorMessage\` |
+| \`narrate-spec\` | Generate narration text for every step in a spec | \`specPath\` | \`tone\` (formal/casual/technical) |
+| \`heal-spec\` | Auto-fix a broken spec using failure artifacts | \`specPath\` | \`outputDir\` |
+| \`demo-from-url\` | Generate a spec by crawling a live web app | \`appUrl\` | \`description\` |
+| \`translate-spec\` | Translate all narration to another language | \`specPath\`, \`language\` | |
+| \`spec-from-test\` | Convert a Playwright/Cypress test into a spec | \`testPath\` | |
+| \`review-demo\` | AI quality review of a completed demo run | | \`outputDir\`, \`specPath\` |
+
+## Typical Workflows
+
+1. **New demo**: \`demo-from-url\` → \`narrate-spec\` → \`review-demo\`
+2. **From tests**: \`spec-from-test\` → \`narrate-spec\` → \`review-demo\`
+3. **Fix broken demo**: \`heal-spec\` or \`debug-demo\` → \`review-demo\`
+4. **Localize**: \`translate-spec\` for each target language
+`;
+
 export function registerResources(server: McpServer): void {
   server.resource(
     "basic-template",
@@ -151,6 +176,22 @@ export function registerResources(server: McpServer): void {
             uri: "demo-machine://docs/spec-format",
             mimeType: TEXT_MARKDOWN,
             text: SPEC_FORMAT_DOCS,
+          },
+        ],
+      }),
+  );
+
+  server.resource(
+    "ai-prompts-docs",
+    "demo-machine://docs/ai-prompts",
+    { mimeType: TEXT_MARKDOWN, description: "Documentation for AI-powered MCP prompts" },
+    () =>
+      Promise.resolve({
+        contents: [
+          {
+            uri: "demo-machine://docs/ai-prompts",
+            mimeType: TEXT_MARKDOWN,
+            text: AI_PROMPTS_DOCS,
           },
         ],
       }),

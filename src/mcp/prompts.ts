@@ -1,54 +1,16 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import {
+  debugDemoHandler,
+  narrateSpecHandler,
+  healSpecHandler,
+  demoFromUrlHandler,
+  translateSpecHandler,
+  specFromTestHandler,
+  reviewDemoHandler,
+} from "./prompt-handlers.js";
 
-async function debugDemoHandler({
-  specPath,
-  errorMessage,
-}: {
-  specPath: string;
-  errorMessage: string | undefined;
-}): Promise<{ messages: Array<{ role: "user"; content: { type: "text"; text: string } }> }> {
-  const { readFile } = await import("node:fs/promises");
-  const path = await import("node:path");
-  // MCP server runs with user permissions; any path accessible to the process is valid.
-  const resolvedPath = path.resolve(specPath);
-  let specContent: string;
-  try {
-    specContent = await readFile(resolvedPath, "utf8");
-  } catch {
-    specContent = `(could not read file: ${resolvedPath})`;
-  }
-  return {
-    messages: [
-      {
-        role: "user" as const,
-        content: {
-          type: "text" as const,
-          text: [
-            "Debug this failing demo-machine spec:",
-            `Spec file: ${resolvedPath}`,
-            errorMessage ? `Error: ${errorMessage}` : "No error message provided.",
-            "",
-            "Spec content:",
-            "```yaml",
-            specContent,
-            "```",
-            "",
-            "Common issues to check:",
-            "1. Selector not found - element may have changed or need a wait",
-            "2. Timing issues - add wait steps after animations",
-            "3. Navigation errors - check URL and runner config",
-            "4. Missing runner command - app may not be started",
-            "",
-            "Diagnose the issue and suggest fixes.",
-          ].join("\n"),
-        },
-      },
-    ],
-  };
-}
-
-export function registerPrompts(server: McpServer): void {
+function registerCorePrompts(server: McpServer): void {
   server.prompt(
     "create-demo-spec",
     "Generate a demo spec YAML for a given application",
@@ -98,4 +60,79 @@ export function registerPrompts(server: McpServer): void {
     },
     ({ specPath, errorMessage }) => debugDemoHandler({ specPath, errorMessage }),
   );
+
+  server.prompt(
+    "narrate-spec",
+    "Generate compelling narration text for every step in a demo spec",
+    {
+      specPath: z.string().describe("Path to the spec file to narrate"),
+      tone: z
+        .string()
+        .optional()
+        .describe("Narration tone: formal (default), casual, or technical"),
+    },
+    ({ specPath, tone }) => narrateSpecHandler({ specPath, tone }),
+  );
+
+  server.prompt(
+    "heal-spec",
+    "Auto-fix a broken demo spec by analyzing failure artifacts",
+    {
+      specPath: z.string().describe("Path to the failing spec file"),
+      outputDir: z
+        .string()
+        .optional()
+        .describe("Directory containing failure artifacts (default: ./output)"),
+    },
+    ({ specPath, outputDir }) => healSpecHandler({ specPath, outputDir }),
+  );
+}
+
+function registerAiPrompts(server: McpServer): void {
+  server.prompt(
+    "demo-from-url",
+    "Generate a complete demo spec by crawling a live web app",
+    {
+      appUrl: z.string().describe("URL of the application to demo"),
+      description: z.string().optional().describe("What user journey to demo"),
+    },
+    ({ appUrl, description }) => demoFromUrlHandler({ appUrl, description }),
+  );
+
+  server.prompt(
+    "translate-spec",
+    "Translate all narration in a demo spec to another language",
+    {
+      specPath: z.string().describe("Path to the spec file to translate"),
+      language: z.string().describe("Target language (e.g. French, ja, pt-BR)"),
+    },
+    ({ specPath, language }) => translateSpecHandler({ specPath, language }),
+  );
+
+  server.prompt(
+    "spec-from-test",
+    "Convert a Playwright or Cypress E2E test into a demo spec",
+    {
+      testPath: z.string().describe("Path to the E2E test file"),
+    },
+    ({ testPath }) => specFromTestHandler({ testPath }),
+  );
+
+  server.prompt(
+    "review-demo",
+    "AI quality review of a completed demo run",
+    {
+      outputDir: z
+        .string()
+        .optional()
+        .describe("Directory containing demo output artifacts (default: ./output)"),
+      specPath: z.string().optional().describe("Path to the original spec file"),
+    },
+    ({ outputDir, specPath }) => reviewDemoHandler({ outputDir, specPath }),
+  );
+}
+
+export function registerPrompts(server: McpServer): void {
+  registerCorePrompts(server);
+  registerAiPrompts(server);
 }

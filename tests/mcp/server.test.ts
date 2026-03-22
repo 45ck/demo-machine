@@ -27,7 +27,7 @@ describe("createServer", () => {
     expect(toolNames).toContain("format-spec");
   });
 
-  it("registers all 3 resources and 2 prompts", () => {
+  it("registers all 4 resources and 8 prompts", () => {
     const resourceNames: string[] = [];
     const promptNames: string[] = [];
     vi.spyOn(McpServer.prototype, "resource").mockImplementation((...args: unknown[]) => {
@@ -38,8 +38,24 @@ describe("createServer", () => {
     });
     createServer();
     expect(resourceNames).toEqual(
-      expect.arrayContaining(["basic-template", "actions-docs", "spec-format-docs"]),
+      expect.arrayContaining([
+        "basic-template",
+        "actions-docs",
+        "spec-format-docs",
+        "ai-prompts-docs",
+      ]),
     );
-    expect(promptNames).toEqual(expect.arrayContaining(["create-demo-spec", "debug-demo"]));
+    expect(promptNames).toEqual(
+      expect.arrayContaining([
+        "create-demo-spec",
+        "debug-demo",
+        "narrate-spec",
+        "heal-spec",
+        "demo-from-url",
+        "translate-spec",
+        "spec-from-test",
+        "review-demo",
+      ]),
+    );
   });
 });
