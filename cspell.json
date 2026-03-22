@@ -60,7 +60,17 @@
     "Cascadia",
     "teleporting",
     "modelcontextprotocol",
-    "navigations"
+    "navigations",
+    "postflight",
+    "valuenow",
+    "contentinfo",
+    "menuitemcheckbox",
+    "menuitemradio",
+    "spinbutton",
+    "treegrid",
+    "requestfailed",
+    "valuetext",
+    "Narr"
   ],
   "ignorePaths": ["node_modules", "dist", "pnpm-lock.yaml", "*.json"]
 }

@@ -25,9 +25,15 @@ importers:
       openai:
         specifier: ^6.22.0
         version: 6.22.0(zod@3.25.76)
+      pixelmatch:
+        specifier: ">=5.0.0"
+        version: 7.1.0
       playwright:
         specifier: ^1.58.2
         version: 1.58.2
+      pngjs:
+        specifier: ">=6.0.0"
+        version: 7.0.0
       tree-kill:
         specifier: ^1.2.2
         version: 1.2.2
@@ -4804,6 +4810,13 @@ packages:
     engines: { node: ">=0.10" }
     hasBin: true
 
+  pixelmatch@7.1.0:
+    resolution:
+      {
+        integrity: sha512-1wrVzJ2STrpmONHKBy228LM1b84msXDUoAzVEl0R8Mz4Ce6EPr+IVtxm8+yvrqLYMHswREkjYFaMxnyGnaY3Ng==,
+      }
+    hasBin: true
+
   pkce-challenge@5.0.1:
     resolution:
       {
@@ -4832,6 +4845,13 @@ packages:
       }
     engines: { node: ">=18" }
     hasBin: true
+
+  pngjs@7.0.0:
+    resolution:
+      {
+        integrity: sha512-LKWqWJRhstyYo9pGvgor/ivk2w94eSjE3RGVuzLGlr3NmD8bf7RcYGze1mNdEHRP6TRP6rMuDHk5t44hnTRyow==,
+      }
+    engines: { node: ">=14.19.0" }
 
   possible-typed-array-names@1.1.0:
     resolution:
@@ -8893,6 +8913,10 @@ snapshots:
 
   pidtree@0.6.0: {}
 
+  pixelmatch@7.1.0:
+    dependencies:
+      pngjs: 7.0.0
+
   pkce-challenge@5.0.1: {}
 
   platform@1.3.6: {}
@@ -8904,6 +8928,8 @@ snapshots:
       playwright-core: 1.58.2
     optionalDependencies:
       fsevents: 2.3.2
+
+  pngjs@7.0.0: {}
 
   possible-typed-array-names@1.1.0: {}
 
