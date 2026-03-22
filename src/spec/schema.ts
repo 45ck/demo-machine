@@ -62,7 +62,7 @@ const changeDetectionSchema = z.object({
   detectors: z
     .array(z.string().min(1))
     .optional()
-    .default(["dom-mutation", "layout", "computed-style"]),
+    .default(["dom-mutation", "layout", "computed-style", "aria-state"]),
   mutationWaitMs: z.number().nonnegative().optional().default(100),
   screenshotThreshold: z.number().nonnegative().max(1).optional().default(0.001),
 });
