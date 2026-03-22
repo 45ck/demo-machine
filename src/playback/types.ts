@@ -1,8 +1,14 @@
+import type { DetectorSignal } from "./change-detection/types.js";
+
 export interface BoundingBox {
   x: number;
   y: number;
   width: number;
   height: number;
+}
+
+export interface StepEvidence {
+  changeDetection?: DetectorSignal[] | undefined;
 }
 
 export interface ActionEvent {
@@ -12,6 +18,7 @@ export interface ActionEvent {
   boundingBox?: BoundingBox;
   duration: number;
   narration?: string;
+  evidence?: StepEvidence | undefined;
 }
 
 export interface PlaybackResult {

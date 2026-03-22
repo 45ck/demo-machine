@@ -140,6 +140,11 @@ async function onStepCompleteMaybe(params: {
   await params.onStepComplete(params.events[params.events.length - 1]!);
 }
 
+function attachEvidence(events: ActionEvent[], signals: import("./change-detection/types.js").DetectorSignal[]): void {
+  const last = events[events.length - 1];
+  if (last && signals.length > 0) last.evidence = { changeDetection: signals };
+}
+
 async function runChapters(params: {
   chapters: Chapter[];
   ctx: PlaybackContext;
@@ -190,12 +195,10 @@ async function runChapters(params: {
 
       // Post-action + settle: evaluate change detection signals.
       if (shouldCheck && params.changeDetection) {
-        await params.changeDetection.after({
-          page: params.page,
-          step,
-          stepIndex,
-          chapterTitle: chapter.title,
-        });
+        const signals = await params.changeDetection.after(
+          { page: params.page, step, stepIndex, chapterTitle: chapter.title },
+        );
+        attachEvidence(params.events, signals);
       }
 
       stepIndex++;

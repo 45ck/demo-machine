@@ -267,6 +267,67 @@ describe("actionHandlers", () => {
     expect(visuals.flashSpotlight).not.toHaveBeenCalled();
   });
 
+  it("handles assert action with count", async () => {
+    (ctx.page.evaluate as ReturnType<typeof vi.fn>).mockResolvedValue(3);
+    const step = { action: "assert" as const, selector: ".item", count: 3 };
+    await actionHandlers["assert"]!(ctx, step, events, 0);
+    expect(ctx.page.evaluate).toHaveBeenCalled();
+    expect(events).toHaveLength(1);
+    expect(events[0]!.action).toBe("assert");
+  });
+
+  it("handles assert action with value", async () => {
+    ctx.page.locator = vi.fn().mockReturnValue({
+      ...createMockLocator(),
+      evaluate: vi.fn().mockResolvedValue("hello"),
+    });
+    const step = { action: "assert" as const, selector: "#input", value: "hello" };
+    await actionHandlers["assert"]!(ctx, step, events, 0);
+    expect(events).toHaveLength(1);
+    expect(events[0]!.action).toBe("assert");
+  });
+
+  it("handles assert action with checked", async () => {
+    ctx.page.locator = vi.fn().mockReturnValue({
+      ...createMockLocator(),
+      evaluate: vi.fn().mockResolvedValue(true),
+    });
+    const step = { action: "assert" as const, selector: "#cb", checked: true };
+    await actionHandlers["assert"]!(ctx, step, events, 0);
+    expect(events).toHaveLength(1);
+    expect(events[0]!.action).toBe("assert");
+  });
+
+  it("handles assert action with enabled", async () => {
+    ctx.page.locator = vi.fn().mockReturnValue({
+      ...createMockLocator(),
+      evaluate: vi.fn().mockResolvedValue(true),
+    });
+    const step = { action: "assert" as const, selector: "#btn", enabled: true };
+    await actionHandlers["assert"]!(ctx, step, events, 0);
+    expect(events).toHaveLength(1);
+    expect(events[0]!.action).toBe("assert");
+  });
+
+  it("throws on failed count assertion", async () => {
+    (ctx.page.evaluate as ReturnType<typeof vi.fn>).mockResolvedValue(2);
+    const step = { action: "assert" as const, selector: ".item", count: 5, timeoutMs: 100 };
+    await expect(actionHandlers["assert"]!(ctx, step, events, 0)).rejects.toThrow(
+      "expected .item count to be 5 but was 2",
+    );
+  });
+
+  it("throws when count assertion uses target instead of selector", async () => {
+    const step = {
+      action: "assert" as const,
+      target: { by: "text" as const, text: "Hello" },
+      count: 3,
+    };
+    await expect(actionHandlers["assert"]!(ctx, step, events, 0)).rejects.toThrow(
+      'assert count requires a CSS "selector"',
+    );
+  });
+
   it("handles screenshot action", async () => {
     const step = { action: "screenshot" as const };
     await actionHandlers["screenshot"]!(ctx, step, events, 0);
