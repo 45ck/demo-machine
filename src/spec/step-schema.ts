@@ -128,6 +128,7 @@ const hoverStepSchema = z.object({
   timeoutMs: z.number().int().positive().optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
+  expectVisualChange: z.boolean().optional(),
 });
 
 const scrollStepSchema = z.object({
@@ -141,6 +142,7 @@ const scrollStepSchema = z.object({
   timeoutMs: z.number().int().positive().optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
+  expectVisualChange: z.boolean().optional(),
 });
 
 const waitStepSchema = z.object({
@@ -156,6 +158,10 @@ const assertStepSchema = z.object({
   nth: z.number().int().nonnegative().optional(),
   visible: z.boolean().optional(),
   text: z.string().optional(),
+  count: z.number().int().nonnegative().optional(),
+  value: z.string().optional(),
+  checked: z.boolean().optional(),
+  enabled: z.boolean().optional(),
   timeoutMs: z.number().int().positive().optional(),
   narration: z.string().optional(),
 });
@@ -246,12 +252,9 @@ const screenshotStepSchema = z.object({
   narration: z.string().optional(),
 });
 
-const pressStepSchema = z.object({
-  action: z.literal("press"),
-  key: nonBlankString,
-  delay: z.number().int().positive().optional(),
-  narration: z.string().optional(),
-});
+const pressStepSchema = z.object(
+  { action: z.literal("press"), key: nonBlankString, delay: z.number().int().positive().optional(), narration: z.string().optional() },
+);
 
 const navTimingFields = {
   timeoutMs: z.number().int().positive().optional(),
@@ -261,34 +264,33 @@ const navTimingFields = {
 const backStepSchema = z.object({ action: z.literal("back"), ...navTimingFields });
 const forwardStepSchema = z.object({ action: z.literal("forward"), ...navTimingFields });
 
-const clickStepSchemaValidated = clickStepSchema.refine((v) => v.selector || v.target, {
-  message: "click requires selector or target",
-});
-const typeStepSchemaValidated = typeStepSchema.refine((v) => v.selector || v.target, {
-  message: "type requires selector or target",
-});
-const hoverStepSchemaValidated = hoverStepSchema.refine((v) => v.selector || v.target, {
-  message: "hover requires selector or target",
-});
+const needsSelector = (v: { selector?: string | undefined; target?: unknown }) => Boolean(v.selector || v.target);
+const selectorMsg = (name: string) => ({ message: `${name} requires selector or target` });
+
+const clickStepSchemaValidated = clickStepSchema.refine(needsSelector, selectorMsg("click"));
+const typeStepSchemaValidated = typeStepSchema.refine(needsSelector, selectorMsg("type"));
+const hoverStepSchemaValidated = hoverStepSchema.refine(needsSelector, selectorMsg("hover"));
 const assertStepSchemaValidated = assertStepSchema
-  .refine((v) => v.selector || v.target, {
-    message: "assert requires selector or target",
-  })
-  .refine((v) => v.visible !== undefined || (v.text !== undefined && v.text !== null), {
-    message: 'assert step must specify at least one of: "visible", "text"',
-  });
-const checkStepSchemaValidated = checkStepSchema.refine((v) => v.selector || v.target, {
-  message: "check requires selector or target",
-});
-const uncheckStepSchemaValidated = uncheckStepSchema.refine((v) => v.selector || v.target, {
-  message: "uncheck requires selector or target",
-});
-const selectStepSchemaValidated = selectStepSchema.refine((v) => v.selector || v.target, {
-  message: "select requires selector or target",
-});
+  .refine(needsSelector, selectorMsg("assert"))
+  .refine(
+    (v) =>
+      v.visible !== undefined ||
+      (v.text !== undefined && v.text !== null) ||
+      v.count !== undefined ||
+      v.value !== undefined ||
+      v.checked !== undefined ||
+      v.enabled !== undefined,
+    {
+      message:
+        'assert step must specify at least one of: "visible", "text", "count", "value", "checked", "enabled"',
+    },
+  );
+const checkStepSchemaValidated = checkStepSchema.refine(needsSelector, selectorMsg("check"));
+const uncheckStepSchemaValidated = uncheckStepSchema.refine(needsSelector, selectorMsg("uncheck"));
+const selectStepSchemaValidated = selectStepSchema.refine(needsSelector, selectorMsg("select"));
 const selectFirstNonPlaceholderStepSchemaValidated = selectFirstNonPlaceholderStepSchema.refine(
-  (v) => v.selector || v.target,
-  { message: "selectFirstNonPlaceholder requires selector or target" },
+  needsSelector,
+  selectorMsg("selectFirstNonPlaceholder"),
 );
 const uploadStepSchemaValidated = uploadStepSchema
   .refine((v) => v.selector || v.target, { message: "upload requires selector or target" })
