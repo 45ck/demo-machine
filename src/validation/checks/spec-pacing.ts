@@ -11,10 +11,17 @@ const PACING_FIELDS = [
   "settleDelayMs",
 ] as const;
 
+type PacingField = (typeof PACING_FIELDS)[number];
+type PacingShape = Partial<Record<PacingField, unknown>>;
+
+interface SpecWithPacing {
+  pacing?: PacingShape;
+}
+
 function checkPacing(ctx: CheckContext): CheckResult[] {
   const results: CheckResult[] = [];
-  const spec = ctx.spec as Record<string, unknown>;
-  const pacing = spec.pacing as Record<string, unknown> | undefined;
+  const spec = ctx.spec as SpecWithPacing;
+  const pacing = spec.pacing;
   const name = "spec-pacing";
 
   if (!pacing) {
@@ -22,10 +29,13 @@ function checkPacing(ctx: CheckContext): CheckResult[] {
   }
 
   for (const field of PACING_FIELDS) {
-    const value = pacing[field];
-    if (value !== undefined && (typeof value !== "number" || !Number.isFinite(value) || value < 0)) {
+    const value: unknown = pacing[field];
+    if (
+      value !== undefined &&
+      (typeof value !== "number" || !Number.isFinite(value) || value < 0)
+    ) {
       results.push(
-        fail(name, `pacing.${field} must be a non-negative number, got ${String(value)}`),
+        fail(name, `pacing.${field} must be a non-negative number, got ${JSON.stringify(value)}`),
       );
     }
   }

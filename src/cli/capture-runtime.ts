@@ -1,5 +1,6 @@
 import type { DemoSpec } from "../spec/types.js";
 import type { PlaywrightPage } from "../playback/actions.js";
+import type { GlobalOptions } from "./options.js";
 import { createLogger } from "../utils/logger.js";
 import type { NarrationPreSynthesisResult } from "../utils/narration-sync-types.js";
 import {
@@ -7,8 +8,32 @@ import {
   preSynthesizeNarration,
 } from "../narration/pre-synthesizer.js";
 import type { NarrationSettings } from "./narration.js";
+import {
+  DEFAULT_CHANGE_DETECTION_CONFIG,
+  type ChangeDetectionConfig,
+} from "../playback/change-detection/types.js";
 
 const log = createLogger("cli:capture:runtime");
+
+export function resolveChangeDetectionConfig(
+  spec: DemoSpec,
+  opts: GlobalOptions,
+): ChangeDetectionConfig | undefined {
+  if (opts.changeDetection === "off") return undefined;
+  const specCfg = spec.changeDetection;
+  if (!specCfg && !opts.changeDetection) return undefined;
+  const base = specCfg
+    ? {
+        mode: specCfg.mode,
+        detectors: specCfg.detectors,
+        mutationWaitMs: specCfg.mutationWaitMs,
+        screenshotThreshold: specCfg.screenshotThreshold,
+      }
+    : { ...DEFAULT_CHANGE_DETECTION_CONFIG };
+  if (opts.changeDetection) base.mode = opts.changeDetection;
+  if (base.mode === "off") return undefined;
+  return base as ChangeDetectionConfig;
+}
 
 export function createPlaybackEngine(params: {
   PlaybackEngine: typeof import("../playback/engine.js").PlaybackEngine;

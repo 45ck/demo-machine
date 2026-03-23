@@ -4,54 +4,74 @@ import { registerCheck } from "../registry.js";
 import { pass, fail } from "../types.js";
 import type { CheckContext, CheckResult } from "../types.js";
 
-function checkFiles(ctx: CheckContext): CheckResult[] {
-  const results: CheckResult[] = [];
-  const spec = ctx.spec as Record<string, unknown>;
-  const meta = (spec.meta ?? {}) as Record<string, unknown>;
-  const branding = meta.branding as Record<string, unknown> | undefined;
-  const name = "spec-files";
+interface FilesSpecShape {
+  meta?: { branding?: { logo?: string } };
+  chapters?: Array<{
+    steps?: Array<{ action?: string; file?: string; files?: string[] }>;
+  }>;
+}
 
-  // Check branding logo
-  if (branding && typeof branding.logo === "string") {
-    const logoPath = path.resolve(ctx.specDir, branding.logo);
-    if (!fs.existsSync(logoPath)) {
+const CHECK_NAME = "spec-files";
+
+function checkBrandingLogo(
+  branding: { logo?: string } | undefined,
+  specDir: string,
+  results: CheckResult[],
+): void {
+  if (!branding || typeof branding.logo !== "string") return;
+  const logoPath = path.resolve(specDir, branding.logo);
+  if (!fs.existsSync(logoPath)) {
+    results.push(
+      fail(
+        CHECK_NAME,
+        `Branding logo not found: ${logoPath}`,
+        "Check the logo path in meta.branding.logo",
+      ),
+    );
+  }
+}
+
+function checkUploadFiles(
+  step: { file?: string; files?: string[] },
+  stepIndex: number,
+  specDir: string,
+  results: CheckResult[],
+): void {
+  const files: string[] = [];
+  if (typeof step.file === "string") files.push(step.file);
+  if (Array.isArray(step.files)) files.push(...step.files);
+  for (const filePath of files) {
+    const resolved = path.resolve(specDir, filePath);
+    if (!fs.existsSync(resolved)) {
       results.push(
-        fail(name, `Branding logo not found: ${logoPath}`, "Check the logo path in meta.branding.logo"),
+        fail(
+          CHECK_NAME,
+          `Step ${stepIndex} upload file not found: ${resolved}`,
+          "Ensure upload files exist relative to the spec directory",
+        ),
       );
     }
   }
+}
 
-  // Check upload file references
-  const chapters = (spec.chapters ?? []) as Array<Record<string, unknown>>;
+function checkFiles(ctx: CheckContext): CheckResult[] {
+  const results: CheckResult[] = [];
+  const spec = ctx.spec as FilesSpecShape;
+
+  checkBrandingLogo(spec.meta?.branding, ctx.specDir, results);
+
+  const chapters = spec.chapters ?? [];
   let stepIndex = 0;
   for (const chapter of chapters) {
-    const steps = (chapter.steps ?? []) as Array<Record<string, unknown>>;
-    for (const step of steps) {
+    for (const step of chapter.steps ?? []) {
       if (step.action === "upload") {
-        const files: string[] = [];
-        if (typeof step.file === "string") files.push(step.file);
-        if (Array.isArray(step.files)) files.push(...(step.files as string[]));
-        for (const filePath of files) {
-          const resolved = path.resolve(ctx.specDir, filePath);
-          if (!fs.existsSync(resolved)) {
-            results.push(
-              fail(
-                name,
-                `Step ${stepIndex} upload file not found: ${resolved}`,
-                "Ensure upload files exist relative to the spec directory",
-              ),
-            );
-          }
-        }
+        checkUploadFiles(step, stepIndex, ctx.specDir, results);
       }
       stepIndex++;
     }
   }
 
-  if (results.length === 0) {
-    return [pass(name)];
-  }
-  return results;
+  return results.length === 0 ? [pass(CHECK_NAME)] : results;
 }
 
 registerCheck({

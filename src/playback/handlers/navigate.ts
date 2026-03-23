@@ -1,5 +1,5 @@
 import type { ActionHandler } from "../action-core.js";
-import { buildEvent, stepTimeoutMs } from "../action-core.js";
+import { buildEvent, stepTimeoutMs, isTimeoutLikeError } from "../action-core.js";
 
 export const handleNavigate: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
@@ -14,13 +14,21 @@ export const handleNavigate: ActionHandler = async (ctx, step, events, stepIndex
     throw new Error(`navigate failed: invalid URL "${step.url}" (base: "${ctx.baseUrl}")`);
   }
 
-  await ctx.page.goto(url, {
-    waitUntil:
-      waitUntil === "load" || waitUntil === "domcontentloaded" || waitUntil === "networkidle"
-        ? waitUntil
-        : "domcontentloaded",
-    timeout: timeoutMs,
-  });
+  const resolvedWaitUntil =
+    waitUntil === "load" || waitUntil === "domcontentloaded" || waitUntil === "networkidle"
+      ? waitUntil
+      : "domcontentloaded";
+  try {
+    await ctx.page.goto(url, { waitUntil: resolvedWaitUntil, timeout: timeoutMs });
+  } catch (err) {
+    if (isTimeoutLikeError(err)) {
+      throw new Error(
+        `Navigation to "${url}" timed out after ${String(timeoutMs)}ms (waitUntil: ${resolvedWaitUntil})`,
+        { cause: err },
+      );
+    }
+    throw err;
+  }
   await ctx.reinjectCursor();
 
   events.push(buildEvent({ action: "navigate", startTime: start, narration: step.narration }));

@@ -13,13 +13,15 @@ import {
   writeFailureArtifacts,
   writePassedVerificationArtifact,
 } from "./capture-artifacts.js";
-import { createPlaybackEngine, prepareNarrationTiming } from "./capture-runtime.js";
-import { runPreSteps } from "../playback/presteps.js";
-import * as path from "node:path";
 import {
-  DEFAULT_CHANGE_DETECTION_CONFIG,
-  type ChangeDetectionConfig,
-} from "../playback/change-detection/types.js";
+  createPlaybackEngine,
+  prepareNarrationTiming,
+  resolveChangeDetectionConfig,
+} from "./capture-runtime.js";
+import { runPreSteps } from "../playback/presteps.js";
+import { attachMonitors, collectIssues } from "../validation/monitor-runner.js";
+import { runPostflight } from "./capture-postflight.js";
+import * as path from "node:path";
 
 const log = createLogger("cli:capture");
 const DEFAULT_BASE_URL = "http://localhost:3000";
@@ -49,26 +51,6 @@ export interface CaptureResult {
 
 function resolveSpecDir(specPath?: string): string | undefined {
   return specPath ? path.dirname(path.resolve(specPath)) : undefined;
-}
-
-function resolveChangeDetectionConfig(
-  spec: DemoSpec,
-  opts: GlobalOptions,
-): ChangeDetectionConfig | undefined {
-  if (opts.changeDetection === "off") return undefined;
-  const specCfg = spec.changeDetection;
-  if (!specCfg && !opts.changeDetection) return undefined;
-  const base = specCfg
-    ? {
-        mode: specCfg.mode,
-        detectors: specCfg.detectors,
-        mutationWaitMs: specCfg.mutationWaitMs,
-        screenshotThreshold: specCfg.screenshotThreshold,
-      }
-    : { ...DEFAULT_CHANGE_DETECTION_CONFIG };
-  if (opts.changeDetection) base.mode = opts.changeDetection;
-  if (base.mode === "off") return undefined;
-  return base as ChangeDetectionConfig;
 }
 
 async function prepareCaptureSession(params: {
@@ -252,9 +234,12 @@ async function captureWithBrowser(params: {
     changeDetection,
   });
 
+  const monitors = attachMonitors(session.page, { runnerUrl: session.baseUrl });
+
   try {
     const result = await engine.execute(params.spec.chapters);
-    return await finalizeSuccessfulCapture({
+    const monitorIssues = collectIssues(monitors);
+    const captureResult = await finalizeSuccessfulCapture({
       captureMod: params.captureMod,
       recording: session.recording,
       captureOpts: session.captureOpts,
@@ -267,7 +252,16 @@ async function captureWithBrowser(params: {
         ? { settings: params.settings, preSynth: narrationPrep.preSynth }
         : undefined,
     });
+    void runPostflight({
+      captureResult,
+      ...params,
+      events: result.events,
+      startTimestamp: result.startTimestamp,
+      monitorIssues,
+    });
+    return captureResult;
   } catch (err) {
+    collectIssues(monitors);
     return await handleCaptureFailure({
       captureMod: params.captureMod,
       recording: session.recording,

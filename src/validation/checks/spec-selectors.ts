@@ -89,6 +89,30 @@ const KNOWN_ARIA_ROLES = new Set([
 
 export { KNOWN_ARIA_ROLES };
 
+interface SelectorTarget {
+  by?: string;
+  role?: string;
+}
+
+interface DragEndpoint {
+  selector?: string;
+}
+
+interface SelectorStep {
+  action?: string;
+  selector?: string;
+  target?: SelectorTarget;
+  from?: DragEndpoint;
+  to?: DragEndpoint;
+}
+
+interface SelectorsSpecShape {
+  chapters?: Array<{ steps?: SelectorStep[] }>;
+}
+
+const CHECK_NAME = "spec-selectors";
+const SELECTOR_HINT = "Fix the CSS selector syntax";
+
 function validateCssSelector(selector: string): string | null {
   if (selector.trim().length === 0) return "Empty selector";
   if (/[{}]/.test(selector)) return "Selector contains CSS block delimiters";
@@ -96,65 +120,60 @@ function validateCssSelector(selector: string): string | null {
   return null;
 }
 
+function checkCssSelector(selector: string, prefix: string, results: CheckResult[]): void {
+  const err = validateCssSelector(selector);
+  if (err) {
+    results.push(fail(CHECK_NAME, `${prefix} "${selector}": ${err}`, SELECTOR_HINT));
+  }
+}
+
+function checkTargetRole(target: SelectorTarget, stepIndex: number, results: CheckResult[]): void {
+  if (
+    target.by === "role" &&
+    typeof target.role === "string" &&
+    !KNOWN_ARIA_ROLES.has(target.role)
+  ) {
+    results.push(warn(CHECK_NAME, `Step ${stepIndex} uses unknown ARIA role "${target.role}"`));
+  }
+}
+
+function checkDragEndpoints(step: SelectorStep, stepIndex: number, results: CheckResult[]): void {
+  for (const endpoint of ["from", "to"] as const) {
+    const ep = step[endpoint];
+    if (ep && typeof ep.selector === "string") {
+      checkCssSelector(ep.selector, `Step ${stepIndex} dragAndDrop.${endpoint} selector`, results);
+    }
+  }
+}
+
+function checkStepSelectors(step: SelectorStep, stepIndex: number, results: CheckResult[]): void {
+  if (typeof step.selector === "string") {
+    checkCssSelector(step.selector, `Step ${stepIndex} selector`, results);
+  }
+
+  if (step.target && typeof step.target === "object") {
+    checkTargetRole(step.target, stepIndex, results);
+  }
+
+  if (step.action === "dragAndDrop") {
+    checkDragEndpoints(step, stepIndex, results);
+  }
+}
+
 function checkSelectors(ctx: CheckContext): CheckResult[] {
   const results: CheckResult[] = [];
-  const spec = ctx.spec as Record<string, unknown>;
-  const chapters = (spec.chapters ?? []) as Array<Record<string, unknown>>;
-  const name = "spec-selectors";
+  const spec = ctx.spec as SelectorsSpecShape;
+  const chapters = spec.chapters ?? [];
 
   let stepIndex = 0;
   for (const chapter of chapters) {
-    const steps = (chapter.steps ?? []) as Array<Record<string, unknown>>;
-    for (const step of steps) {
-      // Check CSS selectors
-      if (typeof step.selector === "string") {
-        const err = validateCssSelector(step.selector);
-        if (err) {
-          results.push(
-            fail(name, `Step ${stepIndex} selector "${step.selector}": ${err}`, "Fix the CSS selector syntax"),
-          );
-        }
-      }
-
-      // Check target-based role selectors
-      if (step.target && typeof step.target === "object") {
-        const target = step.target as Record<string, unknown>;
-        if (target.by === "role" && typeof target.role === "string") {
-          if (!KNOWN_ARIA_ROLES.has(target.role)) {
-            results.push(
-              warn(name, `Step ${stepIndex} uses unknown ARIA role "${target.role}"`),
-            );
-          }
-        }
-      }
-
-      // Check dragAndDrop from/to selectors
-      if (step.action === "dragAndDrop") {
-        for (const endpoint of ["from", "to"] as const) {
-          const ep = step[endpoint] as Record<string, unknown> | undefined;
-          if (ep && typeof ep.selector === "string") {
-            const err = validateCssSelector(ep.selector);
-            if (err) {
-              results.push(
-                fail(
-                  name,
-                  `Step ${stepIndex} dragAndDrop.${endpoint} selector "${ep.selector}": ${err}`,
-                  "Fix the CSS selector syntax",
-                ),
-              );
-            }
-          }
-        }
-      }
-
+    for (const step of chapter.steps ?? []) {
+      checkStepSelectors(step, stepIndex, results);
       stepIndex++;
     }
   }
 
-  if (results.length === 0) {
-    return [pass(name)];
-  }
-  return results;
+  return results.length === 0 ? [pass(CHECK_NAME)] : results;
 }
 
 registerCheck({

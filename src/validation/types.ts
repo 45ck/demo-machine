@@ -10,14 +10,14 @@ export interface CheckResult {
   checkName: string;
   status: CheckSeverity;
   message: string;
-  suggestion?: string;
+  suggestion?: string | undefined;
 }
 
 /** Context for pre-capture checks. */
 export interface CheckContext {
   spec: unknown;
   specDir: string;
-  options?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 /** Function signature for a validation check. */
@@ -30,14 +30,16 @@ export interface CheckDefinition {
   fn: CheckFn;
 }
 
+const PRE_CAPTURE: CheckPhase = "pre-capture";
+
 export function pass(name: string): CheckResult {
-  return { phase: "pre-capture", checkName: name, status: "pass", message: "OK" };
+  return { phase: PRE_CAPTURE, checkName: name, status: "pass", message: "OK" };
 }
 
 export function fail(name: string, message: string, suggestion?: string): CheckResult {
-  return { phase: "pre-capture", checkName: name, status: "fail", message, suggestion };
+  return { phase: PRE_CAPTURE, checkName: name, status: "fail", message, suggestion };
 }
 
 export function warn(name: string, message: string): CheckResult {
-  return { phase: "pre-capture", checkName: name, status: "warn", message };
+  return { phase: PRE_CAPTURE, checkName: name, status: "warn", message };
 }

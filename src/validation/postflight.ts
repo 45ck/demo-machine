@@ -11,7 +11,7 @@ export async function postflight(
   ctx: PostflightContext,
   monitorIssues?: MonitorIssue[],
 ): Promise<CheckResult[]> {
-  const results = await runPhase("post-capture", ctx);
+  const results = await Promise.resolve(runPhase("post-capture", ctx));
   if (monitorIssues) {
     for (const issue of monitorIssues) {
       results.push({

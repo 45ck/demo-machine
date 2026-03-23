@@ -25,68 +25,71 @@ const KNOWN_ACTIONS = new Set([
 
 export { KNOWN_ACTIONS };
 
+interface StepsSpecShape {
+  chapters?: Array<{
+    steps?: Array<{
+      action?: string;
+      timeoutMs?: number;
+      timeout?: number;
+    }>;
+  }>;
+  runner?: { url?: string };
+}
+
+const CHECK_NAME = "spec-steps";
+const HIGH_TIMEOUT = 30000;
+
+function checkStepAction(
+  step: { action?: string; timeoutMs?: number; timeout?: number },
+  stepIndex: number,
+  results: CheckResult[],
+): void {
+  const action = step.action as string;
+
+  if (!KNOWN_ACTIONS.has(action)) {
+    results.push(
+      fail(
+        CHECK_NAME,
+        `Step ${stepIndex}: unknown action "${action}"`,
+        `Known actions: ${[...KNOWN_ACTIONS].join(", ")}`,
+      ),
+    );
+  }
+
+  if (action === "assert" && typeof step.timeoutMs === "number" && step.timeoutMs > HIGH_TIMEOUT) {
+    results.push(
+      warn(CHECK_NAME, `Step ${stepIndex}: assert timeout ${step.timeoutMs}ms is very high`),
+    );
+  }
+
+  if (action === "wait" && typeof step.timeout === "number" && step.timeout > HIGH_TIMEOUT) {
+    results.push(
+      warn(CHECK_NAME, `Step ${stepIndex}: wait timeout ${step.timeout}ms is very long`),
+    );
+  }
+}
+
 function checkSteps(ctx: CheckContext): CheckResult[] {
   const results: CheckResult[] = [];
-  const spec = ctx.spec as Record<string, unknown>;
-  const chapters = (spec.chapters ?? []) as Array<Record<string, unknown>>;
-  const runner = spec.runner as Record<string, unknown> | undefined;
-  const name = "spec-steps";
+  const spec = ctx.spec as StepsSpecShape;
+  const chapters = spec.chapters ?? [];
 
   let stepIndex = 0;
   let hasNavigate = false;
 
   for (const chapter of chapters) {
-    const steps = (chapter.steps ?? []) as Array<Record<string, unknown>>;
-    for (const step of steps) {
-      const action = step.action as string;
-
-      if (!KNOWN_ACTIONS.has(action)) {
-        results.push(
-          fail(
-            name,
-            `Step ${stepIndex}: unknown action "${action}"`,
-            `Known actions: ${[...KNOWN_ACTIONS].join(", ")}`,
-          ),
-        );
-      }
-
-      if (action === "navigate") {
-        hasNavigate = true;
-      }
-
-      // Warn on assert steps with very high timeouts
-      if (action === "assert") {
-        if (typeof step.timeoutMs === "number" && step.timeoutMs > 30000) {
-          results.push(
-            warn(name, `Step ${stepIndex}: assert timeout ${step.timeoutMs}ms is very high`),
-          );
-        }
-      }
-
-      // Warn on wait steps with very long timeouts
-      if (action === "wait") {
-        if (typeof step.timeout === "number" && step.timeout > 30000) {
-          results.push(
-            warn(name, `Step ${stepIndex}: wait timeout ${step.timeout}ms is very long`),
-          );
-        }
-      }
-
+    for (const step of chapter.steps ?? []) {
+      checkStepAction(step, stepIndex, results);
+      if (step.action === "navigate") hasNavigate = true;
       stepIndex++;
     }
   }
 
-  // Warn if no navigate step found (likely needs a URL)
-  if (!hasNavigate && !runner?.url) {
-    results.push(
-      warn(name, "No navigate step found and no runner.url configured"),
-    );
+  if (!hasNavigate && !spec.runner?.url) {
+    results.push(warn(CHECK_NAME, "No navigate step found and no runner.url configured"));
   }
 
-  if (results.length === 0) {
-    return [pass(name)];
-  }
-  return results;
+  return results.length === 0 ? [pass(CHECK_NAME)] : results;
 }
 
 registerCheck({

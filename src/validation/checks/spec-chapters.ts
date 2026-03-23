@@ -5,10 +5,14 @@ import type { CheckContext, CheckResult } from "../types.js";
 const MAX_STEPS_PER_CHAPTER = 50;
 const MAX_CHAPTERS = 20;
 
+interface SpecWithChapters {
+  chapters?: Array<{ title?: string; steps?: unknown[] }>;
+}
+
 function checkChapters(ctx: CheckContext): CheckResult[] {
   const results: CheckResult[] = [];
-  const spec = ctx.spec as Record<string, unknown>;
-  const chapters = (spec.chapters ?? []) as Array<Record<string, unknown>>;
+  const spec = ctx.spec as SpecWithChapters;
+  const chapters = spec.chapters ?? [];
   const name = "spec-chapters";
 
   if (chapters.length === 0) {
@@ -24,9 +28,9 @@ function checkChapters(ctx: CheckContext): CheckResult[] {
 
   const titles = new Set<string>();
   for (let i = 0; i < chapters.length; i++) {
-    const chapter = chapters[i];
+    const chapter = chapters[i]!;
     const title = chapter.title as string;
-    const steps = (chapter.steps ?? []) as unknown[];
+    const steps = chapter.steps ?? [];
 
     // Check for duplicate titles
     if (titles.has(title)) {
