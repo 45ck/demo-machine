@@ -2,6 +2,7 @@ import type { ActionHandler } from "../action-core.js";
 import { buildEvent, ensureTargetReady, stepTimeoutMs } from "../action-core.js";
 import { resolveLocatorFromInput, type Target } from "../selector.js";
 import { flashSpotlight, pulseFocus } from "../visuals.js";
+import { checkPointerEvents } from "../guards.js";
 
 export const handleDragAndDrop: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
@@ -33,6 +34,11 @@ export const handleDragAndDrop: ActionHandler = async (ctx, step, events, stepIn
 
   const fromBox = await fromResolved.locator.boundingBox();
   const toBox = await toResolved.locator.boundingBox();
+
+  // Runtime guard — warn but never block.
+  if (step.from.selector) {
+    await checkPointerEvents(ctx.page, step.from.selector);
+  }
 
   await ctx.moveCursorTo(fromBox);
   await flashSpotlight(ctx.page, fromBox);

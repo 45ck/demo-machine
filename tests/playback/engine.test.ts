@@ -25,6 +25,16 @@ vi.mock("../../src/redaction/secrets.js", () => ({
   scanForSecrets: vi.fn(() => []),
 }));
 
+vi.mock("../../src/playback/overlay-leak-detector.js", () => ({
+  detectOverlayLeaks: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock("../../src/playback/guards.js", () => ({
+  checkHitTest: vi.fn().mockResolvedValue(null),
+  checkPointerEvents: vi.fn().mockResolvedValue(null),
+  checkTypedText: vi.fn().mockResolvedValue(null),
+}));
+
 const TEST_PACING: Pacing = {
   cursorDurationMs: 600,
   typeDelayMs: 50,
@@ -50,6 +60,7 @@ function createMockLocator() {
     scrollIntoViewIfNeeded: vi.fn().mockResolvedValue(undefined),
     waitFor: vi.fn().mockResolvedValue(undefined),
     evaluate: vi.fn().mockResolvedValue(undefined),
+    inputValue: vi.fn().mockResolvedValue(""),
   };
   return locator as unknown as ReturnType<PlaywrightPage["locator"]>;
 }

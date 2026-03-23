@@ -24,6 +24,7 @@ export interface PlaywrightLocator {
     timeout?: number;
   }): Promise<void>;
   evaluate(fn: string | ((...args: unknown[]) => unknown), ...args: unknown[]): Promise<unknown>;
+  inputValue(): Promise<string>;
 }
 
 export interface PlaywrightPage {

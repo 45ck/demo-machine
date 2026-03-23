@@ -9,6 +9,7 @@ import { selectorForEvent, selectorForEventFromInput, type Target } from "./sele
 import { createNarrationWaiter } from "./narration-waiter.js";
 import { applyRedaction, checkSecrets, injectCursor } from "./overlays.js";
 import { ChangeDetectionOrchestrator } from "./change-detection/orchestrator.js";
+import { detectOverlayLeaks } from "./overlay-leak-detector.js";
 
 const logger = createLogger("playback");
 
@@ -330,6 +331,12 @@ export class PlaybackEngine {
       events,
       startTimestamp,
     });
+
+    // Post-playback: scan for orphaned overlay elements.
+    const overlayLeaks = await detectOverlayLeaks(this.page);
+    for (const leak of overlayLeaks) {
+      logger.warn(leak);
+    }
 
     return {
       events,

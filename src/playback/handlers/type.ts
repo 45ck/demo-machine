@@ -2,6 +2,7 @@ import type { ActionHandler } from "../action-core.js";
 import { buildEvent, ensureTargetReady, stepTimeoutMs } from "../action-core.js";
 import { resolveStepLocator } from "../selector.js";
 import { flashSpotlight, pulseFocus } from "../visuals.js";
+import { checkTypedText } from "../guards.js";
 
 export const handleType: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
@@ -31,6 +32,12 @@ export const handleType: ActionHandler = async (ctx, step, events, stepIndex) =>
 
   await locator.click({ timeout: timeoutMs });
   await ctx.page.keyboard.type(step.text, { delay: ctx.pacing.typeDelayMs });
+
+  // Runtime guard — readback check, warn but never block.
+  // Only verify readback when we cleared first — append mode makes strict comparison unreliable.
+  if (clear === true && step.selector) {
+    await checkTypedText(ctx.page, step.selector, step.text);
+  }
 
   events.push(
     buildEvent({

@@ -12,6 +12,7 @@ import {
   showFilePickerOverlay,
   showSelectOverlay,
 } from "../visuals.js";
+import { checkHitTest, checkPointerEvents } from "../guards.js";
 import * as path from "node:path";
 
 export const handleCheck: ActionHandler = async (ctx, step, events, stepIndex) => {
@@ -24,6 +25,13 @@ export const handleCheck: ActionHandler = async (ctx, step, events, stepIndex) =
 
   await ensureTargetReady(locator, timeoutMs);
   const box = await locator.boundingBox();
+
+  // Runtime guards — warn but never block.
+  if (step.selector) {
+    await checkHitTest(ctx.page, box, step.selector);
+    await checkPointerEvents(ctx.page, step.selector);
+  }
+
   await ctx.moveCursorTo(box);
   await flashSpotlight(ctx.page, box);
   await pulseFocus(ctx.page, box);
@@ -51,6 +59,13 @@ export const handleUncheck: ActionHandler = async (ctx, step, events, stepIndex)
 
   await ensureTargetReady(locator, timeoutMs);
   const box = await locator.boundingBox();
+
+  // Runtime guards — warn but never block.
+  if (step.selector) {
+    await checkHitTest(ctx.page, box, step.selector);
+    await checkPointerEvents(ctx.page, step.selector);
+  }
+
   await ctx.moveCursorTo(box);
   await flashSpotlight(ctx.page, box);
   await pulseFocus(ctx.page, box);
@@ -78,6 +93,13 @@ export const handleSelect: ActionHandler = async (ctx, step, events, stepIndex) 
 
   await ensureTargetReady(locator, timeoutMs);
   const box = await locator.boundingBox();
+
+  // Runtime guards — warn but never block.
+  if (step.selector) {
+    await checkHitTest(ctx.page, box, step.selector);
+    await checkPointerEvents(ctx.page, step.selector);
+  }
+
   await ctx.moveCursorTo(box);
   await flashSpotlight(ctx.page, box);
   await pulseFocus(ctx.page, box);
@@ -118,6 +140,13 @@ export const handleSelectFirstNonPlaceholder: ActionHandler = async (
 
   await ensureTargetReady(locator, timeoutMs);
   const box = await locator.boundingBox();
+
+  // Runtime guards — warn but never block.
+  if (step.selector) {
+    await checkHitTest(ctx.page, box, step.selector);
+    await checkPointerEvents(ctx.page, step.selector);
+  }
+
   await ctx.moveCursorTo(box);
   await flashSpotlight(ctx.page, box);
   await pulseFocus(ctx.page, box);
