@@ -58,6 +58,20 @@ module.exports = {
       to: { path: "^src/(?!spec/|redaction/|utils/)" },
     },
     {
+      name: "quality-deps",
+      severity: "error",
+      comment: "src/quality/ can only import from validation, spec, and utils",
+      from: { path: "^src/quality/" },
+      to: { path: "^src/(?!quality/|validation/|spec/|utils/)" },
+    },
+    {
+      name: "validation-deps",
+      severity: "error",
+      comment: "src/validation/ can only import from spec and utils",
+      from: { path: "^src/validation/" },
+      to: { path: "^src/(?!validation/|spec/|utils/)" },
+    },
+    {
       name: "no-mcp-import",
       severity: "error",
       comment: "Library modules must not import from src/mcp/ (it is a top-level entry point)",

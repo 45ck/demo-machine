@@ -162,5 +162,93 @@ export async function runFullPipeline(params: {
     });
   }
 
+  await runPostRenderQualityGate({
+    outputPath,
+    spec: params.spec,
+    events: workingCapture.events,
+    ...(narrationPrep.timedSegments ? { narrationSegments: narrationPrep.timedSegments } : {}),
+    startTimestamp: workingCapture.startTimestamp,
+  });
+
   log.info(`Output: ${outputPath}`);
+}
+
+/** Build narration-to-action index lookup by walking spec chapters. */
+function buildNarrationToActionMap(spec: DemoSpec): number[] {
+  const map: number[] = [];
+  let stepIdx = 0;
+  for (const chapter of spec.chapters ?? []) {
+    for (const step of chapter.steps ?? []) {
+      if (step.narration) map.push(stepIdx);
+      stepIdx++;
+    }
+  }
+  return map;
+}
+
+/** Prepare quality-gate inputs from capture events and narration segments. */
+function buildQualityGateInputs(params: {
+  spec: DemoSpec;
+  events: import("../playback/types.js").ActionEvent[];
+  narrationSegments: import("../narration/types.js").TimedNarrationSegment[];
+  startTimestamp: number;
+}): {
+  events: Array<{ action: string; timestamp: number; duration: number }>;
+  narrationSegments: Array<{ actionIndex: number; startMs: number; text: string }>;
+} {
+  const t0 = params.startTimestamp;
+  const events = params.events.map((e) => ({
+    action: e.action,
+    timestamp: e.timestamp - t0,
+    duration: e.duration,
+  }));
+  const narrationToAction = buildNarrationToActionMap(params.spec);
+  const narrationSegments = params.narrationSegments.map((seg, i) => ({
+    actionIndex: narrationToAction[i] ?? i,
+    startMs: seg.startMs,
+    text: seg.text,
+  }));
+  return { events, narrationSegments };
+}
+
+async function runPostRenderQualityGate(params: {
+  outputPath: string;
+  spec: DemoSpec;
+  events?: import("../playback/types.js").ActionEvent[];
+  narrationSegments?: import("../narration/types.js").TimedNarrationSegment[];
+  startTimestamp?: number;
+}): Promise<void> {
+  try {
+    const qualityMod = await import("../quality/runner.js");
+
+    const inputs =
+      params.events && params.narrationSegments && params.startTimestamp !== undefined
+        ? buildQualityGateInputs({
+            spec: params.spec,
+            events: params.events,
+            narrationSegments: params.narrationSegments,
+            startTimestamp: params.startTimestamp,
+          })
+        : undefined;
+
+    const gate = await qualityMod.runQualityGate({
+      outputMp4Path: params.outputPath,
+      spec: params.spec,
+      events: inputs?.events,
+      narrationSegments: inputs?.narrationSegments,
+    });
+    for (const r of gate.results) {
+      if (r.status !== "pass") {
+        log.warn(`[quality] ${r.checkName}: ${r.message}`);
+      }
+    }
+    if (gate.hasFailures) {
+      const failCount = gate.results.filter((r) => r.status === "fail").length;
+      log.warn(`Quality gate: ${failCount} check(s) failed out of ${gate.results.length}`);
+    } else {
+      log.info(`Quality gate passed (${gate.results.length} checks, ${gate.durationMs}ms)`);
+    }
+  } catch (err) {
+    log.warn(`Quality gate skipped: ${err instanceof Error ? err.message : String(err)}`);
+  }
 }

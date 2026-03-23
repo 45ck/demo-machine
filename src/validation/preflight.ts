@@ -2,6 +2,9 @@ import type { CheckContext } from "./types.js";
 import { PreflightError } from "./errors.js";
 import { runPhase } from "./registry.js";
 
+// Side-effect imports: register pre-capture checks
+import "./checks/action-conflicts.js";
+
 export async function preflight(ctx: CheckContext): Promise<void> {
   const results = await Promise.resolve(runPhase("pre-capture", ctx));
   const failures = results.filter((r) => r.status === "fail");
