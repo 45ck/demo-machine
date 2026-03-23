@@ -13,3 +13,7 @@ reports/
 *.mp3
 trace.zip
 test-output/
+
+# Dolt database files (added by bd init)
+.dolt/
+*.db

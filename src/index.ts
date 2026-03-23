@@ -34,6 +34,7 @@ export type { PlaywrightPage, PlaybackContext } from "./playback/actions.js";
 export type {
   ActionEvent,
   BoundingBox,
+  StepEvidence,
   PlaybackResult,
   PlaybackOptions,
 } from "./playback/types.js";
@@ -45,6 +46,8 @@ export {
   LayoutDetector,
   ComputedStyleDetector,
   ScreenshotDiffDetector,
+  AriaStateDetector,
+  HitTestDetector,
   createDetectors,
   KNOWN_DETECTOR_NAMES,
   DEFAULT_CHANGE_DETECTION_CONFIG,
@@ -116,6 +119,17 @@ export type {
   TimedNarrationSegment,
   ElevenLabsVoiceSettings,
 } from "./narration/types.js";
+export {
+  detectOverlaps,
+  renderTimelineView,
+  buildTimelineViewInput,
+} from "./narration/timeline-view.js";
+export type {
+  TimelineViewInput,
+  TimelineViewResult,
+  OverlapInfo,
+} from "./narration/timeline-view.js";
+
 export type {
   NarrationSyncMode,
   NarrationSyncConfig,
@@ -140,6 +154,20 @@ export type { PipelineOptions, CaptureResult as PipelineCaptureResult } from "./
 export { generateBlurStyles } from "./redaction/mask.js";
 export { scanForSecrets } from "./redaction/secrets.js";
 export type { SecretMatch } from "./redaction/types.js";
+
+// Validation
+export { preflight, PreflightError } from "./validation/preflight.js";
+export { postflight } from "./validation/postflight.js";
+export { attachMonitors, collectIssues } from "./validation/monitor-runner.js";
+export type {
+  CheckResult,
+  CheckContext,
+  CheckPhase,
+  CheckSeverity,
+  CheckDefinition,
+} from "./validation/types.js";
+export type { CaptureMonitor, MonitorIssue } from "./validation/monitor-types.js";
+export type { CaptureCheckContext } from "./validation/checks/post-capture.js";
 
 // Utils
 export { createLogger, setLogLevel } from "./utils/logger.js";
