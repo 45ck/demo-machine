@@ -18,7 +18,3 @@ export async function runPhase(phase: CheckPhase, ctx: CheckContext): Promise<Ch
   );
   return settled.flatMap((s) => (s.status === "fulfilled" ? s.value : []));
 }
-
-export function getPhaseOrder(): CheckPhase[] {
-  return ["pre-capture", "post-capture"];
-}

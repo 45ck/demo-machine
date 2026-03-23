@@ -74,7 +74,8 @@
     "desync",
     "matroska",
     "readback",
-    "maxlength"
+    "maxlength",
+    "postcap"
   ],
   "ignorePaths": ["node_modules", "dist", "pnpm-lock.yaml", "*.json"]
 }

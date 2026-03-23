@@ -4,6 +4,7 @@ import { runPhase } from "./registry.js";
 
 // Side-effect imports: register pre-capture checks
 import "./checks/action-conflicts.js";
+import "./checks/spec-files.js";
 
 export async function preflight(ctx: CheckContext): Promise<void> {
   const results = await Promise.resolve(runPhase("pre-capture", ctx));
