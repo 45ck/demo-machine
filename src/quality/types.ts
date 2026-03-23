@@ -61,4 +61,6 @@ export interface QualityCheckContext {
     | undefined;
   /** Chapter title frame screenshots as PNG buffers, keyed by chapter index. */
   chapterTitleScreenshots?: Map<number, Buffer> | undefined;
+  /** Previous run's file size in bytes, for file-size-trend check (#48). */
+  previousFileSizeBytes?: number | undefined;
 }

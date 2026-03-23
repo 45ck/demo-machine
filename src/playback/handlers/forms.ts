@@ -12,12 +12,21 @@ import {
   showFilePickerOverlay,
   showSelectOverlay,
 } from "../visuals.js";
-import { checkHitTest, checkPointerEvents } from "../guards.js";
+import { checkHitTest, checkPointerEvents, checkNetworkIdle } from "../guards.js";
+import { checkActionability, checkSemanticFormTarget } from "../a11y-guards.js";
+import {
+  checkSelectOverlay,
+  checkFilePickerOverlay,
+  checkOverlayZIndex,
+} from "../overlay-visual-guards.js";
 import * as path from "node:path";
 
 export const handleCheck: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "check") return;
+
+  // Runtime guard — warn about pending network requests before action.
+  await checkNetworkIdle(ctx.page);
 
   const timeoutMs = stepTimeoutMs(step);
   const resolved = resolveStepLocator(ctx.page, step);
@@ -30,6 +39,8 @@ export const handleCheck: ActionHandler = async (ctx, step, events, stepIndex) =
   if (step.selector) {
     await checkHitTest(ctx.page, box, step.selector);
     await checkPointerEvents(ctx.page, step.selector);
+    await checkActionability(ctx.page, step.selector, "check");
+    await checkSemanticFormTarget(ctx.page, step.selector, "check");
   }
 
   await ctx.moveCursorTo(box);
@@ -53,6 +64,9 @@ export const handleUncheck: ActionHandler = async (ctx, step, events, stepIndex)
   const start = Date.now();
   if (step.action !== "uncheck") return;
 
+  // Runtime guard — warn about pending network requests before action.
+  await checkNetworkIdle(ctx.page);
+
   const timeoutMs = stepTimeoutMs(step);
   const resolved = resolveStepLocator(ctx.page, step);
   const locator = resolved.locator;
@@ -64,6 +78,8 @@ export const handleUncheck: ActionHandler = async (ctx, step, events, stepIndex)
   if (step.selector) {
     await checkHitTest(ctx.page, box, step.selector);
     await checkPointerEvents(ctx.page, step.selector);
+    await checkActionability(ctx.page, step.selector, "uncheck");
+    await checkSemanticFormTarget(ctx.page, step.selector, "uncheck");
   }
 
   await ctx.moveCursorTo(box);
@@ -87,6 +103,9 @@ export const handleSelect: ActionHandler = async (ctx, step, events, stepIndex) 
   const start = Date.now();
   if (step.action !== "select") return;
 
+  // Runtime guard — warn about pending network requests before action.
+  await checkNetworkIdle(ctx.page);
+
   const timeoutMs = stepTimeoutMs(step);
   const resolved = resolveStepLocator(ctx.page, step);
   const locator = resolved.locator;
@@ -98,6 +117,8 @@ export const handleSelect: ActionHandler = async (ctx, step, events, stepIndex) 
   if (step.selector) {
     await checkHitTest(ctx.page, box, step.selector);
     await checkPointerEvents(ctx.page, step.selector);
+    await checkActionability(ctx.page, step.selector, "select");
+    await checkSemanticFormTarget(ctx.page, step.selector, "select");
   }
 
   await ctx.moveCursorTo(box);
@@ -111,7 +132,12 @@ export const handleSelect: ActionHandler = async (ctx, step, events, stepIndex) 
     const opt = sel.selectedOptions[0];
     return opt ? (opt.textContent?.trim() ?? opt.value) : null;
   }) as (...args: unknown[]) => unknown)) as string | null;
-  if (selectedText) await showSelectOverlay(ctx.page, selectedText);
+  if (selectedText) {
+    await showSelectOverlay(ctx.page, selectedText);
+    // Post-action visual guards (#4, #52) — verify overlay rendered correctly.
+    await checkSelectOverlay(ctx.page, selectedText);
+    await checkOverlayZIndex(ctx.page, "dm-select-overlay");
+  }
 
   events.push(
     buildEvent({
@@ -134,6 +160,9 @@ export const handleSelectFirstNonPlaceholder: ActionHandler = async (
   const start = Date.now();
   if (step.action !== "selectFirstNonPlaceholder") return;
 
+  // Runtime guard — warn about pending network requests before action.
+  await checkNetworkIdle(ctx.page);
+
   const timeoutMs = stepTimeoutMs(step);
   const resolved = resolveStepLocator(ctx.page, step);
   const locator = resolved.locator;
@@ -145,6 +174,8 @@ export const handleSelectFirstNonPlaceholder: ActionHandler = async (
   if (step.selector) {
     await checkHitTest(ctx.page, box, step.selector);
     await checkPointerEvents(ctx.page, step.selector);
+    await checkActionability(ctx.page, step.selector, "select");
+    await checkSemanticFormTarget(ctx.page, step.selector, "select");
   }
 
   await ctx.moveCursorTo(box);
@@ -180,7 +211,12 @@ export const handleSelectFirstNonPlaceholder: ActionHandler = async (
     const opt = sel.selectedOptions[0];
     return opt ? (opt.textContent?.trim() ?? opt.value) : null;
   }) as (...args: unknown[]) => unknown)) as string | null;
-  if (selectedText) await showSelectOverlay(ctx.page, selectedText);
+  if (selectedText) {
+    await showSelectOverlay(ctx.page, selectedText);
+    // Post-action visual guards (#4, #52) — verify overlay rendered correctly.
+    await checkSelectOverlay(ctx.page, selectedText);
+    await checkOverlayZIndex(ctx.page, "dm-select-overlay");
+  }
 
   events.push(
     buildEvent({
@@ -197,6 +233,9 @@ export const handleSelectFirstNonPlaceholder: ActionHandler = async (
 export const handleUpload: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "upload") return;
+
+  // Runtime guard — warn about pending network requests before action.
+  await checkNetworkIdle(ctx.page);
 
   const timeoutMs = stepTimeoutMs(step);
   const resolved = resolveStepLocator(ctx.page, step);
@@ -216,6 +255,9 @@ export const handleUpload: ActionHandler = async (ctx, step, events, stepIndex) 
   // Show a file-picker overlay so the viewer understands a file is being selected.
   const fileNames = files.map((f) => path.basename(f));
   await showFilePickerOverlay(ctx.page, fileNames);
+  // Post-action visual guards (#5, #52) — verify overlay rendered correctly.
+  await checkFilePickerOverlay(ctx.page, fileNames);
+  await checkOverlayZIndex(ctx.page, "dm-file-picker");
 
   try {
     await locator.setInputFiles(files, { timeout: timeoutMs });

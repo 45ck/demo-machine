@@ -75,7 +75,9 @@
     "matroska",
     "readback",
     "maxlength",
-    "postcap"
+    "postcap",
+    "contenteditable",
+    "labelledby"
   ],
   "ignorePaths": ["node_modules", "dist", "pnpm-lock.yaml", "*.json"]
 }

@@ -30,6 +30,11 @@ export { PlaybackEngine } from "./playback/engine.js";
 export { PlaybackStepError, NoVisibleChangeError } from "./playback/errors.js";
 export { actionHandlers } from "./playback/actions.js";
 export { runPreSteps } from "./playback/presteps.js";
+export {
+  checkSelectOverlay,
+  checkFilePickerOverlay,
+  checkOverlayZIndex,
+} from "./playback/overlay-visual-guards.js";
 export type { PlaywrightPage, PlaybackContext } from "./playback/actions.js";
 export type {
   ActionEvent,
@@ -180,6 +185,7 @@ export {
   checkPhantomOverlay,
   checkCursorPosition,
   checkChapterTitles,
+  checkFileSizeTrend,
 } from "./quality/index.js";
 export type {
   QualityGateResult,

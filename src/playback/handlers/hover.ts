@@ -2,11 +2,14 @@ import type { ActionHandler } from "../action-core.js";
 import { buildEvent, ensureTargetReady, stepTimeoutMs } from "../action-core.js";
 import { resolveStepLocator } from "../selector.js";
 import { flashSpotlight, pulseFocus } from "../visuals.js";
-import { checkPointerEvents } from "../guards.js";
+import { checkPointerEvents, checkBoundingBoxStability, checkNetworkIdle } from "../guards.js";
 
 export const handleHover: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "hover") return;
+
+  // Runtime guard — warn about pending network requests before action.
+  await checkNetworkIdle(ctx.page);
 
   const timeoutMs = stepTimeoutMs(step);
   const resolved = resolveStepLocator(ctx.page, step);
@@ -15,7 +18,8 @@ export const handleHover: ActionHandler = async (ctx, step, events, stepIndex) =
   await ensureTargetReady(locator, timeoutMs);
   const box = await locator.boundingBox();
 
-  // Runtime guard — warn but never block.
+  // Runtime guards — warn but never block.
+  await checkBoundingBoxStability(locator);
   if (step.selector) {
     await checkPointerEvents(ctx.page, step.selector);
   }

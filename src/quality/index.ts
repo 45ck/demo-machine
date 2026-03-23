@@ -9,3 +9,4 @@ export { checkAssertZeroEffect } from "./checks/visual/assert-zero-effect.js";
 export { checkPhantomOverlay } from "./checks/visual/phantom-overlay.js";
 export { checkCursorPosition } from "./checks/visual/cursor-position.js";
 export { checkChapterTitles } from "./checks/visual/chapter-title.js";
+export { checkFileSizeTrend } from "./checks/file-size-trend.js";

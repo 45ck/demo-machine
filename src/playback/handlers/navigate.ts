@@ -1,5 +1,6 @@
 import type { ActionHandler } from "../action-core.js";
 import { buildEvent, stepTimeoutMs, isTimeoutLikeError } from "../action-core.js";
+import { checkMissingLabels } from "../a11y-guards.js";
 
 export const handleNavigate: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
@@ -30,6 +31,9 @@ export const handleNavigate: ActionHandler = async (ctx, step, events, stepIndex
     throw err;
   }
   await ctx.reinjectCursor();
+
+  // Post-navigate a11y audit — warn about interactive elements without accessible names.
+  await checkMissingLabels(ctx.page);
 
   events.push(buildEvent({ action: "navigate", startTime: start, narration: step.narration }));
   await ctx.waitAfterStep(stepIndex, step);

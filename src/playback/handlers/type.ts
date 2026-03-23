@@ -2,11 +2,15 @@ import type { ActionHandler } from "../action-core.js";
 import { buildEvent, ensureTargetReady, stepTimeoutMs } from "../action-core.js";
 import { resolveStepLocator } from "../selector.js";
 import { flashSpotlight, pulseFocus } from "../visuals.js";
-import { checkTypedText } from "../guards.js";
+import { checkTypedText, checkNetworkIdle } from "../guards.js";
+import { checkActionability, checkSemanticFormTarget } from "../a11y-guards.js";
 
 export const handleType: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "type") return;
+
+  // Runtime guard — warn about pending network requests before action.
+  await checkNetworkIdle(ctx.page);
 
   const timeoutMs = stepTimeoutMs(step);
   const resolved = resolveStepLocator(ctx.page, step);
@@ -14,6 +18,13 @@ export const handleType: ActionHandler = async (ctx, step, events, stepIndex) =>
 
   await ensureTargetReady(locator, timeoutMs);
   const box = await locator.boundingBox();
+
+  // Runtime guards — warn but never block.
+  if (step.selector) {
+    await checkActionability(ctx.page, step.selector, "type");
+    await checkSemanticFormTarget(ctx.page, step.selector, "type");
+  }
+
   await ctx.moveCursorTo(box);
   await flashSpotlight(ctx.page, box);
   await pulseFocus(ctx.page, box);

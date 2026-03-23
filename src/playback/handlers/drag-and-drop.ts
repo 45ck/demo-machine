@@ -2,11 +2,14 @@ import type { ActionHandler } from "../action-core.js";
 import { buildEvent, ensureTargetReady, stepTimeoutMs } from "../action-core.js";
 import { resolveLocatorFromInput, type Target } from "../selector.js";
 import { flashSpotlight, pulseFocus } from "../visuals.js";
-import { checkPointerEvents } from "../guards.js";
+import { checkPointerEvents, checkBoundingBoxStability, checkNetworkIdle } from "../guards.js";
 
 export const handleDragAndDrop: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "dragAndDrop") return;
+
+  // Runtime guard — warn about pending network requests before action.
+  await checkNetworkIdle(ctx.page);
 
   const timeoutMs = stepTimeoutMs(step);
 
@@ -35,7 +38,8 @@ export const handleDragAndDrop: ActionHandler = async (ctx, step, events, stepIn
   const fromBox = await fromResolved.locator.boundingBox();
   const toBox = await toResolved.locator.boundingBox();
 
-  // Runtime guard — warn but never block.
+  // Runtime guards — warn but never block.
+  await checkBoundingBoxStability(fromResolved.locator);
   if (step.from.selector) {
     await checkPointerEvents(ctx.page, step.from.selector);
   }

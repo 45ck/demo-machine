@@ -15,6 +15,7 @@ import { checkAssertZeroEffect } from "./checks/visual/assert-zero-effect.js";
 import { checkPhantomOverlay } from "./checks/visual/phantom-overlay.js";
 import { checkCursorPosition } from "./checks/visual/cursor-position.js";
 import { checkChapterTitles } from "./checks/visual/chapter-title.js";
+import { checkFileSizeTrend } from "./checks/file-size-trend.js";
 import type { VideoProbeResult, ManifestEntry, QualityCheckContext } from "./types.js";
 
 export interface QualityGateResult {
@@ -55,6 +56,8 @@ export async function runQualityGate(params: {
   cursorPositions?: QualityCheckContext["cursorPositions"];
   /** Chapter title frame screenshots as PNG buffers, keyed by chapter index. */
   chapterTitleScreenshots?: QualityCheckContext["chapterTitleScreenshots"];
+  /** Previous run's file size in bytes, for file-size-trend check (#48). */
+  previousFileSizeBytes?: QualityCheckContext["previousFileSizeBytes"];
 }): Promise<QualityGateResult> {
   const start = Date.now();
   const results: CheckResult[] = [];
@@ -105,6 +108,7 @@ export async function runQualityGate(params: {
     assertScreenshotPairs: params.assertScreenshotPairs,
     cursorPositions: params.cursorPositions,
     chapterTitleScreenshots: params.chapterTitleScreenshots,
+    previousFileSizeBytes: params.previousFileSizeBytes,
   };
 
   results.push(...executeChecks(ctx, probeResult));
@@ -143,6 +147,7 @@ function executeChecks(
     out.push(...safeRun(() => checkCodecCompliance(ctx)));
   }
   out.push(...safeRun(() => checkFileSize(ctx)));
+  out.push(...safeRun(() => checkFileSizeTrend(ctx, ctx.previousFileSizeBytes)));
   out.push(...safeRun(() => checkNarrationOrdering(ctx)));
   out.push(...safeRun(() => checkFrameRate(ctx)));
   out.push(...safeRun(() => checkIntroOutro(ctx)));

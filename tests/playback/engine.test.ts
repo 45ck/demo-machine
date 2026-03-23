@@ -33,6 +33,22 @@ vi.mock("../../src/playback/guards.js", () => ({
   checkHitTest: vi.fn().mockResolvedValue(null),
   checkPointerEvents: vi.fn().mockResolvedValue(null),
   checkTypedText: vi.fn().mockResolvedValue(null),
+  checkScrollPosition: vi.fn().mockResolvedValue(null),
+  checkBoundingBoxStability: vi.fn().mockResolvedValue(null),
+  checkNetworkIdle: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock("../../src/playback/a11y-guards.js", () => ({
+  checkActionability: vi.fn().mockResolvedValue(null),
+  checkMissingLabels: vi.fn().mockResolvedValue([]),
+  checkSemanticFormTarget: vi.fn().mockResolvedValue(null),
+  checkAriaRoleConsistency: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock("../../src/playback/overlay-visual-guards.js", () => ({
+  checkSelectOverlay: vi.fn().mockResolvedValue(null),
+  checkFilePickerOverlay: vi.fn().mockResolvedValue(null),
+  checkOverlayZIndex: vi.fn().mockResolvedValue(null),
 }));
 
 const TEST_PACING: Pacing = {

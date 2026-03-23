@@ -10,8 +10,22 @@ import { createNarrationWaiter } from "./narration-waiter.js";
 import { applyRedaction, checkSecrets, injectCursor } from "./overlays.js";
 import { ChangeDetectionOrchestrator } from "./change-detection/orchestrator.js";
 import { detectOverlayLeaks } from "./overlay-leak-detector.js";
+import { checkAriaRoleConsistency } from "./a11y-guards.js";
 
 const logger = createLogger("playback");
+
+/** Actions that mutate the DOM and warrant a post-step ARIA consistency audit. */
+const INTERACTIVE_ACTIONS = new Set([
+  "click",
+  "clickFirstVisible",
+  "type",
+  "check",
+  "uncheck",
+  "select",
+  "selectFirstNonPlaceholder",
+  "dragAndDrop",
+  "press",
+]);
 
 const NO_PACING: Pacing = {
   cursorDurationMs: 0,
@@ -207,6 +221,11 @@ async function runChapters(params: {
           chapterTitle: chapter.title,
         });
         attachEvidence(params.events, signals);
+      }
+
+      // Post-action ARIA role consistency audit — runs after interactive steps.
+      if (INTERACTIVE_ACTIONS.has(step.action)) {
+        await checkAriaRoleConsistency(params.page);
       }
 
       stepIndex++;

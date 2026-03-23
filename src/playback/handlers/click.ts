@@ -3,11 +3,20 @@ import { buildEvent, ensureTargetReady, stepTimeoutMs } from "../action-core.js"
 import { resolveStepLocator } from "../selector.js";
 import { getClickPulseScript } from "../cursor.js";
 import { flashSpotlight, pulseFocus, spawnRipple } from "../visuals.js";
-import { checkHitTest, checkPointerEvents } from "../guards.js";
+import {
+  checkHitTest,
+  checkPointerEvents,
+  checkBoundingBoxStability,
+  checkNetworkIdle,
+} from "../guards.js";
+import { checkActionability } from "../a11y-guards.js";
 
 export const handleClick: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "click") return;
+
+  // Runtime guard — warn about pending network requests before action.
+  await checkNetworkIdle(ctx.page);
 
   const timeoutMs = stepTimeoutMs(step);
   const resolved = resolveStepLocator(ctx.page, step);
@@ -17,9 +26,11 @@ export const handleClick: ActionHandler = async (ctx, step, events, stepIndex) =
   const box = await locator.boundingBox();
 
   // Runtime guards — warn but never block.
+  await checkBoundingBoxStability(locator);
   if (step.selector) {
     await checkHitTest(ctx.page, box, step.selector);
     await checkPointerEvents(ctx.page, step.selector);
+    await checkActionability(ctx.page, step.selector, "click");
   }
 
   await ctx.moveCursorTo(box);
@@ -45,6 +56,9 @@ export const handleClickFirstVisible: ActionHandler = async (ctx, step, events, 
   const start = Date.now();
   if (step.action !== "clickFirstVisible") return;
 
+  // Runtime guard — warn about pending network requests before action.
+  await checkNetworkIdle(ctx.page);
+
   const timeoutMs = stepTimeoutMs(step);
   const selector = `${step.selector}:visible`;
   const locator = ctx.page.locator(selector).nth(step.nth ?? 0);
@@ -53,9 +67,11 @@ export const handleClickFirstVisible: ActionHandler = async (ctx, step, events, 
   const box = await locator.boundingBox();
 
   // Runtime guards — warn but never block.
+  await checkBoundingBoxStability(locator);
   if (step.selector) {
     await checkHitTest(ctx.page, box, step.selector);
     await checkPointerEvents(ctx.page, step.selector);
+    await checkActionability(ctx.page, step.selector, "click");
   }
 
   await ctx.moveCursorTo(box);
