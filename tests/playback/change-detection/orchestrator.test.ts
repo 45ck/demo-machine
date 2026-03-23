@@ -55,9 +55,7 @@ describe("ChangeDetectionOrchestrator", () => {
         false,
       );
       expect(orch.shouldCheck({ action: "screenshot" } as Step)).toBe(false);
-      expect(orch.shouldCheck({ action: "hover", selector: "#x" } as Step)).toBe(false);
       expect(orch.shouldCheck({ action: "press", key: "Enter" } as Step)).toBe(false);
-      expect(orch.shouldCheck({ action: "scroll", x: 0, y: 200 } as Step)).toBe(false);
     });
 
     it("returns true for all interactive action types", () => {
@@ -72,6 +70,8 @@ describe("ChangeDetectionOrchestrator", () => {
         { action: "uncheck", selector: "#g" },
         { action: "upload", selector: "#h", file: "x.txt" },
         { action: "dragAndDrop", from: { selector: "#i" }, to: { selector: "#j" } },
+        { action: "hover", selector: "#x" },
+        { action: "scroll", selector: "#y", x: 0, y: 200 },
       ];
       for (const step of interactive) {
         expect(orch.shouldCheck(step as Step)).toBe(true);

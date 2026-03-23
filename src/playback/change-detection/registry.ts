@@ -3,6 +3,8 @@ import { DomMutationDetector } from "./dom-mutation.js";
 import { LayoutDetector } from "./layout.js";
 import { ComputedStyleDetector } from "./computed-style.js";
 import { ScreenshotDiffDetector } from "./screenshot-diff.js";
+import { AriaStateDetector } from "./aria-state.js";
+import { HitTestDetector } from "./hit-test.js";
 
 type DetectorFactory = (config: ChangeDetectionConfig) => ChangeDetector;
 
@@ -11,6 +13,8 @@ const BUILTIN_DETECTORS: Record<string, DetectorFactory> = {
   layout: () => new LayoutDetector(),
   "computed-style": () => new ComputedStyleDetector(),
   "screenshot-diff": (cfg) => new ScreenshotDiffDetector(cfg.screenshotThreshold),
+  "aria-state": () => new AriaStateDetector(),
+  "hit-test": () => new HitTestDetector(),
 };
 
 /**

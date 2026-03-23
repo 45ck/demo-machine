@@ -11,7 +11,7 @@ export interface ChangeDetectionConfig {
 
 export const DEFAULT_CHANGE_DETECTION_CONFIG: ChangeDetectionConfig = {
   mode: "error",
-  detectors: ["dom-mutation", "layout", "computed-style"],
+  detectors: ["dom-mutation", "layout", "computed-style", "aria-state"],
   mutationWaitMs: 100,
   screenshotThreshold: 0.001,
 };
@@ -27,6 +27,8 @@ const INTERACTIVE_ACTIONS = new Set([
   "uncheck",
   "upload",
   "dragAndDrop",
+  "hover",
+  "scroll",
 ]);
 
 export function isInteractiveAction(action: string): boolean {
