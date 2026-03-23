@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { z } from "zod";
 
 const nonBlankString = z
@@ -252,9 +253,12 @@ const screenshotStepSchema = z.object({
   narration: z.string().optional(),
 });
 
-const pressStepSchema = z.object(
-  { action: z.literal("press"), key: nonBlankString, delay: z.number().int().positive().optional(), narration: z.string().optional() },
-);
+const pressStepSchema = z.object({
+  action: z.literal("press"),
+  key: nonBlankString,
+  delay: z.number().int().positive().optional(),
+  narration: z.string().optional(),
+});
 
 const navTimingFields = {
   timeoutMs: z.number().int().positive().optional(),
@@ -264,7 +268,8 @@ const navTimingFields = {
 const backStepSchema = z.object({ action: z.literal("back"), ...navTimingFields });
 const forwardStepSchema = z.object({ action: z.literal("forward"), ...navTimingFields });
 
-const needsSelector = (v: { selector?: string | undefined; target?: unknown }) => Boolean(v.selector || v.target);
+const needsSelector = (v: { selector?: string | undefined; target?: unknown }) =>
+  Boolean(v.selector || v.target);
 const selectorMsg = (name: string) => ({ message: `${name} requires selector or target` });
 
 const clickStepSchemaValidated = clickStepSchema.refine(needsSelector, selectorMsg("click"));

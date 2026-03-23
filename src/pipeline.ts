@@ -166,6 +166,7 @@ function toGlobalOptions(opts: PipelineOptions): import("./cli/options.js").Glob
     headless: opts.headless,
     strictGeometry: false,
     trimStartMs: 0,
+    timeline: false,
   };
 }
 

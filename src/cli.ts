@@ -82,6 +82,7 @@ program
       return v;
     },
   )
+  .option("--timeline", "Print narration timeline after rendering", false)
   .option("--resolution <WxH>", "Override spec resolution for capture (e.g. 1280x720)", (v) => {
     const m = /^(\d+)x(\d+)$/.exec(v);
     if (!m) throw new InvalidArgumentError("--resolution must be in WxH format, e.g. 1280x720.");
@@ -101,6 +102,27 @@ program
     try {
       const spec = await loadSpec(specPath);
       logger.info(`Spec valid: "${spec.meta.title}" (${String(spec.chapters.length)} chapters)`);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const { resolveNarrationSettings: resolveNarrSettings } = await import("./cli/narration.js");
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const settings = resolveNarrSettings({
+        spec,
+        opts,
+        getOptionSource: (name: string) => program.getOptionValueSource(name),
+      });
+      const pathMod = await import("node:path");
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const { preflight: preflightCheck } = await import("./validation/preflight.js");
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      await preflightCheck({
+        spec,
+        specPath,
+        specDir: pathMod.dirname(pathMod.resolve(specPath)),
+        opts,
+        settings,
+      });
     } catch (err) {
       logger.error(err instanceof Error ? (err.stack ?? err.message) : String(err));
       process.exitCode = 1;

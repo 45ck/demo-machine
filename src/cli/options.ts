@@ -18,6 +18,7 @@ export interface GlobalOptions {
   trimStartMs: number;
   resolutionOverride?: { width: number; height: number } | undefined;
   changeDetection?: ChangeDetectionMode | undefined;
+  timeline: boolean;
 }
 
 export function applyGlobalOptions(opts: GlobalOptions): void {

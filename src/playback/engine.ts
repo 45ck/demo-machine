@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import type { Chapter } from "../spec/types.js";
 import { createLogger } from "../utils/logger.js";
 import type { PlaywrightPage, PlaybackContext } from "./actions.js";
@@ -140,7 +141,10 @@ async function onStepCompleteMaybe(params: {
   await params.onStepComplete(params.events[params.events.length - 1]!);
 }
 
-function attachEvidence(events: ActionEvent[], signals: import("./change-detection/types.js").DetectorSignal[]): void {
+function attachEvidence(
+  events: ActionEvent[],
+  signals: import("./change-detection/types.js").DetectorSignal[],
+): void {
   const last = events[events.length - 1];
   if (last && signals.length > 0) last.evidence = { changeDetection: signals };
 }
@@ -195,9 +199,12 @@ async function runChapters(params: {
 
       // Post-action + settle: evaluate change detection signals.
       if (shouldCheck && params.changeDetection) {
-        const signals = await params.changeDetection.after(
-          { page: params.page, step, stepIndex, chapterTitle: chapter.title },
-        );
+        const signals = await params.changeDetection.after({
+          page: params.page,
+          step,
+          stepIndex,
+          chapterTitle: chapter.title,
+        });
         attachEvidence(params.events, signals);
       }
 
