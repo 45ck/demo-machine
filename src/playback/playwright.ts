@@ -1,4 +1,4 @@
-import type { BoundingBox } from "./types.js";
+import type { BoundingBox } from "./geometry.js";
 
 export interface PlaywrightLocator {
   nth(index: number): PlaywrightLocator;

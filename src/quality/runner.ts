@@ -10,6 +10,11 @@ import { checkNarrationOrdering } from "./checks/narration-ordering.js";
 import { checkFrameRate } from "./checks/frame-rate.js";
 import { checkIntroOutro } from "./checks/intro-outro.js";
 import { checkDurationAnomalies } from "./checks/duration-anomaly.js";
+import { checkStepScreenshots } from "./checks/visual/step-screenshot.js";
+import { checkAssertZeroEffect } from "./checks/visual/assert-zero-effect.js";
+import { checkPhantomOverlay } from "./checks/visual/phantom-overlay.js";
+import { checkCursorPosition } from "./checks/visual/cursor-position.js";
+import { checkChapterTitles } from "./checks/visual/chapter-title.js";
 import type { VideoProbeResult, ManifestEntry, QualityCheckContext } from "./types.js";
 
 export interface QualityGateResult {
@@ -42,6 +47,14 @@ export async function runQualityGate(params: {
   outroDurationMs?: QualityCheckContext["outroDurationMs"];
   /** Historical timing data keyed by action type, for duration anomaly check. */
   timingHistory?: QualityCheckContext["timingHistory"];
+  /** Step screenshots as PNG buffers, keyed by step index. */
+  stepScreenshots?: QualityCheckContext["stepScreenshots"];
+  /** Screenshot pairs for assert steps: [beforeAssert, afterAssert]. */
+  assertScreenshotPairs?: QualityCheckContext["assertScreenshotPairs"];
+  /** Cursor positions at click moments. */
+  cursorPositions?: QualityCheckContext["cursorPositions"];
+  /** Chapter title frame screenshots as PNG buffers, keyed by chapter index. */
+  chapterTitleScreenshots?: QualityCheckContext["chapterTitleScreenshots"];
 }): Promise<QualityGateResult> {
   const start = Date.now();
   const results: CheckResult[] = [];
@@ -88,6 +101,10 @@ export async function runQualityGate(params: {
     introDurationMs: params.introDurationMs,
     outroDurationMs: params.outroDurationMs,
     timingHistory: params.timingHistory,
+    stepScreenshots: params.stepScreenshots,
+    assertScreenshotPairs: params.assertScreenshotPairs,
+    cursorPositions: params.cursorPositions,
+    chapterTitleScreenshots: params.chapterTitleScreenshots,
   };
 
   results.push(...executeChecks(ctx, probeResult));
@@ -130,6 +147,12 @@ function executeChecks(
   out.push(...safeRun(() => checkFrameRate(ctx)));
   out.push(...safeRun(() => checkIntroOutro(ctx)));
   out.push(...safeRun(() => checkDurationAnomalies(ctx)));
+  // Phase 4: Visual regression checks
+  out.push(...safeRun(() => checkStepScreenshots(ctx)));
+  out.push(...safeRun(() => checkAssertZeroEffect(ctx)));
+  out.push(...safeRun(() => checkPhantomOverlay(ctx)));
+  out.push(...safeRun(() => checkCursorPosition(ctx)));
+  out.push(...safeRun(() => checkChapterTitles(ctx)));
   return out;
 }
 

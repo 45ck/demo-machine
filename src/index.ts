@@ -170,12 +170,24 @@ export type { CaptureMonitor, MonitorIssue } from "./validation/monitor-types.js
 export type { CaptureCheckContext } from "./validation/checks/post-capture.js";
 
 // Quality Gate
-export { probeVideo, runQualityGate } from "./quality/index.js";
+export {
+  probeVideo,
+  runQualityGate,
+  diffImages,
+  countColorPixels,
+  checkStepScreenshots,
+  checkAssertZeroEffect,
+  checkPhantomOverlay,
+  checkCursorPosition,
+  checkChapterTitles,
+} from "./quality/index.js";
 export type {
   QualityGateResult,
   VideoProbeResult,
   QualityCheckContext,
   ManifestEntry,
+  PixelDiffResult,
+  ColorTarget,
 } from "./quality/index.js";
 
 // Utils

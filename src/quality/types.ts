@@ -45,4 +45,20 @@ export interface QualityCheckContext {
   outroDurationMs?: number | undefined;
   /** Historical timing data keyed by action type, for duration anomaly check. */
   timingHistory?: Record<string, number[]> | undefined;
+  /** Step screenshots as PNG buffers, keyed by step index. */
+  stepScreenshots?: Map<number, Buffer> | undefined;
+  /** Screenshot pairs for assert steps: [beforeAssert, afterAssert]. */
+  assertScreenshotPairs?: Array<{ stepIndex: number; before: Buffer; after: Buffer }> | undefined;
+  /** Cursor positions at click moments. */
+  cursorPositions?:
+    | Array<{
+        stepIndex: number;
+        cursorX: number;
+        cursorY: number;
+        targetCenterX: number;
+        targetCenterY: number;
+      }>
+    | undefined;
+  /** Chapter title frame screenshots as PNG buffers, keyed by chapter index. */
+  chapterTitleScreenshots?: Map<number, Buffer> | undefined;
 }

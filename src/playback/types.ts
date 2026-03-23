@@ -1,11 +1,7 @@
 import type { DetectorSignal } from "./change-detection/types.js";
+import type { BoundingBox } from "./geometry.js";
 
-export interface BoundingBox {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+export type { BoundingBox } from "./geometry.js";
 
 export interface StepEvidence {
   changeDetection?: DetectorSignal[] | undefined;
