@@ -70,7 +70,11 @@
     "treegrid",
     "requestfailed",
     "valuetext",
-    "Narr"
+    "Narr",
+    "desync",
+    "matroska",
+    "readback",
+    "maxlength"
   ],
   "ignorePaths": ["node_modules", "dist", "pnpm-lock.yaml", "*.json"]
 }

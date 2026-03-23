@@ -1,5 +1,5 @@
 /** Validation check phase. */
-export type CheckPhase = "pre-capture" | "post-capture";
+export type CheckPhase = "pre-capture" | "post-capture" | "post-render";
 
 /** Check severity level. */
 export type CheckSeverity = "pass" | "fail" | "warn";
@@ -42,4 +42,18 @@ export function fail(name: string, message: string, suggestion?: string): CheckR
 
 export function warn(name: string, message: string): CheckResult {
   return { phase: PRE_CAPTURE, checkName: name, status: "warn", message };
+}
+
+const POST_RENDER: CheckPhase = "post-render";
+
+export function postRenderPass(name: string): CheckResult {
+  return { phase: POST_RENDER, checkName: name, status: "pass", message: "OK" };
+}
+
+export function postRenderFail(name: string, message: string, suggestion?: string): CheckResult {
+  return { phase: POST_RENDER, checkName: name, status: "fail", message, suggestion };
+}
+
+export function postRenderWarn(name: string, message: string): CheckResult {
+  return { phase: POST_RENDER, checkName: name, status: "warn", message };
 }

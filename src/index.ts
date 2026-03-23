@@ -169,6 +169,15 @@ export type {
 export type { CaptureMonitor, MonitorIssue } from "./validation/monitor-types.js";
 export type { CaptureCheckContext } from "./validation/checks/post-capture.js";
 
+// Quality Gate
+export { probeVideo, runQualityGate } from "./quality/index.js";
+export type {
+  QualityGateResult,
+  VideoProbeResult,
+  QualityCheckContext,
+  ManifestEntry,
+} from "./quality/index.js";
+
 // Utils
 export { createLogger, setLogLevel } from "./utils/logger.js";
 export type { LogLevel, Logger } from "./utils/logger.js";
