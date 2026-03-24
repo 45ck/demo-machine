@@ -44,7 +44,9 @@ export class HitTestDetector implements ChangeDetector {
         const topEl = document.elementFromPoint(cx, cy);
         if (!topEl) return { found: true, hit: false, topTag: "null" };
         const hit = el === topEl || el.contains(topEl);
-        const topTag = `<${topEl.tagName.toLowerCase()}${topEl.id ? `#${topEl.id}` : ""}${topEl.className ? `.${String(topEl.className).split(" ")[0]}` : ""}>`;
+        const idPart = topEl.id ? "#" + topEl.id : "";
+        const classPart = topEl.className ? "." + String(topEl.className).split(" ")[0] : "";
+        const topTag = "<" + topEl.tagName.toLowerCase() + idPart + classPart + ">";
         return { found: true, hit, topTag };
       }) as (...args: unknown[]) => unknown,
       selector as unknown,

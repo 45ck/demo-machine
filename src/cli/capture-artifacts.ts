@@ -216,7 +216,45 @@ export async function writePassedVerificationArtifact(params: {
   return verificationPath;
 }
 
-export async function writeFailedVerificationArtifact(params: {
+export async function handleCaptureFailure(params: {
+  captureMod: CaptureRecorderModule;
+  recording: { context: unknown; page: unknown };
+  page: PlaywrightPage;
+  captureOpts: { outputDir: string; resolution: DemoSpec["meta"]["resolution"] };
+  spec: DemoSpec;
+  specPath?: string | undefined;
+  environmentPath: string;
+  err: unknown;
+}): Promise<never> {
+  const failure = buildFailureSummary(params.err);
+  const failureArtifacts = await writeFailureArtifacts({
+    page: params.page,
+    outDir: params.captureOpts.outputDir,
+    failure,
+  });
+  const bundle = await finalizeCaptureSafe({
+    captureMod: params.captureMod,
+    recording: params.recording,
+    events: failure.events ?? [],
+    captureOpts: params.captureOpts,
+    specTitle: params.spec.meta.title,
+    startTimestamp: failure.startTimestamp ?? Date.now(),
+  });
+  await writeFailedVerificationArtifact({
+    spec: params.spec,
+    ...(params.specPath ? { specPath: params.specPath } : {}),
+    outputDir: params.captureOpts.outputDir,
+    eventCount: failure.events?.length ?? 0,
+    startTimestamp: failure.startTimestamp,
+    ...(bundle ? { bundle } : {}),
+    environmentPath: params.environmentPath,
+    failureArtifacts,
+    failure,
+  });
+  throw params.err;
+}
+
+async function writeFailedVerificationArtifact(params: {
   spec: DemoSpec;
   specPath?: string;
   outputDir: string;

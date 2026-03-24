@@ -98,29 +98,45 @@ async function renderFromTimeline(params: {
   return outputPath;
 }
 
-export async function runFullPipeline(params: {
+/** Filter out empty collections from Phase 4 screenshot data. */
+function buildNonEmptyScreenshotData(
+  raw: import("../playback/screenshot-collector.js").ScreenshotCollectorResults | undefined,
+):
+  | {
+      stepScreenshots?: Map<number, Buffer>;
+      assertScreenshotPairs?: Array<{ stepIndex: number; before: Buffer; after: Buffer }>;
+      cursorPositions?: Array<{
+        stepIndex: number;
+        cursorX: number;
+        cursorY: number;
+        targetCenterX: number;
+        targetCenterY: number;
+      }>;
+      chapterTitleScreenshots?: Map<number, Buffer>;
+    }
+  | undefined {
+  if (!raw) return undefined;
+  const result: NonNullable<ReturnType<typeof buildNonEmptyScreenshotData>> = {};
+  if (raw.stepScreenshots.size > 0) result.stepScreenshots = raw.stepScreenshots;
+  if (raw.assertScreenshotPairs.length > 0)
+    result.assertScreenshotPairs = raw.assertScreenshotPairs;
+  if (raw.cursorPositions.length > 0) result.cursorPositions = raw.cursorPositions;
+  if (raw.chapterTitleScreenshots.size > 0)
+    result.chapterTitleScreenshots = raw.chapterTitleScreenshots;
+  return result;
+}
+
+async function runEditPhase(params: {
+  capture: Awaited<ReturnType<typeof captureFromSpec>>;
   spec: DemoSpec;
-  specPath?: string;
-  /** Explicit specDir override forwarded to captureFromSpec. */
-  specDir?: string | undefined;
   opts: GlobalOptions;
   settings: NarrationSettings;
 }): Promise<void> {
-  const capture = await captureFromSpec({
-    spec: params.spec,
-    ...(params.specPath ? { specPath: params.specPath } : {}),
-    ...(params.specDir !== undefined ? { specDir: params.specDir } : {}),
-    opts: params.opts,
-    settings: params.settings,
-  });
-
-  if (!params.opts.edit) {
-    log.info(`Capture complete: ${capture.videoPath}`);
-    return;
-  }
-
   const timelineMod = await import("../editor/timeline.js");
-  const { workingCapture, trim } = await prepareTrimmedCapture({ capture, opts: params.opts });
+  const { workingCapture, trim } = await prepareTrimmedCapture({
+    capture: params.capture,
+    opts: params.opts,
+  });
 
   const baseTimeline = timelineMod.buildTimeline(
     workingCapture.events,
@@ -162,15 +178,47 @@ export async function runFullPipeline(params: {
     });
   }
 
+  const screenshotData = buildNonEmptyScreenshotData(params.capture.screenshotData);
+
   await runPostRenderQualityGate({
     outputPath,
     spec: params.spec,
     events: workingCapture.events,
     ...(narrationPrep.timedSegments ? { narrationSegments: narrationPrep.timedSegments } : {}),
     startTimestamp: workingCapture.startTimestamp,
+    ...(screenshotData ? { screenshotData } : {}),
   });
 
   log.info(`Output: ${outputPath}`);
+}
+
+export async function runFullPipeline(params: {
+  spec: DemoSpec;
+  specPath?: string;
+  /** Explicit specDir override forwarded to captureFromSpec. */
+  specDir?: string | undefined;
+  opts: GlobalOptions;
+  settings: NarrationSettings;
+}): Promise<void> {
+  const capture = await captureFromSpec({
+    spec: params.spec,
+    ...(params.specPath ? { specPath: params.specPath } : {}),
+    ...(params.specDir !== undefined ? { specDir: params.specDir } : {}),
+    opts: params.opts,
+    settings: params.settings,
+  });
+
+  if (!params.opts.edit) {
+    log.info(`Capture complete: ${capture.videoPath}`);
+    return;
+  }
+
+  await runEditPhase({
+    capture,
+    spec: params.spec,
+    opts: params.opts,
+    settings: params.settings,
+  });
 }
 
 /** Build narration-to-action index lookup by walking spec chapters. */
@@ -217,6 +265,19 @@ async function runPostRenderQualityGate(params: {
   events?: import("../playback/types.js").ActionEvent[];
   narrationSegments?: import("../narration/types.js").TimedNarrationSegment[];
   startTimestamp?: number;
+  /** Phase 4 visual data from ScreenshotCollector. */
+  screenshotData?: {
+    stepScreenshots?: Map<number, Buffer>;
+    assertScreenshotPairs?: Array<{ stepIndex: number; before: Buffer; after: Buffer }>;
+    cursorPositions?: Array<{
+      stepIndex: number;
+      cursorX: number;
+      cursorY: number;
+      targetCenterX: number;
+      targetCenterY: number;
+    }>;
+    chapterTitleScreenshots?: Map<number, Buffer>;
+  };
 }): Promise<void> {
   try {
     const qualityMod = await import("../quality/runner.js");
@@ -236,6 +297,7 @@ async function runPostRenderQualityGate(params: {
       spec: params.spec,
       events: inputs?.events,
       narrationSegments: inputs?.narrationSegments,
+      ...(params.screenshotData ?? {}),
     });
     for (const r of gate.results) {
       if (r.status !== "pass") {

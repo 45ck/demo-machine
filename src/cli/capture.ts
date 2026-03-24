@@ -5,12 +5,10 @@ import { createLogger } from "../utils/logger.js";
 import type { GlobalOptions } from "./options.js";
 import type { NarrationPreSynthesisResult } from "../utils/narration-sync-types.js";
 import type { NarrationSettings } from "./narration.js";
+import type { ScreenshotCollectorResults } from "../playback/screenshot-collector.js";
 import {
-  buildFailureSummary,
-  finalizeCaptureSafe,
+  handleCaptureFailure,
   writeCaptureEnvironmentArtifact,
-  writeFailedVerificationArtifact,
-  writeFailureArtifacts,
   writePassedVerificationArtifact,
 } from "./capture-artifacts.js";
 import {
@@ -27,30 +25,25 @@ const log = createLogger("cli:capture");
 const DEFAULT_BASE_URL = "http://localhost:3000";
 type CaptureRecorderModule = typeof import("../capture/recorder.js");
 
+interface CaptureArtifacts {
+  tracePath: string;
+  eventLogPath: string;
+  metadataPath?: string | undefined;
+  environmentPath: string;
+  verificationPath: string;
+}
+
 export interface CaptureResult {
   videoPath: string;
   events: ActionEvent[];
   spec: DemoSpec;
   startTimestamp: number;
-  artifacts?:
-    | {
-        tracePath: string;
-        eventLogPath: string;
-        metadataPath?: string | undefined;
-        environmentPath: string;
-        verificationPath: string;
-      }
-    | undefined;
+  artifacts?: CaptureArtifacts | undefined;
   narration?:
-    | {
-        settings: NarrationSettings;
-        preSynth?: NarrationPreSynthesisResult | undefined;
-      }
+    | { settings: NarrationSettings; preSynth?: NarrationPreSynthesisResult | undefined }
     | undefined;
-}
-
-function resolveSpecDir(specPath?: string): string | undefined {
-  return specPath ? path.dirname(path.resolve(specPath)) : undefined;
+  /** Phase 4 visual data from ScreenshotCollector (optional). */
+  screenshotData?: ScreenshotCollectorResults | undefined;
 }
 
 async function prepareCaptureSession(params: {
@@ -151,45 +144,7 @@ async function finalizeSuccessfulCapture(params: {
   };
 }
 
-async function handleCaptureFailure(params: {
-  captureMod: CaptureRecorderModule;
-  recording: { context: unknown; page: unknown };
-  page: PlaywrightPage;
-  captureOpts: { outputDir: string; resolution: DemoSpec["meta"]["resolution"] };
-  spec: DemoSpec;
-  specPath?: string | undefined;
-  environmentPath: string;
-  err: unknown;
-}): Promise<never> {
-  const failure = buildFailureSummary(params.err);
-  const failureArtifacts = await writeFailureArtifacts({
-    page: params.page,
-    outDir: params.captureOpts.outputDir,
-    failure,
-  });
-  const bundle = await finalizeCaptureSafe({
-    captureMod: params.captureMod,
-    recording: params.recording,
-    events: failure.events ?? [],
-    captureOpts: params.captureOpts,
-    specTitle: params.spec.meta.title,
-    startTimestamp: failure.startTimestamp ?? Date.now(),
-  });
-  await writeFailedVerificationArtifact({
-    spec: params.spec,
-    ...(params.specPath ? { specPath: params.specPath } : {}),
-    outputDir: params.captureOpts.outputDir,
-    eventCount: failure.events?.length ?? 0,
-    startTimestamp: failure.startTimestamp,
-    ...(bundle ? { bundle } : {}),
-    environmentPath: params.environmentPath,
-    failureArtifacts,
-    failure,
-  });
-  throw params.err;
-}
-
-async function captureWithBrowser(params: {
+interface CaptureWithBrowserParams {
   browser: unknown;
   captureMod: CaptureRecorderModule;
   PlaybackEngine: typeof import("../playback/engine.js").PlaybackEngine;
@@ -198,12 +153,15 @@ async function captureWithBrowser(params: {
   specDir?: string | undefined;
   opts: GlobalOptions;
   settings: NarrationSettings;
-}): Promise<CaptureResult> {
+}
+
+async function captureWithBrowser(params: CaptureWithBrowserParams): Promise<CaptureResult> {
+  const specPathOpt = params.specPath ? { specPath: params.specPath } : {};
   const session = await prepareCaptureSession({
     browser: params.browser,
     captureMod: params.captureMod,
     spec: params.spec,
-    ...(params.specPath ? { specPath: params.specPath } : {}),
+    ...specPathOpt,
     opts: params.opts,
     settings: params.settings,
   });
@@ -220,8 +178,8 @@ async function captureWithBrowser(params: {
     outputDir: params.opts.output,
   });
 
-  const changeDetection = resolveChangeDetectionConfig(params.spec, params.opts);
-
+  const collectorMod = await import("../playback/screenshot-collector.js");
+  const screenshotCollector = collectorMod.tryCreateCollector();
   const engine = createPlaybackEngine({
     PlaybackEngine: params.PlaybackEngine,
     page: session.page,
@@ -231,7 +189,7 @@ async function captureWithBrowser(params: {
     specDir: params.specDir,
     settings: params.settings,
     timing: narrationPrep.timing,
-    changeDetection,
+    changeDetection: resolveChangeDetectionConfig(params.spec, params.opts),
   });
 
   const monitors = attachMonitors(session.page, { runnerUrl: session.baseUrl });
@@ -239,12 +197,14 @@ async function captureWithBrowser(params: {
   try {
     const result = await engine.execute(params.spec.chapters);
     const monitorIssues = collectIssues(monitors);
+    const screenshotData = collectorMod.collectResults(screenshotCollector);
+
     const captureResult = await finalizeSuccessfulCapture({
       captureMod: params.captureMod,
       recording: session.recording,
       captureOpts: session.captureOpts,
       spec: params.spec,
-      ...(params.specPath ? { specPath: params.specPath } : {}),
+      ...specPathOpt,
       events: result.events,
       startTimestamp: result.startTimestamp,
       environmentPath: session.environmentPath,
@@ -252,6 +212,7 @@ async function captureWithBrowser(params: {
         ? { settings: params.settings, preSynth: narrationPrep.preSynth }
         : undefined,
     });
+    captureResult.screenshotData = screenshotData;
     void runPostflight({
       captureResult,
       ...params,
@@ -268,7 +229,7 @@ async function captureWithBrowser(params: {
       page: session.page,
       captureOpts: session.captureOpts,
       spec: params.spec,
-      ...(params.specPath ? { specPath: params.specPath } : {}),
+      ...specPathOpt,
       environmentPath: session.environmentPath,
       err,
     });
@@ -303,7 +264,9 @@ export async function captureFromSpec(params: {
         PlaybackEngine,
         spec,
         specPath: params.specPath,
-        specDir: params.specDir ?? resolveSpecDir(params.specPath),
+        specDir:
+          params.specDir ??
+          (params.specPath ? path.dirname(path.resolve(params.specPath)) : undefined),
         opts: params.opts,
         settings: params.settings,
       });

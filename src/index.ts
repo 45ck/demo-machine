@@ -43,6 +43,8 @@ export type {
   PlaybackResult,
   PlaybackOptions,
 } from "./playback/types.js";
+export { ScreenshotCollector } from "./playback/screenshot-collector.js";
+export type { ScreenshotCollectorResults } from "./playback/screenshot-collector.js";
 
 // Change Detection
 export {
@@ -164,6 +166,7 @@ export type { SecretMatch } from "./redaction/types.js";
 export { preflight, PreflightError } from "./validation/preflight.js";
 export { postflight } from "./validation/postflight.js";
 export { attachMonitors, collectIssues } from "./validation/monitor-runner.js";
+export { runPhase, registerCheck } from "./validation/registry.js";
 export type {
   CheckResult,
   CheckContext,
