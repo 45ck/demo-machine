@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
 
-export type PromptResult = {
+type PromptResult = {
   messages: Array<{ role: "user"; content: { type: "text"; text: string } }>;
 };
 

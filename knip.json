@@ -1,5 +1,5 @@
 {
   "project": ["src/**/*.ts"],
   "ignore": ["**/*.test.ts"],
-  "ignoreDependencies": ["kokoro-js", "openai", "json5", "@iarna/toml"]
+  "ignoreDependencies": ["kokoro-js", "openai", "json5", "@iarna/toml", "pixelmatch", "pngjs"]
 }

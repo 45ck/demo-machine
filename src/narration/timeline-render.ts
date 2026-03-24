@@ -9,7 +9,7 @@ export const ANSI = {
   reset: "\x1b[0m",
 } as const;
 
-export interface TimelineLayout {
+interface TimelineLayout {
   totalMs: number;
   cols: number;
   msPerCol: number;
@@ -19,7 +19,7 @@ export function computeLayout(totalMs: number, cols: number): TimelineLayout {
   return { totalMs, cols, msPerCol: totalMs / cols };
 }
 
-export function msToCol(ms: number, layout: TimelineLayout): number {
+function msToCol(ms: number, layout: TimelineLayout): number {
   return Math.min(Math.round(ms / layout.msPerCol), layout.cols - 1);
 }
 
@@ -27,12 +27,7 @@ export function colorize(text: string, code: string, useColor: boolean): string 
   return useColor ? `${code}${text}${ANSI.reset}` : text;
 }
 
-export function truncate(text: string, maxLen: number): string {
-  if (text.length <= maxLen) return text;
-  return text.slice(0, maxLen - 3) + "...";
-}
-
-export function pickRulerInterval(layout: TimelineLayout): number {
+function pickRulerInterval(layout: TimelineLayout): number {
   const targetTicks = Math.floor(layout.cols / 12);
   const intervals = [500, 1000, 2000, 5000, 10000, 30000, 60000];
   for (const iv of intervals) {
