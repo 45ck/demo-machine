@@ -1,0 +1,60 @@
+meta:
+  title: "Proof: Assert Action"
+  resolution:
+    width: 1280
+    height: 720
+
+runner:
+  command: "node examples/todo-app/serve.mjs"
+  url: "http://localhost:4567"
+  timeout: 10000
+
+pacing:
+  cursorDurationMs: 600
+
+chapters:
+  - title: "Assert Actions"
+    steps:
+      - action: navigate
+        url: "/"
+        narration: "Testing the assert action on the TaskFlow app."
+
+      - action: assert
+        selector: "#get-started"
+        visible: true
+        narration: "Assert the Get Started button is visible on load."
+
+      - action: click
+        selector: "#get-started"
+
+      - action: assert
+        selector: ".welcome-message"
+        visible: true
+        narration: "Assert the welcome message becomes visible after clicking."
+
+      - action: type
+        selector: "#task-input"
+        text: "Assert proof task"
+
+      - action: click
+        selector: "#add-btn"
+
+      - action: assert
+        selector: ".task-text"
+        nth: 0
+        text: "Assert proof task"
+        narration: "Assert the task text matches what was typed."
+
+      - action: assert
+        selector: "#total-count"
+        text: "1"
+        narration: "Assert the total task count is exactly one."
+
+      - action: click
+        selector: ".task-checkbox"
+        nth: 0
+
+      - action: assert
+        selector: "#completed-count"
+        text: "1"
+        narration: "Assert the completed count updates after checking the task."

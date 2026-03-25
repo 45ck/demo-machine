@@ -1,0 +1,55 @@
+meta:
+  title: "Proof: Wait Action"
+  resolution:
+    width: 1280
+    height: 720
+
+runner:
+  command: "node examples/async-skeleton/serve.mjs"
+  url: "http://localhost:4583"
+  timeout: 10000
+
+pacing:
+  cursorDurationMs: 600
+
+chapters:
+  - title: "Wait Actions"
+    steps:
+      - action: navigate
+        url: "/"
+        narration: "Testing the wait action on the AsyncSkeleton dashboard."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "page-title"
+        visible: true
+        narration: "The page title is visible immediately on load."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "metric-revenue"
+        visible: false
+        timeoutMs: 2000
+        narration: "Assert metric content is hidden while the skeleton is loading."
+
+      - action: wait
+        timeout: 3500
+        narration: "Wait for the async data to finish loading."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "metric-revenue"
+        visible: true
+        timeoutMs: 5000
+        narration: "After the wait, the revenue metric is now visible."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "metric-users"
+        visible: true
+        timeoutMs: 3000
+        narration: "The users metric has also loaded and is visible."

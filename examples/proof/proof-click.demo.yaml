@@ -1,0 +1,43 @@
+meta:
+  title: "Proof: Click Action"
+  resolution:
+    width: 1280
+    height: 720
+
+runner:
+  command: "node examples/todo-app/serve.mjs"
+  url: "http://localhost:4567"
+  timeout: 10000
+
+pacing:
+  cursorDurationMs: 600
+  postClickDelayMs: 600
+
+chapters:
+  - title: "Click Actions"
+    steps:
+      - action: navigate
+        url: "/"
+        narration: "Testing the click action on the TaskFlow app."
+
+      - action: click
+        selector: "#get-started"
+        narration: "Click the Get Started button to reveal the task form."
+
+      - action: type
+        selector: "#task-input"
+        text: "Proof click task"
+
+      - action: click
+        selector: "#add-btn"
+        narration: "Click the Add button to create a task."
+
+      - action: click
+        selector: ".task-checkbox"
+        nth: 0
+        narration: "Click the checkbox to mark the task as complete."
+
+      - action: click
+        selector: ".task-delete"
+        nth: 0
+        narration: "Click the Delete button to remove the task."

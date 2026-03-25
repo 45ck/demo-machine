@@ -1,0 +1,66 @@
+meta:
+  title: "Proof: Drag Action"
+  resolution:
+    width: 1280
+    height: 720
+
+runner:
+  command: "node examples/drag-sort/serve.mjs"
+  url: "http://localhost:4581"
+  timeout: 10000
+
+pacing:
+  cursorDurationMs: 600
+
+chapters:
+  - title: "Drag Actions"
+    steps:
+      - action: navigate
+        url: "/"
+        narration: "Testing the dragAndDrop action on the DragSort app."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "card-0"
+        text: "Build landing page"
+        narration: "The first card starts as Build landing page."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "card-2"
+        text: "Write API docs"
+
+      - action: dragAndDrop
+        from:
+          target:
+            by: testId
+            testId: "card-0"
+        to:
+          target:
+            by: testId
+            testId: "card-2"
+        narration: "Drag the first card onto the third to swap them."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "card-0"
+        text: "Write API docs"
+        timeoutMs: 5000
+        narration: "After the drag, the first position holds the swapped text."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "card-2"
+        text: "Build landing page"
+        timeoutMs: 5000
+
+      - action: assert
+        target:
+          by: testId
+          testId: "status-msg"
+        text: "Swapped positions"
+        narration: "The status confirms the swap completed successfully."

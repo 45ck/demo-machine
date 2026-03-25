@@ -1,0 +1,243 @@
+meta:
+  title: "demo-machine: Self-Showcase"
+  resolution:
+    width: 1920
+    height: 1080
+
+runner:
+  command: "node output/example-suite/serve.mjs"
+  url: "http://localhost:5555"
+  timeout: 15000
+
+pacing:
+  postNavigateDelayMs: 2000
+  postClickDelayMs: 600
+  cursorDurationMs: 500
+
+narration:
+  enabled: true
+  provider: kokoro
+  voice: af_heart
+
+chapters:
+  # ────────────────────────────────────────────────────────────
+  # Chapter 1 — The Demo Gallery
+  # ────────────────────────────────────────────────────────────
+  - title: "The Demo Gallery"
+    narration: >-
+      Here's what demo-machine produces — a gallery of twenty-seven
+      automated product demos, all generated from simple YAML specs.
+    steps:
+      - action: navigate
+        url: "http://localhost:5555"
+        narration: >-
+          The review viewer opens at localhost 5555.
+          Every demo rendered by the tool appears here.
+
+      - action: wait
+        timeout: 1500
+
+      # Verify the viewer loaded: topbar title is visible
+      - action: assert
+        selector: ".topbar-title"
+        visible: true
+
+      # Verify the "All" filter is active and the count is shown
+      - action: assert
+        selector: ".topbar-count"
+        visible: true
+
+      # Click the first sidebar item to start playback
+      - action: click
+        selector: ".sidebar-item"
+        nth: 0
+        narration: >-
+          The sidebar lists every demo. Clicking one loads it in the
+          main player area.
+
+      - action: wait
+        timeout: 2000
+
+      # Scroll the sidebar to reveal more demos
+      - action: scroll
+        selector: ".sidebar"
+        y: 300
+        narration: >-
+          Twenty-seven demos across thirteen example apps — from simple
+          hello-world to complex dashboards with redaction and autosync.
+
+      - action: wait
+        timeout: 1200
+
+      - action: scroll
+        selector: ".sidebar"
+        y: 300
+
+      - action: wait
+        timeout: 1000
+
+  # ────────────────────────────────────────────────────────────
+  # Chapter 2 — Filtering by Category
+  # ────────────────────────────────────────────────────────────
+  - title: "Filtering by Category"
+    narration: >-
+      The filter bar lets you focus on specific categories of demos.
+    steps:
+      # Click "New" filter — green-tagged demos
+      - action: click
+        selector: ".filter-bar button[data-filter='new']"
+        narration: >-
+          Clicking New shows only the newest demos — async-skeleton,
+          drag-sort, file-uploader, and seeded-api.
+
+      - action: wait
+        timeout: 1200
+
+      # Verify the count updates
+      - action: assert
+        selector: ".topbar-count"
+        visible: true
+
+      # Click "Autosync" filter — blue-tagged demos
+      - action: click
+        selector: ".filter-bar button[data-filter='auto']"
+        narration: >-
+          Autosync demos show how narration timing adjusts automatically
+          to match action pacing.
+
+      - action: wait
+        timeout: 1200
+
+      # Click "Redaction" filter — purple-tagged demos
+      - action: click
+        selector: ".filter-bar button[data-filter='redact']"
+        narration: >-
+          Redaction demos demonstrate automatic blurring of sensitive
+          data — emails, names, and custom selectors.
+
+      - action: wait
+        timeout: 1200
+
+      # Click "Core" filter — untagged base demos
+      - action: click
+        selector: ".filter-bar button[data-filter='core']"
+        narration: >-
+          Core demos are the foundation — each one tests a different
+          UI pattern like forms, modals, tables, and navigation.
+
+      - action: wait
+        timeout: 1200
+
+      # Return to "All"
+      - action: click
+        selector: ".filter-bar button[data-filter='all']"
+        narration: "And we can always return to the full gallery."
+
+      - action: wait
+        timeout: 800
+
+  # ────────────────────────────────────────────────────────────
+  # Chapter 3 — Watching a Demo
+  # ────────────────────────────────────────────────────────────
+  - title: "Watching a Demo"
+    narration: >-
+      Each demo runs a real browser, captures every interaction,
+      and renders a polished video.
+    steps:
+      # Click the todo-app sidebar item (it has data-name="todo-app")
+      - action: click
+        selector: ".sidebar-item[data-name='todo-app']"
+        narration: >-
+          Let's watch the todo-app demo. It shows a task manager being
+          driven entirely by a YAML spec.
+
+      - action: wait
+        timeout: 3000
+
+      # The footer should show "todo-app"
+      - action: assert
+        selector: "#footerName"
+        text: "todo-app"
+
+      # Let the video play for a few seconds
+      - action: wait
+        timeout: 5000
+        narration: >-
+          The video plays with full browser chrome — clicks, typing,
+          scrolling, all captured frame by frame.
+
+      # Navigate to next demo using the Next button
+      - action: click
+        selector: "#btnNext"
+        narration: "We can step through demos with the navigation controls."
+
+      - action: wait
+        timeout: 3000
+
+      # Navigate to another demo via sidebar
+      - action: click
+        selector: ".sidebar-item[data-name='form-wizard']"
+        narration: >-
+          The form-wizard demo captures a multi-step wizard with
+          validation and accessibility-targeted selectors.
+
+      - action: wait
+        timeout: 4000
+
+  # ────────────────────────────────────────────────────────────
+  # Chapter 4 — Quality at Scale
+  # ────────────────────────────────────────────────────────────
+  - title: "Quality at Scale"
+    narration: >-
+      Twenty-seven demos, nine hundred fifty-four tests, thirteen quality
+      checks — all automated from YAML to polished video.
+    steps:
+      # Click through to the spa-router demo
+      - action: click
+        selector: ".sidebar-item[data-name='spa-router']"
+        narration: >-
+          The spa-router demo tests single-page navigation with async
+          loading states and browser history.
+
+      - action: wait
+        timeout: 3000
+
+      # Show off the dashboard-table demo
+      - action: click
+        selector: ".sidebar-item[data-name='dashboard-table']"
+        narration: >-
+          Dashboard-table demonstrates sorting, filtering, and
+          pagination on a data-heavy table.
+
+      - action: wait
+        timeout: 3000
+
+      # Scroll sidebar to the bottom to show the full list
+      - action: scroll
+        selector: ".sidebar"
+        y: 2000
+        narration: >-
+          Every demo has variants — autosync for narration timing,
+          redaction for data privacy, all generated from the same base spec.
+
+      - action: wait
+        timeout: 1500
+
+      # Click the last demo in the sidebar
+      - action: click
+        selector: ".sidebar-item[data-name='virtual-table']"
+        narration: >-
+          From hello-world to virtual-table, demo-machine turns YAML
+          into production-ready product demos. That's the power of
+          demo as code.
+
+      - action: wait
+        timeout: 4000
+
+      # Scroll sidebar back to top for a clean ending
+      - action: scroll
+        selector: ".sidebar"
+        y: -3000
+
+      - action: wait
+        timeout: 1000

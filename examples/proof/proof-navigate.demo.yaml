@@ -1,0 +1,50 @@
+meta:
+  title: "Proof: Navigate Action"
+  resolution:
+    width: 1280
+    height: 720
+
+runner:
+  command: "node examples/spa-router/serve.mjs"
+  url: "http://localhost:4569"
+  timeout: 10000
+
+pacing:
+  cursorDurationMs: 600
+  postClickDelayMs: 150
+
+chapters:
+  - title: "Navigate Actions"
+    steps:
+      - action: navigate
+        url: "http://localhost:4569"
+        narration: "Testing the navigate action by loading the SPA router app."
+
+      - action: assert
+        selector: "[data-testid='route-title']"
+        text: "Home"
+        narration: "The Home route loads successfully after navigation."
+
+      - action: navigate
+        url: "http://localhost:4569/pricing"
+        narration: "Navigate directly to the Pricing route via URL."
+
+      - action: wait
+        timeout: 650
+
+      - action: assert
+        selector: "[data-testid='route-title']"
+        text: "Pricing"
+        narration: "The Pricing route renders correctly after direct navigation."
+
+      - action: navigate
+        url: "http://localhost:4569/docs"
+        narration: "Navigate directly to the Docs route."
+
+      - action: wait
+        timeout: 650
+
+      - action: assert
+        selector: "[data-testid='route-title']"
+        text: "Docs"
+        narration: "Each navigate action loads the correct route content."

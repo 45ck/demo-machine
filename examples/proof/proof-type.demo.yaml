@@ -1,0 +1,52 @@
+meta:
+  title: "Proof: Type Action"
+  resolution:
+    width: 1280
+    height: 720
+
+runner:
+  command: "node examples/todo-app/serve.mjs"
+  url: "http://localhost:4567"
+  timeout: 10000
+
+pacing:
+  cursorDurationMs: 600
+  typeDelayMs: 60
+  postTypeDelayMs: 400
+
+chapters:
+  - title: "Type Actions"
+    steps:
+      - action: navigate
+        url: "/"
+        narration: "Testing the type action on the TaskFlow app."
+
+      - action: click
+        selector: "#get-started"
+
+      - action: type
+        selector: "#task-input"
+        text: "First typed task"
+        narration: "Type a task name into the input field character by character."
+
+      - action: click
+        selector: "#add-btn"
+
+      - action: assert
+        selector: ".task-text"
+        nth: 0
+        text: "First typed task"
+        narration: "The typed text now appears as a task in the list."
+
+      - action: type
+        selector: "#task-input"
+        text: "Second typed task"
+        narration: "Type another task name to confirm consistent input behavior."
+
+      - action: click
+        selector: "#add-btn"
+
+      - action: assert
+        selector: ".task-text"
+        nth: 1
+        text: "Second typed task"

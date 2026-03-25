@@ -1,0 +1,70 @@
+meta:
+  title: "Proof: Select Action"
+  resolution:
+    width: 1280
+    height: 720
+
+runner:
+  command: "node examples/controls-lab/serve.mjs"
+  url: "http://localhost:4571"
+  timeout: 10000
+
+pacing:
+  cursorDurationMs: 600
+
+chapters:
+  - title: "Select Actions"
+    steps:
+      - action: navigate
+        url: "/"
+        narration: "Testing the select action on the ControlRoom app."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "title"
+        visible: true
+
+      - action: select
+        target:
+          by: label
+          text: "Plan"
+        option:
+          label: "Starter"
+        narration: "Select the Starter plan from the dropdown."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "status-text"
+        text: "Plan: Starter"
+        narration: "The status confirms the Starter plan is selected."
+
+      - action: select
+        target:
+          by: label
+          text: "Plan"
+        option:
+          label: "Pro"
+        narration: "Change the selection to the Pro plan."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "status-text"
+        text: "Plan: Pro"
+
+      - action: select
+        target:
+          by: label
+          text: "Plan"
+        option:
+          label: "Enterprise"
+        narration: "Finally, select the Enterprise plan."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "status-text"
+        text: "Plan: Enterprise"
+        narration: "All three dropdown options select correctly."

@@ -1,0 +1,54 @@
+meta:
+  title: "Proof: Hover Action"
+  resolution:
+    width: 1280
+    height: 720
+
+runner:
+  command: "node examples/chart-tooltips/serve.mjs"
+  url: "http://localhost:4576"
+  healthcheck: "http://localhost:4576/api/health"
+  timeout: 10000
+
+pacing:
+  cursorDurationMs: 600
+
+chapters:
+  - title: "Hover Actions"
+    steps:
+      - action: navigate
+        url: "/"
+        narration: "Testing the hover action on the ChartLab tooltip app."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "tooltip"
+        text: "hover a bar"
+        narration: "The tooltip starts in its default idle state."
+
+      - action: hover
+        target:
+          by: testId
+          testId: "bar-q1"
+        narration: "Hover over the Q1 bar to trigger the tooltip."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "tooltip"
+        text: "Q1: $31k"
+        narration: "The tooltip updates to show Q1 revenue data."
+
+      - action: hover
+        target:
+          by: testId
+          testId: "bar-q3"
+        narration: "Move the hover to Q3 to see the tooltip update."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "tooltip"
+        text: "Q3: $48k"
+        narration: "The tooltip correctly reflects the hovered bar."

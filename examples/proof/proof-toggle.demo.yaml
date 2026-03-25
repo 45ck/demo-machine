@@ -1,0 +1,52 @@
+meta:
+  title: "Proof: Toggle Action"
+  resolution:
+    width: 1280
+    height: 720
+
+runner:
+  command: "node examples/controls-lab/serve.mjs"
+  url: "http://localhost:4571"
+  timeout: 10000
+
+pacing:
+  cursorDurationMs: 600
+
+chapters:
+  - title: "Toggle Actions"
+    steps:
+      - action: navigate
+        url: "/"
+        narration: "Testing the check and uncheck actions on the ControlRoom app."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "title"
+        visible: true
+
+      - action: check
+        target:
+          by: label
+          text: "Enable alerts"
+        narration: "Check the alerts checkbox to enable it."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "status-text"
+        text: "Alerts: enabled"
+        narration: "The status confirms alerts are now enabled."
+
+      - action: uncheck
+        target:
+          by: label
+          text: "Enable alerts"
+        narration: "Uncheck the alerts checkbox to disable it."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "status-text"
+        text: "Alerts: disabled"
+        narration: "The status confirms alerts are now disabled."
