@@ -1,20 +1,20 @@
 [
   {
     "action": "navigate",
-    "timestamp": 1774330231681,
-    "duration": 298,
+    "timestamp": 1774414412189,
+    "duration": 283,
     "narration": "Welcome to ControlRoom. Let's exercise common UI controls."
   },
   {
     "action": "assert",
-    "timestamp": 1774330233227,
-    "duration": 71,
+    "timestamp": 1774414413712,
+    "duration": 42,
     "selector": "target(testId:title)"
   },
   {
     "action": "check",
-    "timestamp": 1774330233523,
-    "duration": 990,
+    "timestamp": 1774414413963,
+    "duration": 844,
     "selector": "target(label:Enable alerts)",
     "boundingBox": {
       "x": 478,
@@ -25,8 +25,8 @@
   },
   {
     "action": "uncheck",
-    "timestamp": 1774330235253,
-    "duration": 1072,
+    "timestamp": 1774414415600,
+    "duration": 950,
     "selector": "target(label:Enable alerts)",
     "boundingBox": {
       "x": 478,
@@ -37,8 +37,8 @@
   },
   {
     "action": "selectFirstNonPlaceholder",
-    "timestamp": 1774330237055,
-    "duration": 2113,
+    "timestamp": 1774414417275,
+    "duration": 4987,
     "selector": "target(label:Plan)",
     "boundingBox": {
       "x": 474,
@@ -49,8 +49,8 @@
   },
   {
     "action": "select",
-    "timestamp": 1774330239991,
-    "duration": 2326,
+    "timestamp": 1774414422995,
+    "duration": 6110,
     "selector": "target(label:Plan)",
     "boundingBox": {
       "x": 474,
@@ -62,8 +62,8 @@
   },
   {
     "action": "upload",
-    "timestamp": 1774330243111,
-    "duration": 2490,
+    "timestamp": 1774414429825,
+    "duration": 2138,
     "selector": "target(label:Upload logo)",
     "boundingBox": {
       "x": 474,
@@ -75,14 +75,14 @@
   },
   {
     "action": "assert",
-    "timestamp": 1774330246367,
-    "duration": 34,
+    "timestamp": 1774414432689,
+    "duration": 9,
     "selector": "target(testId:status-text)"
   },
   {
     "action": "dragAndDrop",
-    "timestamp": 1774330246651,
-    "duration": 1603,
+    "timestamp": 1774414432903,
+    "duration": 1444,
     "selector": "target(testId:card-alpha) -> target(testId:drop-zone)",
     "boundingBox": {
       "x": 806,
@@ -94,8 +94,8 @@
   },
   {
     "action": "assert",
-    "timestamp": 1774330248976,
-    "duration": 8,
+    "timestamp": 1774414435065,
+    "duration": 6,
     "selector": "target(testId:drop-hint)"
   }
 ]

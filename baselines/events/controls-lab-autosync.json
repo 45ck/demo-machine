@@ -1,14 +1,14 @@
 [
   {
     "action": "navigate",
-    "timestamp": 1774330201238,
-    "duration": 271,
+    "timestamp": 1774414412760,
+    "duration": 194,
     "narration": "Welcome to ControlRoom. We'll validate that demo machine can drive common UI controls."
   },
   {
     "action": "check",
-    "timestamp": 1774330202757,
-    "duration": 1011,
+    "timestamp": 1774414414181,
+    "duration": 1165,
     "selector": "target(label:Enable alerts)",
     "boundingBox": {
       "x": 478,
@@ -20,8 +20,8 @@
   },
   {
     "action": "uncheck",
-    "timestamp": 1774330204568,
-    "duration": 1282,
+    "timestamp": 1774414416083,
+    "duration": 909,
     "selector": "target(label:Enable alerts)",
     "boundingBox": {
       "x": 478,
@@ -33,8 +33,8 @@
   },
   {
     "action": "selectFirstNonPlaceholder",
-    "timestamp": 1774330206720,
-    "duration": 2680,
+    "timestamp": 1774414417707,
+    "duration": 4879,
     "selector": "target(label:Plan)",
     "boundingBox": {
       "x": 474,
@@ -46,8 +46,8 @@
   },
   {
     "action": "select",
-    "timestamp": 1774330210261,
-    "duration": 2298,
+    "timestamp": 1774414423460,
+    "duration": 5288,
     "selector": "target(label:Plan)",
     "boundingBox": {
       "x": 474,
@@ -59,8 +59,8 @@
   },
   {
     "action": "upload",
-    "timestamp": 1774330213526,
-    "duration": 2591,
+    "timestamp": 1774414429517,
+    "duration": 2330,
     "selector": "target(label:Upload logo)",
     "boundingBox": {
       "x": 474,
@@ -72,15 +72,15 @@
   },
   {
     "action": "assert",
-    "timestamp": 1774330216929,
-    "duration": 122,
+    "timestamp": 1774414432579,
+    "duration": 14,
     "selector": "target(testId:status-text)",
     "narration": "And we assert that the UI reflects the uploaded file."
   },
   {
     "action": "dragAndDrop",
-    "timestamp": 1774330217276,
-    "duration": 1978,
+    "timestamp": 1774414432803,
+    "duration": 1965,
     "selector": "target(testId:card-alpha) -> target(testId:drop-zone)",
     "boundingBox": {
       "x": 806,
@@ -92,8 +92,8 @@
   },
   {
     "action": "assert",
-    "timestamp": 1774330220021,
-    "duration": 8,
+    "timestamp": 1774414435491,
+    "duration": 7,
     "selector": "target(testId:drop-hint)",
     "narration": "The drop zone updates to confirm the action."
   }
