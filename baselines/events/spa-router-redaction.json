@@ -1,0 +1,26 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330572907,
+    "duration": 241,
+    "narration": "Sometimes paths or user identifiers should be redacted in demos."
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330574407,
+    "duration": 1129,
+    "selector": "[data-testid='nav-docs']",
+    "boundingBox": {
+      "x": 1431.21875,
+      "y": 14,
+      "width": 60.78125,
+      "height": 43
+    },
+    "narration": "Navigate to Docs so the redacted path element is visible."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330576266,
+    "duration": 917
+  }
+]

@@ -1,0 +1,187 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330601031,
+    "duration": 283,
+    "narration": "Welcome to TaskFlow, a simple and elegant task manager."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330602579,
+    "duration": 1029
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330603817,
+    "duration": 1387,
+    "selector": "#get-started",
+    "boundingBox": {
+      "x": 620,
+      "y": 255,
+      "width": 680,
+      "height": 50
+    },
+    "narration": "Let's click Get Started to begin managing our tasks."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330605969,
+    "duration": 819
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330607014,
+    "duration": 1152,
+    "selector": "#task-input",
+    "boundingBox": {
+      "x": 620,
+      "y": 429,
+      "width": 553.59375,
+      "height": 49
+    }
+  },
+  {
+    "action": "type",
+    "timestamp": 1774330608911,
+    "duration": 3670,
+    "selector": "#task-input",
+    "boundingBox": {
+      "x": 620,
+      "y": 429,
+      "width": 553.59375,
+      "height": 49
+    },
+    "narration": "We'll type in our first task — designing a new landing page."
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330613153,
+    "duration": 1103,
+    "selector": "#add-btn",
+    "boundingBox": {
+      "x": 1185.59375,
+      "y": 429,
+      "width": 114.40625,
+      "height": 49
+    }
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330615011,
+    "duration": 517
+  },
+  {
+    "action": "type",
+    "timestamp": 1774330615749,
+    "duration": 2450,
+    "selector": "#task-input",
+    "boundingBox": {
+      "x": 620,
+      "y": 429,
+      "width": 553.59375,
+      "height": 49
+    },
+    "narration": "Next, let's add a task to review pull requests."
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330618758,
+    "duration": 900,
+    "selector": "#add-btn",
+    "boundingBox": {
+      "x": 1185.59375,
+      "y": 429,
+      "width": 114.40625,
+      "height": 49
+    }
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330620448,
+    "duration": 538
+  },
+  {
+    "action": "type",
+    "timestamp": 1774330621202,
+    "duration": 1944,
+    "selector": "#task-input",
+    "boundingBox": {
+      "x": 620,
+      "y": 429,
+      "width": 553.59375,
+      "height": 49
+    },
+    "narration": "And one more — writing unit tests."
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330623750,
+    "duration": 940,
+    "selector": "#add-btn",
+    "boundingBox": {
+      "x": 1185.59375,
+      "y": 429,
+      "width": 114.40625,
+      "height": 49
+    }
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330625454,
+    "duration": 512
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330626192,
+    "duration": 987,
+    "selector": ".task-checkbox[nth=0]",
+    "boundingBox": {
+      "x": 641,
+      "y": 576,
+      "width": 22,
+      "height": 22
+    },
+    "narration": "To mark a task as done, just click the checkbox."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330627921,
+    "duration": 822
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330628976,
+    "duration": 1105,
+    "selector": "[data-filter='completed']",
+    "boundingBox": {
+      "x": 753.859375,
+      "y": 502,
+      "width": 96.875,
+      "height": 33
+    },
+    "narration": "We can filter to see only completed tasks."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330630937,
+    "duration": 826
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330631994,
+    "duration": 1085,
+    "selector": "[data-filter='all']",
+    "boundingBox": {
+      "x": 620,
+      "y": 502,
+      "width": 48.453125,
+      "height": 33
+    },
+    "narration": "Or switch back to view all tasks at once."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330633813,
+    "duration": 515
+  }
+]

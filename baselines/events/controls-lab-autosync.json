@@ -1,0 +1,100 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330201238,
+    "duration": 271,
+    "narration": "Welcome to ControlRoom. We'll validate that demo machine can drive common UI controls."
+  },
+  {
+    "action": "check",
+    "timestamp": 1774330202757,
+    "duration": 1011,
+    "selector": "target(label:Enable alerts)",
+    "boundingBox": {
+      "x": 478,
+      "y": 441.6875,
+      "width": 18,
+      "height": 18
+    },
+    "narration": "First, we toggle a checkbox using its accessible label."
+  },
+  {
+    "action": "uncheck",
+    "timestamp": 1774330204568,
+    "duration": 1282,
+    "selector": "target(label:Enable alerts)",
+    "boundingBox": {
+      "x": 478,
+      "y": 441.6875,
+      "width": 18,
+      "height": 18
+    },
+    "narration": "We can also drive the same checkbox back to its unchecked state."
+  },
+  {
+    "action": "selectFirstNonPlaceholder",
+    "timestamp": 1774330206720,
+    "duration": 2680,
+    "selector": "target(label:Plan)",
+    "boundingBox": {
+      "x": 474,
+      "y": 491.1875,
+      "width": 128,
+      "height": 44
+    },
+    "narration": "Next, we select the first non-placeholder choice automatically."
+  },
+  {
+    "action": "select",
+    "timestamp": 1774330210261,
+    "duration": 2298,
+    "selector": "target(label:Plan)",
+    "boundingBox": {
+      "x": 474,
+      "y": 491.1875,
+      "width": 128,
+      "height": 44
+    },
+    "narration": "Then we pick a specific plan from the dropdown."
+  },
+  {
+    "action": "upload",
+    "timestamp": 1774330213526,
+    "duration": 2591,
+    "selector": "target(label:Upload logo)",
+    "boundingBox": {
+      "x": 474,
+      "y": 563.1875,
+      "width": 275,
+      "height": 44
+    },
+    "narration": "Now we upload a file, resolving paths relative to the spec."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330216929,
+    "duration": 122,
+    "selector": "target(testId:status-text)",
+    "narration": "And we assert that the UI reflects the uploaded file."
+  },
+  {
+    "action": "dragAndDrop",
+    "timestamp": 1774330217276,
+    "duration": 1978,
+    "selector": "target(testId:card-alpha) -> target(testId:drop-zone)",
+    "boundingBox": {
+      "x": 806,
+      "y": 480.375,
+      "width": 107.5,
+      "height": 43
+    },
+    "narration": "Finally, we demonstrate drag and drop between two regions."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330220021,
+    "duration": 8,
+    "selector": "target(testId:drop-hint)",
+    "narration": "The drop zone updates to confirm the action."
+  }
+]

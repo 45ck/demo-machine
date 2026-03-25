@@ -1,0 +1,124 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330289392,
+    "duration": 278,
+    "narration": "DashLite is a dense admin table with search, filters, and sorting."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330290915,
+    "duration": 61,
+    "selector": "[data-testid='count']"
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330291196,
+    "duration": 970,
+    "selector": "[data-testid='search']",
+    "boundingBox": {
+      "x": 427,
+      "y": 93.1875,
+      "width": 606,
+      "height": 42
+    },
+    "narration": "We'll search for a specific user."
+  },
+  {
+    "action": "type",
+    "timestamp": 1774330292940,
+    "duration": 1297,
+    "selector": "[data-testid='search']",
+    "boundingBox": {
+      "x": 427,
+      "y": 93.1875,
+      "width": 606,
+      "height": 42
+    },
+    "narration": "Type a name to filter the results instantly."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330294860,
+    "duration": 9,
+    "selector": "[data-testid='count']"
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330295130,
+    "duration": 574
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330295966,
+    "duration": 1474,
+    "selector": "[data-testid='search']",
+    "boundingBox": {
+      "x": 427,
+      "y": 93.1875,
+      "width": 606,
+      "height": 42
+    }
+  },
+  {
+    "action": "press",
+    "timestamp": 1774330298178,
+    "duration": 80,
+    "selector": "action(press)"
+  },
+  {
+    "action": "press",
+    "timestamp": 1774330299012,
+    "duration": 238,
+    "selector": "action(press)"
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330300048,
+    "duration": 1007,
+    "selector": "[data-testid='th-email']",
+    "boundingBox": {
+      "x": 790.53125,
+      "y": 150.1875,
+      "width": 418.078125,
+      "height": 41.5
+    },
+    "narration": "Now we sort by email."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330301818,
+    "duration": 8,
+    "selector": "[data-testid='sort']"
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330302055,
+    "duration": 1026,
+    "selector": "[data-testid='status']",
+    "boundingBox": {
+      "x": 1043,
+      "y": 93.1875,
+      "width": 220,
+      "height": 42
+    }
+  },
+  {
+    "action": "press",
+    "timestamp": 1774330303845,
+    "duration": 23,
+    "selector": "action(press)"
+  },
+  {
+    "action": "press",
+    "timestamp": 1774330304686,
+    "duration": 76,
+    "selector": "action(press)",
+    "narration": "And filter to Active users."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330305529,
+    "duration": 533
+  }
+]

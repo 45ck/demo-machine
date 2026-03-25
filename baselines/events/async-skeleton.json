@@ -1,0 +1,102 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330141889,
+    "duration": 470,
+    "narration": "Metrics load asynchronously — the skeleton shows while data fetches."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330143605,
+    "duration": 64,
+    "selector": "target(testId:page-title)"
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330143874,
+    "duration": 14,
+    "selector": "target(testId:metric-revenue)"
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330144103,
+    "duration": 3516
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330147836,
+    "duration": 9,
+    "selector": "target(testId:metric-revenue)"
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330148058,
+    "duration": 8,
+    "selector": "target(testId:metric-users)"
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330148278,
+    "duration": 8,
+    "selector": "target(testId:metric-churn)"
+  },
+  {
+    "action": "screenshot",
+    "timestamp": 1774330148503,
+    "duration": 488
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330149205,
+    "duration": 998,
+    "selector": "target(testId:card-revenue)",
+    "boundingBox": {
+      "x": 510,
+      "y": 506.5,
+      "width": 290.65625,
+      "height": 127
+    },
+    "narration": "Click a metric card to open the detail panel."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330150954,
+    "duration": 9,
+    "selector": "target(testId:detail-panel)"
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330151181,
+    "duration": 10,
+    "selector": "target(testId:detail-panel)"
+  },
+  {
+    "action": "screenshot",
+    "timestamp": 1774330151403,
+    "duration": 557
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330152173,
+    "duration": 873,
+    "selector": "target(testId:card-users)",
+    "boundingBox": {
+      "x": 814.65625,
+      "y": 360,
+      "width": 290.671875,
+      "height": 127
+    },
+    "narration": "Switch to the Users metric for a different view."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330153778,
+    "duration": 8,
+    "selector": "target(testId:detail-panel)"
+  },
+  {
+    "action": "screenshot",
+    "timestamp": 1774330154000,
+    "duration": 549
+  }
+]

@@ -1,0 +1,130 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330350548,
+    "duration": 228,
+    "narration": "Welcome to FlowForm. We'll move fast, but everything stays perfectly timed."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330352010,
+    "duration": 417
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330352641,
+    "duration": 1118,
+    "selector": "[data-testid='name']",
+    "boundingBox": {
+      "x": 867,
+      "y": 448.40625,
+      "width": 276,
+      "height": 44
+    },
+    "narration": "Let's fill in a name."
+  },
+  {
+    "action": "type",
+    "timestamp": 1774330354524,
+    "duration": 1994,
+    "selector": "[data-testid='name']",
+    "boundingBox": {
+      "x": 867,
+      "y": 448.40625,
+      "width": 276,
+      "height": 44
+    },
+    "narration": "And an email address."
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330357055,
+    "duration": 956,
+    "selector": "[data-testid='email']",
+    "boundingBox": {
+      "x": 1155,
+      "y": 448.40625,
+      "width": 276,
+      "height": 44
+    }
+  },
+  {
+    "action": "type",
+    "timestamp": 1774330358806,
+    "duration": 1953,
+    "selector": "[data-testid='email']",
+    "boundingBox": {
+      "x": 1155,
+      "y": 448.40625,
+      "width": 276,
+      "height": 44
+    }
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330361371,
+    "duration": 1231,
+    "selector": "target(role:button[name=\"Next\"])",
+    "boundingBox": {
+      "x": 1373.578125,
+      "y": 506.40625,
+      "width": 57.421875,
+      "height": 44
+    },
+    "narration": "Next, we'll pick a plan."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330363338,
+    "duration": 358
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330363933,
+    "duration": 1181,
+    "selector": "[data-testid='plan-pro']",
+    "boundingBox": {
+      "x": 1058.328125,
+      "y": 452.953125,
+      "width": 181.328125,
+      "height": 73
+    },
+    "narration": "Pro gives us the essentials for a growing team."
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330365963,
+    "duration": 1113,
+    "selector": "target(role:button[name=\"Next\"])",
+    "boundingBox": {
+      "x": 1373.578125,
+      "y": 539.953125,
+      "width": 57.421875,
+      "height": 44
+    },
+    "narration": "Then we review."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330367820,
+    "duration": 395
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330368434,
+    "duration": 1032,
+    "selector": "[data-testid='submit']",
+    "boundingBox": {
+      "x": 1359.5,
+      "y": 545.953125,
+      "width": 71.5,
+      "height": 44
+    },
+    "narration": "Finally, submit the workspace."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330370259,
+    "duration": 656
+  }
+]

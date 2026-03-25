@@ -1,0 +1,13 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330276875,
+    "duration": 272,
+    "narration": "Tenant identifiers or account IDs can be blurred and scanned."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330278406,
+    "duration": 1223
+  }
+]

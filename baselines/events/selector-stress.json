@@ -1,0 +1,27 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330549292,
+    "duration": 355,
+    "narration": "Real apps often have repeated controls. When multiple matches exist, use nth to pick the right one."
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330550887,
+    "duration": 1215,
+    "selector": "target(role:button[name=\"Delete\"])[nth=3]",
+    "boundingBox": {
+      "x": 1413.984375,
+      "y": 220.96875,
+      "width": 66.015625,
+      "height": 38
+    },
+    "narration": "This clicks the fourth Delete button, without brittle CSS."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330552923,
+    "duration": 12,
+    "selector": "target(testId:status)"
+  }
+]

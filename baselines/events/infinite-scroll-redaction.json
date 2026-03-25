@@ -1,0 +1,13 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330446030,
+    "duration": 256,
+    "narration": "Even simple counters can be redacted in public demos."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330447532,
+    "duration": 1220
+  }
+]

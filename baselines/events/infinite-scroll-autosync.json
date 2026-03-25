@@ -1,0 +1,33 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330435105,
+    "duration": 213,
+    "narration": "Infinite scrolling is common in modern apps."
+  },
+  {
+    "action": "scroll",
+    "timestamp": 1774330436557,
+    "duration": 895,
+    "selector": "[data-testid='list']",
+    "boundingBox": {
+      "x": 471,
+      "y": 107,
+      "width": 978,
+      "height": 640
+    },
+    "narration": "We'll scroll to trigger a deterministic load."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330438214,
+    "duration": 951
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330439434,
+    "duration": 80,
+    "selector": "[data-testid='count']",
+    "narration": "And we can assert the new content was added."
+  }
+]

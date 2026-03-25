@@ -1,0 +1,13 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330380959,
+    "duration": 286,
+    "narration": "Sensitive values can be blurred and scanned automatically."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330382500,
+    "duration": 1216
+  }
+]

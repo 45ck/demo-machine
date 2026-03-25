@@ -1,0 +1,114 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330165726,
+    "duration": 506,
+    "narration": "This is a typical OTP sign-in flow: email, then a six-digit code."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330167472,
+    "duration": 53,
+    "selector": "target(testId:state-text)"
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330167740,
+    "duration": 1170,
+    "selector": "target(label:Work email)",
+    "boundingBox": {
+      "x": 489,
+      "y": 555.5,
+      "width": 468.09375,
+      "height": 46
+    },
+    "narration": "We can target form inputs by their label, not by CSS."
+  },
+  {
+    "action": "type",
+    "timestamp": 1774330169645,
+    "duration": 2372,
+    "selector": "target(testId:email)",
+    "boundingBox": {
+      "x": 489,
+      "y": 555.5,
+      "width": 468.09375,
+      "height": 46
+    }
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330172585,
+    "duration": 884,
+    "selector": "target(role:button[name=\"Send code\"])",
+    "boundingBox": {
+      "x": 489,
+      "y": 613.5,
+      "width": 97.40625,
+      "height": 44
+    },
+    "narration": "Send the code to reveal the OTP entry UI."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330174310,
+    "duration": 9,
+    "selector": "target(testId:otp-panel)"
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330174539,
+    "duration": 8,
+    "selector": "target(testId:state-text)"
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330174772,
+    "duration": 883,
+    "selector": "target(testId:otp-0)",
+    "boundingBox": {
+      "x": 504,
+      "y": 614.265625,
+      "width": 216,
+      "height": 50
+    },
+    "narration": "Now we can type the full OTP into the first digit and let the UI auto-advance."
+  },
+  {
+    "action": "type",
+    "timestamp": 1774330176441,
+    "duration": 1600,
+    "selector": "target(testId:otp-0)",
+    "boundingBox": {
+      "x": 504,
+      "y": 614.265625,
+      "width": 216,
+      "height": 50
+    }
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330178628,
+    "duration": 1006,
+    "selector": "target(role:button[name=\"Verify\"])",
+    "boundingBox": {
+      "x": 504,
+      "y": 676.265625,
+      "width": 66.3125,
+      "height": 44
+    },
+    "narration": "And verify to finish the sign-in."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330180413,
+    "duration": 8,
+    "selector": "target(testId:status)"
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330180654,
+    "duration": 51,
+    "selector": "target(testId:state-text)"
+  }
+]

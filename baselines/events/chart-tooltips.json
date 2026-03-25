@@ -1,0 +1,39 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330190234,
+    "duration": 277,
+    "narration": "Hover interactions are critical for demos, especially charts and dashboards."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330191743,
+    "duration": 72,
+    "selector": "target(testId:tooltip)"
+  },
+  {
+    "action": "hover",
+    "timestamp": 1774330192061,
+    "duration": 1173,
+    "selector": "target(testId:bar-q2)",
+    "boundingBox": {
+      "x": 647.0398559570312,
+      "y": 177.8367156982422,
+      "width": 63.8421630859375,
+      "height": 141.01405334472656
+    },
+    "narration": "We'll hover Q2 and watch a tooltip appear."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330193956,
+    "duration": 11,
+    "selector": "target(testId:tooltip)"
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330194177,
+    "duration": 8,
+    "selector": "target(testId:tooltip)"
+  }
+]

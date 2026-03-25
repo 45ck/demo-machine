@@ -1,0 +1,80 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330333062,
+    "duration": 296,
+    "narration": "FileUploader demonstrates single and multi-file uploads."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330334598,
+    "duration": 60,
+    "selector": "target(testId:title)"
+  },
+  {
+    "action": "upload",
+    "timestamp": 1774330334873,
+    "duration": 2541,
+    "selector": "target(label:Choose files)",
+    "boundingBox": {
+      "x": 711,
+      "y": 514,
+      "width": 498,
+      "height": 44
+    },
+    "narration": "Upload a single file using the label as the target."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330338148,
+    "duration": 103,
+    "selector": "target(testId:file-list)"
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330338488,
+    "duration": 15,
+    "selector": "target(testId:file-count)"
+  },
+  {
+    "action": "screenshot",
+    "timestamp": 1774330338716,
+    "duration": 567
+  },
+  {
+    "action": "upload",
+    "timestamp": 1774330339520,
+    "duration": 2258,
+    "selector": "target(label:Choose files)",
+    "boundingBox": {
+      "x": 711,
+      "y": 513,
+      "width": 498,
+      "height": 44
+    },
+    "narration": "Now upload two files at once using the files array."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330342556,
+    "duration": 12,
+    "selector": "target(testId:file-list)"
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330342791,
+    "duration": 39,
+    "selector": "target(testId:file-list)"
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330343038,
+    "duration": 16,
+    "selector": "target(testId:file-count)"
+  },
+  {
+    "action": "screenshot",
+    "timestamp": 1774330343286,
+    "duration": 573
+  }
+]

@@ -1,0 +1,74 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330532906,
+    "duration": 255,
+    "narration": "preSteps seeded the API — the notes are ready before we arrive."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330534395,
+    "duration": 50,
+    "selector": "target(testId:session-state)"
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330534659,
+    "duration": 29,
+    "selector": "target(testId:note-count)"
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330534916,
+    "duration": 22,
+    "selector": "target(testId:note-0)"
+  },
+  {
+    "action": "screenshot",
+    "timestamp": 1774330535161,
+    "duration": 550
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330535919,
+    "duration": 1078,
+    "selector": "target(testId:note-0)",
+    "boundingBox": {
+      "x": 603,
+      "y": 485,
+      "width": 326,
+      "height": 45
+    },
+    "narration": "Click the first note to open its detail panel."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330537727,
+    "duration": 7,
+    "selector": "target(testId:note-detail)"
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330537945,
+    "duration": 1375,
+    "selector": "target(testId:note-1)",
+    "boundingBox": {
+      "x": 603,
+      "y": 538,
+      "width": 326,
+      "height": 45
+    },
+    "narration": "Switch to the second note seamlessly."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330540063,
+    "duration": 40,
+    "selector": "target(testId:note-detail)"
+  },
+  {
+    "action": "screenshot",
+    "timestamp": 1774330540324,
+    "duration": 614
+  }
+]

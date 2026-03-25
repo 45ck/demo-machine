@@ -1,0 +1,44 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330560246,
+    "duration": 235,
+    "narration": "RouteLab is a tiny SPA. We'll jump across routes with perfectly timed narration."
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330561731,
+    "duration": 1029,
+    "selector": "[data-testid='nav-pricing']",
+    "boundingBox": {
+      "x": 1347.078125,
+      "y": 14,
+      "width": 74.140625,
+      "height": 43
+    },
+    "narration": "Pricing loads asynchronously."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330563506,
+    "duration": 692
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330564437,
+    "duration": 882,
+    "selector": "[data-testid='nav-docs']",
+    "boundingBox": {
+      "x": 1431.21875,
+      "y": 14,
+      "width": 60.78125,
+      "height": 43
+    },
+    "narration": "Docs is another route, also with async content."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330566048,
+    "duration": 669
+  }
+]

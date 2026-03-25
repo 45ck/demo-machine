@@ -1,0 +1,26 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330494409,
+    "duration": 375,
+    "narration": "Inputs can be blurred during recording to protect sensitive values."
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330496022,
+    "duration": 1786,
+    "selector": "[data-testid='open-modal']",
+    "boundingBox": {
+      "x": 529,
+      "y": 546.09375,
+      "width": 97.921875,
+      "height": 44
+    },
+    "narration": "Open the modal to reveal the blurred email input."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330498571,
+    "duration": 951
+  }
+]

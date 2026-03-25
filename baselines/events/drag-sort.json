@@ -1,0 +1,62 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330320242,
+    "duration": 159,
+    "narration": "DragSort shows task cards you can reorder by dragging."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330321652,
+    "duration": 75,
+    "selector": "target(testId:title)"
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330321944,
+    "duration": 25,
+    "selector": "target(testId:card-0)"
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330322187,
+    "duration": 15,
+    "selector": "target(testId:card-2)"
+  },
+  {
+    "action": "dragAndDrop",
+    "timestamp": 1774330322429,
+    "duration": 1501,
+    "selector": "target(testId:card-0) -> target(testId:card-2)",
+    "boundingBox": {
+      "x": 705,
+      "y": 421.5,
+      "width": 510,
+      "height": 49
+    },
+    "narration": "Dragging the first card to swap it with the third."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330324657,
+    "duration": 7,
+    "selector": "target(testId:card-0)"
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330324873,
+    "duration": 7,
+    "selector": "target(testId:card-2)"
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330325096,
+    "duration": 7,
+    "selector": "target(testId:status-msg)"
+  },
+  {
+    "action": "screenshot",
+    "timestamp": 1774330325312,
+    "duration": 570
+  }
+]

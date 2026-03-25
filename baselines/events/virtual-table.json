@@ -1,0 +1,38 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330644129,
+    "duration": 306,
+    "narration": "Virtualized tables are common: only a small window of rows exists in the DOM."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330645661,
+    "duration": 52,
+    "selector": "target(testId:range)"
+  },
+  {
+    "action": "scroll",
+    "timestamp": 1774330645930,
+    "duration": 828,
+    "selector": "target(testId:viewport)",
+    "boundingBox": {
+      "x": 411,
+      "y": 110.1875,
+      "width": 1098,
+      "height": 520
+    },
+    "narration": "We can still scroll deterministically within a container."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330647493,
+    "duration": 667
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330648380,
+    "duration": 15,
+    "selector": "target(text:Row 300)"
+  }
+]

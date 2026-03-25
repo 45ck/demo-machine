@@ -1,0 +1,61 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330455195,
+    "duration": 308,
+    "narration": "ScrollForge shows infinite scrolling with deterministic loading."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330456746,
+    "duration": 50,
+    "selector": "[data-testid='count']"
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330457012,
+    "duration": 616
+  },
+  {
+    "action": "scroll",
+    "timestamp": 1774330457849,
+    "duration": 789,
+    "selector": "[data-testid='list']",
+    "boundingBox": {
+      "x": 471,
+      "y": 107,
+      "width": 978,
+      "height": 640
+    },
+    "narration": "We'll scroll near the bottom to trigger the next page."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330459510,
+    "duration": 748
+  },
+  {
+    "action": "scroll",
+    "timestamp": 1774330460515,
+    "duration": 1443,
+    "selector": "[data-testid='list']",
+    "boundingBox": {
+      "x": 471,
+      "y": 107,
+      "width": 978,
+      "height": 640
+    },
+    "narration": "Scrolling again loads the next page of items."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330462761,
+    "duration": 729
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330463737,
+    "duration": 76,
+    "selector": "[data-testid='count']"
+  }
+]

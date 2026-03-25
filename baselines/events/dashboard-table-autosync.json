@@ -1,0 +1,56 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330260754,
+    "duration": 266,
+    "narration": "DashLite is a realistic admin table: dense UI, fast interactions."
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330262265,
+    "duration": 1084,
+    "selector": "[data-testid='search']",
+    "boundingBox": {
+      "x": 427,
+      "y": 93.1875,
+      "width": 606,
+      "height": 42
+    },
+    "narration": "We'll search by name."
+  },
+  {
+    "action": "type",
+    "timestamp": 1774330264080,
+    "duration": 1470,
+    "selector": "[data-testid='search']",
+    "boundingBox": {
+      "x": 427,
+      "y": 93.1875,
+      "width": 606,
+      "height": 42
+    }
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330266081,
+    "duration": 470
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330266780,
+    "duration": 941,
+    "selector": "[data-testid='th-status']",
+    "boundingBox": {
+      "x": 1184.8125,
+      "y": 150.1875,
+      "width": 324.1875,
+      "height": 41.5
+    },
+    "narration": "Then sort by status."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330268464,
+    "duration": 624
+  }
+]

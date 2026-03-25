@@ -1,0 +1,108 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330583714,
+    "duration": 266,
+    "narration": "This app is a tiny single-page router with async loading."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330585221,
+    "duration": 61,
+    "selector": "[data-testid='route-title']"
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330585503,
+    "duration": 737
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330586459,
+    "duration": 975,
+    "selector": "[data-testid='nav-pricing']",
+    "boundingBox": {
+      "x": 1347.078125,
+      "y": 14,
+      "width": 74.140625,
+      "height": 43
+    },
+    "narration": "Let's navigate to Pricing."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330587824,
+    "duration": 11,
+    "selector": "[data-testid='loading']"
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330588045,
+    "duration": 659
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330588947,
+    "duration": 34,
+    "selector": "[data-testid='route-title']"
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330589254,
+    "duration": 1006,
+    "selector": "[data-testid='nav-docs']",
+    "boundingBox": {
+      "x": 1431.21875,
+      "y": 14,
+      "width": 60.78125,
+      "height": 43
+    },
+    "narration": "And then to Docs."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330590677,
+    "duration": 687
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330591610,
+    "duration": 25,
+    "selector": "[data-testid='route-title']"
+  },
+  {
+    "action": "back",
+    "timestamp": 1774330591870,
+    "duration": 91,
+    "selector": "action(back)",
+    "narration": "We can even drive browser history."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330592427,
+    "duration": 677
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330593323,
+    "duration": 11,
+    "selector": "[data-testid='route-title']"
+  },
+  {
+    "action": "forward",
+    "timestamp": 1774330593544,
+    "duration": 23,
+    "selector": "action(forward)"
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330593938,
+    "duration": 686
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330594852,
+    "duration": 12,
+    "selector": "[data-testid='route-title']"
+  }
+]

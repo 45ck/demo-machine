@@ -1,0 +1,99 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330508481,
+    "duration": 368,
+    "narration": "This demo focuses on overlay UI: tooltips and modals."
+  },
+  {
+    "action": "hover",
+    "timestamp": 1774330510102,
+    "duration": 1286,
+    "selector": "[data-testid='info']",
+    "boundingBox": {
+      "x": 1357,
+      "y": 494,
+      "width": 34,
+      "height": 34
+    },
+    "narration": "Hover can reveal tooltips."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330512119,
+    "duration": 9,
+    "selector": "[data-testid='tooltip']"
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330512339,
+    "duration": 631
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330513207,
+    "duration": 1211,
+    "selector": "[data-testid='open-modal']",
+    "boundingBox": {
+      "x": 529,
+      "y": 546.09375,
+      "width": 97.921875,
+      "height": 44
+    },
+    "narration": "We'll open the Invite modal."
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330515176,
+    "duration": 8,
+    "selector": "[data-testid='overlay']"
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330515402,
+    "duration": 1642,
+    "selector": "[data-testid='invite-email']",
+    "boundingBox": {
+      "x": 717,
+      "y": 536.59375,
+      "width": 486,
+      "height": 44
+    },
+    "narration": "Then type an email and send the invite."
+  },
+  {
+    "action": "type",
+    "timestamp": 1774330517916,
+    "duration": 3187,
+    "selector": "[data-testid='invite-email']",
+    "boundingBox": {
+      "x": 717,
+      "y": 536.59375,
+      "width": 486,
+      "height": 44
+    }
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330521654,
+    "duration": 1487,
+    "selector": "[data-testid='send-invite']",
+    "boundingBox": {
+      "x": 717,
+      "y": 590.59375,
+      "width": 486,
+      "height": 44
+    }
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330523907,
+    "duration": 8,
+    "selector": "[data-testid='toast']"
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330524130,
+    "duration": 708
+  }
+]

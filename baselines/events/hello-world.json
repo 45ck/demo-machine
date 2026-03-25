@@ -1,0 +1,56 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330420217,
+    "duration": 272
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330421743,
+    "duration": 53,
+    "selector": "target(altText:HelloWorld logo)"
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330422011,
+    "duration": 15,
+    "selector": "target(title:Launch quickstart)"
+  },
+  {
+    "action": "clickFirstVisible",
+    "timestamp": 1774330422256,
+    "duration": 1024,
+    "selector": ".start-cta:visible[nth=0]",
+    "boundingBox": {
+      "x": 534,
+      "y": 583.78125,
+      "width": 95.953125,
+      "height": 44
+    },
+    "narration": "Click the first visible get started button."
+  },
+  {
+    "action": "type",
+    "timestamp": 1774330424006,
+    "duration": 2024,
+    "selector": "target(placeholder:name@company.com)",
+    "boundingBox": {
+      "x": 982,
+      "y": 529.09375,
+      "width": 195,
+      "height": 44
+    },
+    "narration": "Enter your email address."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330426619,
+    "duration": 1031
+  },
+  {
+    "action": "assert",
+    "timestamp": 1774330427865,
+    "duration": 9,
+    "selector": ".welcome-message"
+  }
+]

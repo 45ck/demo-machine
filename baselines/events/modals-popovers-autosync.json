@@ -1,0 +1,82 @@
+[
+  {
+    "action": "navigate",
+    "timestamp": 1774330471065,
+    "duration": 277,
+    "narration": "OverlayKit shows the tricky UI: hover tooltips and modals."
+  },
+  {
+    "action": "hover",
+    "timestamp": 1774330472580,
+    "duration": 1304,
+    "selector": "[data-testid='info']",
+    "boundingBox": {
+      "x": 1357,
+      "y": 494,
+      "width": 34,
+      "height": 34
+    },
+    "narration": "Hover reveals a tooltip."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330474615,
+    "duration": 681
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330475603,
+    "duration": 1027,
+    "selector": "[data-testid='open-modal']",
+    "boundingBox": {
+      "x": 529,
+      "y": 546.09375,
+      "width": 97.921875,
+      "height": 44
+    },
+    "narration": "Now we open the invite modal."
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330477387,
+    "duration": 1599,
+    "selector": "[data-testid='invite-email']",
+    "boundingBox": {
+      "x": 717,
+      "y": 536.59375,
+      "width": 486,
+      "height": 44
+    }
+  },
+  {
+    "action": "type",
+    "timestamp": 1774330479771,
+    "duration": 3036,
+    "selector": "[data-testid='invite-email']",
+    "boundingBox": {
+      "x": 717,
+      "y": 536.59375,
+      "width": 486,
+      "height": 44
+    },
+    "narration": "We type an email."
+  },
+  {
+    "action": "click",
+    "timestamp": 1774330483397,
+    "duration": 2155,
+    "selector": "[data-testid='send-invite']",
+    "boundingBox": {
+      "x": 717,
+      "y": 590.59375,
+      "width": 486,
+      "height": 44
+    },
+    "narration": "And send the invite."
+  },
+  {
+    "action": "wait",
+    "timestamp": 1774330486339,
+    "duration": 723
+  }
+]
