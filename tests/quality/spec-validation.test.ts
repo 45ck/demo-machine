@@ -22,9 +22,15 @@ async function loadManifest(): Promise<Manifest> {
   return JSON.parse(raw) as Manifest;
 }
 
+/** Specs in examples/ root that are standalone (not part of the CI manifest suite). */
+const STANDALONE_SPECS = new Set(["examples/meta-demo.demo.yaml"]);
+
 async function discoverSpecFiles(): Promise<string[]> {
   const entries = await readdir(resolve(projectRoot, "examples"));
-  return entries.filter((f) => f.endsWith(".demo.yaml")).map((f) => `examples/${f}`);
+  return entries
+    .filter((f) => f.endsWith(".demo.yaml"))
+    .map((f) => `examples/${f}`)
+    .filter((p) => !STANDALONE_SPECS.has(p));
 }
 
 describe("bulk spec validation", () => {

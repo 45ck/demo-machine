@@ -29,6 +29,8 @@ export type { RunnerHandle, RunnerOptions } from "./runner/types.js";
 export { PlaybackEngine } from "./playback/engine.js";
 export { PlaybackStepError, NoVisibleChangeError } from "./playback/errors.js";
 export { actionHandlers } from "./playback/actions.js";
+export { registerCustomSelectApproach } from "./playback/handlers/select-approaches.js";
+export type { SelectApproach, SelectApproachFn } from "./playback/handlers/select-approaches.js";
 export { runPreSteps } from "./playback/presteps.js";
 export {
   checkSelectOverlay,

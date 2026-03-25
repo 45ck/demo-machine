@@ -12,6 +12,7 @@ import {
   showFilePickerOverlay,
   showSelectOverlay,
 } from "../visuals.js";
+import { getSelectApproach, resolveApproachFn } from "./select-approaches.js";
 import { checkHitTest, checkPointerEvents, checkNetworkIdle } from "../guards.js";
 import { checkActionability, checkSemanticFormTarget } from "../a11y-guards.js";
 import {
@@ -124,17 +125,23 @@ export const handleSelect: ActionHandler = async (ctx, step, events, stepIndex) 
   await ctx.moveCursorTo(box);
   await flashSpotlight(ctx.page, box);
   await pulseFocus(ctx.page, box);
-  await locator.selectOption(step.option, { timeout: timeoutMs });
 
-  // Show which option was chosen — native <select> dropdowns open/close too fast to see.
-  const selectedText = (await locator.evaluate(((el: unknown) => {
-    const sel = el as HTMLSelectElement;
-    const opt = sel.selectedOptions[0];
-    return opt ? (opt.textContent?.trim() ?? opt.value) : null;
-  }) as (...args: unknown[]) => unknown)) as string | null;
+  // Visual dropdown interaction — approach selected via DM_SELECT_APPROACH env var.
+  let selectedText: string | null = null;
+  if (box && ctx.pacing.cursorDurationMs > 0) {
+    const fn = resolveApproachFn(getSelectApproach());
+    selectedText = await fn({ ctx, locator, box, optionSpec: step.option, timeoutMs });
+  } else {
+    await locator.selectOption(step.option, { timeout: timeoutMs });
+    selectedText = (await locator.evaluate(((el: unknown) => {
+      const sel = el as HTMLSelectElement;
+      const opt = sel.selectedOptions[0];
+      return opt ? (opt.textContent?.trim() ?? opt.value) : null;
+    }) as (...args: unknown[]) => unknown)) as string | null;
+  }
+
   if (selectedText) {
     await showSelectOverlay(ctx.page, selectedText);
-    // Post-action visual guards (#4, #52) — verify overlay rendered correctly.
     await checkSelectOverlay(ctx.page, selectedText);
     await checkOverlayZIndex(ctx.page, "dm-select-overlay");
   }
@@ -203,14 +210,21 @@ export const handleSelectFirstNonPlaceholder: ActionHandler = async (
     );
   }
 
-  await locator.selectOption({ value: firstValue }, { timeout: timeoutMs });
+  // Visual dropdown interaction — approach selected via DM_SELECT_APPROACH env var.
+  let selectedText: string | null = null;
+  if (box && ctx.pacing.cursorDurationMs > 0) {
+    const fn = resolveApproachFn(getSelectApproach());
+    selectedText = await fn({ ctx, locator, box, optionSpec: { value: firstValue }, timeoutMs });
+  } else {
+    await locator.selectOption({ value: firstValue }, { timeout: timeoutMs });
+    selectedText = (await locator.evaluate(((el: unknown) => {
+      const sel = el as HTMLSelectElement;
+      const opt = sel.selectedOptions[0];
+      return opt ? (opt.textContent?.trim() ?? opt.value) : null;
+    }) as (...args: unknown[]) => unknown)) as string | null;
+  }
 
-  // Show which option was chosen — native <select> dropdowns open/close too fast to see.
-  const selectedText = (await locator.evaluate(((el: unknown) => {
-    const sel = el as HTMLSelectElement;
-    const opt = sel.selectedOptions[0];
-    return opt ? (opt.textContent?.trim() ?? opt.value) : null;
-  }) as (...args: unknown[]) => unknown)) as string | null;
+  // Show which option was chosen — confirmation toast.
   if (selectedText) {
     await showSelectOverlay(ctx.page, selectedText);
     // Post-action visual guards (#4, #52) — verify overlay rendered correctly.

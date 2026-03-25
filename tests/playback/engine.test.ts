@@ -21,6 +21,24 @@ vi.mock("../../src/playback/visuals.js", () => ({
   showSelectOverlay: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("../../src/playback/handlers/select-approaches.js", () => ({
+  getSelectApproach: vi.fn().mockReturnValue("C"),
+  resolveApproachFn: vi.fn().mockReturnValue(
+    vi
+      .fn()
+      .mockImplementation(
+        async (p: {
+          locator: { selectOption: Function; evaluate: Function };
+          optionSpec: unknown;
+          timeoutMs: number;
+        }) => {
+          await p.locator.selectOption(p.optionSpec, { timeout: p.timeoutMs });
+          return (await p.locator.evaluate(() => {})) as string | null;
+        },
+      ),
+  ),
+}));
+
 vi.mock("../../src/redaction/secrets.js", () => ({
   scanForSecrets: vi.fn(() => []),
 }));
