@@ -2,12 +2,14 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import type { TimedNarrationSegment } from "../narration/types.js";
 import type { ActionEvent } from "../playback/types.js";
+import { createLogger } from "../utils/logger.js";
 import {
   detectOverlaps,
   renderTimelineView,
   buildTimelineViewInput,
-  NarrationOverlapError,
 } from "../narration/timeline-view.js";
+
+const log = createLogger("timeline-display");
 
 interface TimelineDisplayParams {
   timedSegments: TimedNarrationSegment[];
@@ -19,7 +21,7 @@ interface TimelineDisplayParams {
   showTimeline?: boolean;
 }
 
-/** Display timeline and save narration segments. Throws on overlaps. */
+/** Display timeline and save narration segments. Warns on overlaps. */
 export function displayTimelineAndSaveSegments(params: TimelineDisplayParams): void {
   const { timedSegments, events, spec, outputDir, showTimeline } = params;
 
@@ -45,12 +47,14 @@ export function displayTimelineAndSaveSegments(params: TimelineDisplayParams): v
     console.log(output);
   }
 
-  // Hard error on overlaps
+  // Warn on overlaps (output.mp4 is already rendered at this point)
   if (overlaps.length > 0) {
     const plural = overlaps.length !== 1 ? "s" : "";
-    throw new NarrationOverlapError(
-      overlaps,
-      `${overlaps.length} narration overlap${plural} detected`,
-    );
+    for (const o of overlaps) {
+      log.warn(
+        `Narration overlap: segment ${o.indexA} ↔ ${o.indexB} (${o.overlapMs.toFixed(0)}ms)`,
+      );
+    }
+    log.warn(`${overlaps.length} narration overlap${plural} — consider adjusting pacing`);
   }
 }
