@@ -15,6 +15,12 @@ export function registerRunTool(server: McpServer): void {
         .string()
         .optional()
         .describe("TTS provider: kokoro | openai | elevenlabs | piper"),
+      selectApproach: z
+        .enum(["A", "B", "C", "D"])
+        .optional()
+        .describe(
+          "Select dropdown visual approach: A (cloned listbox), B (keyboard nav), C (fake overlay, default), D (custom hook via registerCustomSelectApproach)",
+        ),
     },
     async (args) => {
       try {
@@ -29,6 +35,7 @@ export function registerRunTool(server: McpServer): void {
           renderer: args.renderer ?? "ffmpeg",
           ttsProvider: args.ttsProvider ?? "kokoro",
           headless: args.headless ?? true,
+          selectApproach: args.selectApproach,
         });
         return {
           content: [

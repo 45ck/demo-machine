@@ -82,6 +82,17 @@ program
       return v;
     },
   )
+  .option(
+    "--select-approach <A|B|C|D>",
+    "Select dropdown visual approach: A (cloned listbox), B (keyboard nav), C (fake overlay, default), D (custom hook)",
+    (v) => {
+      const upper = v.toUpperCase();
+      if (upper !== "A" && upper !== "B" && upper !== "C" && upper !== "D") {
+        throw new InvalidArgumentError("--select-approach must be A, B, C, or D.");
+      }
+      return upper;
+    },
+  )
   .option("--timeline", "Print narration timeline after rendering", false)
   .option("--resolution <WxH>", "Override spec resolution for capture (e.g. 1280x720)", (v) => {
     const m = /^(\d+)x(\d+)$/.exec(v);

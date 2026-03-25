@@ -249,6 +249,12 @@ export async function captureFromSpec(params: {
   const { PlaybackEngine } = await import("../playback/engine.js");
   const pw = await import("playwright");
   const spec = params.spec;
+
+  // Spec-level selectApproach as fallback when CLI flag was not provided.
+  if (!process.env["DM_SELECT_APPROACH"] && spec.meta.selectApproach) {
+    process.env["DM_SELECT_APPROACH"] = spec.meta.selectApproach;
+  }
+
   log.info(`Running: "${spec.meta.title}"`);
 
   const handle = spec.runner?.command

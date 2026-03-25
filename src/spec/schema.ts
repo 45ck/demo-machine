@@ -22,6 +22,7 @@ const metaSchema = z.object({
   title: z.string().min(1),
   resolution: resolutionSchema.optional().default({ width: 1920, height: 1080 }),
   branding: brandingSchema.optional(),
+  selectApproach: z.enum(["A", "B", "C", "D"]).optional(),
 });
 
 const runnerConfigSchema = z.object({
