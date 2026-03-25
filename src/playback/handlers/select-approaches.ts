@@ -33,7 +33,7 @@ async function readSelectedText(
 }
 
 /** Approach A: Clone real `<select>`, expand as listbox, cursor on real `<option>` elements. */
-export async function selectApproachA(p: SelectParams): Promise<string | null> {
+async function selectApproachA(p: SelectParams): Promise<string | null> {
   const options = await readSelectOptions(p.ctx.page, p.box, p.optionSpec);
   const targetIdx = options.findIndex((o) => o.isTarget);
 
@@ -65,7 +65,7 @@ export async function selectApproachA(p: SelectParams): Promise<string | null> {
 }
 
 /** Approach B: Click to open native dropdown, keyboard navigate, Enter to select. */
-export async function selectApproachB(p: SelectParams): Promise<string | null> {
+async function selectApproachB(p: SelectParams): Promise<string | null> {
   const options = await readSelectOptions(p.ctx.page, p.box, p.optionSpec);
   const targetIdx = options.findIndex((o) => o.isTarget);
 
@@ -99,7 +99,7 @@ export async function selectApproachB(p: SelectParams): Promise<string | null> {
 }
 
 /** Approach C: Polished fake overlay styled like Chrome's native dropdown. */
-export async function selectApproachC(p: SelectParams): Promise<string | null> {
+async function selectApproachC(p: SelectParams): Promise<string | null> {
   const options = await readSelectOptions(p.ctx.page, p.box, p.optionSpec);
   const targetIdx = options.findIndex((o) => o.isTarget);
 

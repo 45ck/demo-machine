@@ -3,7 +3,7 @@ import type { PlaywrightPage } from "./playwright.js";
 
 const SELECT_DROPDOWN_ID = "dm-select-dropdown";
 
-export interface SelectDropdownOption {
+interface SelectDropdownOption {
   value: string;
   text: string;
   disabled: boolean;
