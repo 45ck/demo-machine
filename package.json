@@ -35,6 +35,12 @@
     "examples:validate": "node scripts/examples-suite.mjs --mode validate",
     "examples:capture": "node scripts/examples-suite.mjs --mode capture",
     "demo:gallery": "node scripts/demo-gallery.mjs",
+    "demo:health": "node scripts/demo-health-dashboard.mjs",
+    "golden-frames": "node scripts/golden-frames.mjs",
+    "golden-frames:compare": "node scripts/golden-frames.mjs --compare",
+    "golden-frames:update": "node scripts/golden-frames.mjs --update",
+    "visual-diff": "node scripts/visual-diff-gate.mjs",
+    "visual-diff:update": "node scripts/visual-diff-gate.mjs --update-baselines",
     "prepublishOnly": "pnpm build && pnpm test",
     "prepare": "husky",
     "validate": "pnpm lint && pnpm format && pnpm spell && pnpm typecheck && pnpm test && pnpm knip && pnpm dep-check && pnpm quality:verify:strict"

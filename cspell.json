@@ -79,7 +79,9 @@
     "contenteditable",
     "labelledby",
     "selectedphoto",
-    "selecteddoc"
+    "selecteddoc",
+    "topbar",
+    "autosync"
   ],
   "ignorePaths": ["node_modules", "dist", "pnpm-lock.yaml", "*.json"]
 }

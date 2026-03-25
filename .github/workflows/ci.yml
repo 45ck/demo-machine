@@ -227,6 +227,48 @@ jobs:
           # Re-run to get exit code for the step
           node scripts/events-diff.mjs --baseline "$BASELINE" --current "$CURRENT"
 
+      # --- Visual regression diff ---
+      - name: Visual regression diff
+        if: always() && steps.capture.outcome == 'success'
+        continue-on-error: true
+        env:
+          SLUG: ${{ matrix.slug }}
+        run: |
+          MP4="output/example-suite/${SLUG}/output.mp4"
+
+          if [ ! -f "$MP4" ]; then
+            echo "No output.mp4 for ${SLUG} — skipping visual diff."
+            exit 0
+          fi
+
+          BASELINE_DIR="baselines/golden-frames/${SLUG}"
+          if [ ! -d "$BASELINE_DIR" ]; then
+            echo "No golden-frame baseline for ${SLUG} — skipping visual diff."
+            echo "### Visual Diff: ${SLUG}" >> "$GITHUB_STEP_SUMMARY"
+            echo "No baseline found. Run \`node scripts/visual-diff-gate.mjs --update-baselines\` to create one." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          RESULT=$(node scripts/visual-diff-gate.mjs --filter "$SLUG" --threshold 2 2>&1) || true
+          echo "### Visual Diff: ${SLUG}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "$RESULT" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+          # Re-run to get exit code — warn but do not fail the job
+          node scripts/visual-diff-gate.mjs --filter "$SLUG" --threshold 2 || {
+            echo "::warning::Visual regression detected for ${SLUG}"
+          }
+
+      - name: Upload visual diff report
+        if: always() && steps.capture.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-diff-${{ matrix.slug }}
+          path: output/visual-diff-report.json
+          retention-days: 7
+          if-no-files-found: ignore
+
       - name: Upload traces on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -423,6 +465,48 @@ jobs:
           node scripts/capture-perf-gate.mjs --baseline "$BASELINE" --current "$CURRENT" || {
             echo "::warning::Performance regression detected for ${SLUG}"
           }
+
+      # --- Visual regression diff ---
+      - name: Visual regression diff
+        if: always() && (steps.capture.outcome == 'success' || steps.capture-q3.outcome == 'success')
+        continue-on-error: true
+        env:
+          SLUG: ${{ matrix.slug }}
+        run: |
+          MP4="output/example-suite/${SLUG}/output.mp4"
+
+          if [ ! -f "$MP4" ]; then
+            echo "No output.mp4 for ${SLUG} — skipping visual diff."
+            exit 0
+          fi
+
+          BASELINE_DIR="baselines/golden-frames/${SLUG}"
+          if [ ! -d "$BASELINE_DIR" ]; then
+            echo "No golden-frame baseline for ${SLUG} — skipping visual diff."
+            echo "### Visual Diff: ${SLUG}" >> "$GITHUB_STEP_SUMMARY"
+            echo "No baseline found. Run \`node scripts/visual-diff-gate.mjs --update-baselines\` to create one." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          RESULT=$(node scripts/visual-diff-gate.mjs --filter "$SLUG" --threshold 2 2>&1) || true
+          echo "### Visual Diff: ${SLUG}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "$RESULT" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+          # Nightly: report-only, visual diffs are advisory
+          node scripts/visual-diff-gate.mjs --filter "$SLUG" --threshold 2 || {
+            echo "::warning::Visual regression detected for ${SLUG}"
+          }
+
+      - name: Upload visual diff report
+        if: always() && (steps.capture.outcome == 'success' || steps.capture-q3.outcome == 'success')
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-diff-nightly-${{ matrix.slug }}
+          path: output/visual-diff-report.json
+          retention-days: 7
+          if-no-files-found: ignore
 
       - name: Upload traces on failure
         if: failure()
