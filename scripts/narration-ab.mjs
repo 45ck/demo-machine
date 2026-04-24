@@ -154,7 +154,11 @@ function fmtBytes(bytes) {
 }
 
 function escapeHtml(s) {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function generateCompareHTML(slug, variants) {
@@ -344,10 +348,10 @@ async function main() {
 
   if (opts.useExisting) {
     if (!(await exists(existingEvents))) {
+      console.error(`--use-existing specified but no events.json found at ${existingEvents}`);
       console.error(
-        `--use-existing specified but no events.json found at ${existingEvents}`,
+        "Run a capture first: node scripts/examples-suite.mjs --mode capture --filter " + slug,
       );
-      console.error("Run a capture first: node scripts/examples-suite.mjs --mode capture --filter " + slug);
       process.exit(1);
     }
     eventsSource = existingSuiteDir;
@@ -429,7 +433,13 @@ async function main() {
 
     if (code !== 0) {
       console.error(`  [FAIL]  ${voice} (exit ${code})`);
-      variants.push({ voice, success: false, mp4Bytes: 0, wavBytes: 0, error: `exit code ${code}` });
+      variants.push({
+        voice,
+        success: false,
+        mp4Bytes: 0,
+        wavBytes: 0,
+        error: `exit code ${code}`,
+      });
       continue;
     }
 

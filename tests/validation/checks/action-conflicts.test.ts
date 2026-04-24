@@ -166,6 +166,55 @@ describe("action-conflicts check", () => {
     expect(results[0]!.status).toBe("pass");
   });
 
+  it("warns on check then uncheck across non-assert steps", async () => {
+    const results = await conflictResults({
+      chapters: [
+        {
+          title: "C",
+          steps: [
+            { action: "check", selector: "#agree" },
+            { action: "wait", timeout: 250 },
+            { action: "uncheck", selector: "#agree" },
+          ],
+        },
+      ],
+    });
+    expect(results.some((r) => r.status === "warn" && r.message.includes("0→2"))).toBe(true);
+  });
+
+  it("warns on duplicate type across screenshot without assertion", async () => {
+    const results = await conflictResults({
+      chapters: [
+        {
+          title: "C",
+          steps: [
+            { action: "type", selector: "#input", text: "hello" },
+            { action: "screenshot", name: "typed" },
+            { action: "type", selector: "#input", text: "world" },
+          ],
+        },
+      ],
+    });
+    expect(results.some((r) => r.status === "warn" && r.message.includes("duplicate"))).toBe(true);
+  });
+
+  it("resets sequence tracking after navigation", async () => {
+    const results = await conflictResults({
+      chapters: [
+        {
+          title: "C",
+          steps: [
+            { action: "type", selector: "#input", text: "hello" },
+            { action: "navigate", url: "http://localhost:3000/new" },
+            { action: "type", selector: "#input", text: "world" },
+          ],
+        },
+      ],
+    });
+    const duplicateType = results.find((r) => r.message.includes('duplicate "type"'));
+    expect(duplicateType).toBeUndefined();
+  });
+
   it("passes when selectors differ between consecutive same-action steps", async () => {
     const results = await conflictResults({
       chapters: [

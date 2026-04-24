@@ -26,6 +26,27 @@ function fileSizeBytes(filePath) {
   }
 }
 
+function findVideoArtifact(dir, verification) {
+  const candidates = [
+    verification?.artifacts?.videoPath,
+    path.join(dir, "video.webm"),
+    path.join(dir, "output.mp4"),
+  ].filter(Boolean);
+
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      return {
+        path: candidate,
+        exists: true,
+        sizeBytes: fileSizeBytes(candidate),
+        extension: path.extname(candidate).slice(1) || null,
+      };
+    }
+  }
+
+  return { path: candidates[0] ?? null, exists: false, sizeBytes: 0, extension: null };
+}
+
 /** Collect per-demo metrics from a single output directory. */
 function collectDemo(slug, dir) {
   const failurePath = path.join(dir, "failure.json");
@@ -36,9 +57,7 @@ function collectDemo(slug, dir) {
   const events = readJson(path.join(dir, "events.json"));
   const narrationSegments = readJson(path.join(dir, "narration-segments.json"));
 
-  const mp4Path = path.join(dir, "output.mp4");
-  const mp4Exists = existsSync(mp4Path);
-  const mp4SizeBytes = fileSizeBytes(mp4Path);
+  const video = findVideoArtifact(dir, verification);
 
   // Status
   let status = "missing";
@@ -48,7 +67,7 @@ function collectDemo(slug, dir) {
     status = "pass";
   } else if (verification) {
     status = "fail";
-  } else if (mp4Exists) {
+  } else if (video.exists) {
     status = "warn";
   }
 
@@ -138,8 +157,9 @@ function collectDemo(slug, dir) {
     narrationCoverage,
     narrationSegmentCount,
     narrationOverlapCount,
-    mp4Exists,
-    mp4SizeMb: mp4SizeBytes > 0 ? Number((mp4SizeBytes / (1024 * 1024)).toFixed(2)) : null,
+    videoExists: video.exists,
+    videoFormat: video.extension,
+    videoSizeMb: video.sizeBytes > 0 ? Number((video.sizeBytes / (1024 * 1024)).toFixed(2)) : null,
     lastCaptureTimestamp,
     specPath,
     qualityScore,
@@ -175,7 +195,7 @@ function generateHtml(demos, generatedAt) {
   const missing = demos.filter((d) => d.status === "missing").length;
 
   const maxDuration = Math.max(...demos.map((d) => d.durationSec ?? 0), 1);
-  const maxSize = Math.max(...demos.map((d) => d.mp4SizeMb ?? 0), 1);
+  const maxSize = Math.max(...demos.map((d) => d.videoSizeMb ?? 0), 1);
 
   const demosJson = JSON.stringify(demos);
 
@@ -513,7 +533,7 @@ function generateHtml(demos, generatedAt) {
         <th data-col="actionCount">Actions <span class="sort-arrow"></span></th>
         <th data-col="actionTypes">Action Types</th>
         <th data-col="narrationCoverage">Narration <span class="sort-arrow"></span></th>
-        <th data-col="mp4SizeMb">File Size <span class="sort-arrow"></span></th>
+        <th data-col="videoSizeMb">Video Size <span class="sort-arrow"></span></th>
         <th data-col="qualityScore">Quality <span class="sort-arrow"></span></th>
         <th data-col="lastCaptureTimestamp">Last Capture <span class="sort-arrow"></span></th>
       </tr>
@@ -590,7 +610,7 @@ function sortValue(demo, col) {
     case "durationSec": return demo.durationSec ?? -1;
     case "actionCount": return demo.actionCount ?? -1;
     case "narrationCoverage": return demo.narrationCoverage ?? -1;
-    case "mp4SizeMb": return demo.mp4SizeMb ?? -1;
+    case "videoSizeMb": return demo.videoSizeMb ?? -1;
     case "qualityScore": return demo.qualityScore ?? -1;
     case "lastCaptureTimestamp": return demo.lastCaptureTimestamp ?? "";
     default: return "";
@@ -623,7 +643,7 @@ function render() {
       "<td>" + (d.actionCount || '<span class="muted">--</span>') + "</td>" +
       "<td>" + actionPillsHtml(d.actionTypes) + "</td>" +
       "<td>" + coverageHtml(d.narrationCoverage) + "</td>" +
-      "<td>" + barHtml(d.mp4SizeMb, maxSize, "size") + "</td>" +
+      "<td>" + barHtml(d.videoSizeMb, maxSize, "size") + "</td>" +
       "<td>" + qualityHtml(d.qualityScore) + "</td>" +
       "<td>" + timestampHtml(d.lastCaptureTimestamp) + "</td>" +
       "</tr>";

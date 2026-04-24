@@ -613,7 +613,9 @@ async function main() {
       const detection = await checkDetection(mutatedOutputDir, exitCode, timedOut);
 
       const symbol = detection.detected ? "KILLED" : "SURVIVED";
-      console.log(`         -> ${symbol} (${detection.reason}, ${(durationMs / 1000).toFixed(1)}s)`);
+      console.log(
+        `         -> ${symbol} (${detection.reason}, ${(durationMs / 1000).toFixed(1)}s)`,
+      );
 
       results.push({
         slug,

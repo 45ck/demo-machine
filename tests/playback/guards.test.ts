@@ -4,10 +4,12 @@ import {
   checkPointerEvents,
   checkTypedText,
   checkScrollPosition,
+  checkElementScrollPosition,
+  checkWindowScrollPosition,
   checkBoundingBoxStability,
   checkNetworkIdle,
 } from "../../src/playback/guards.js";
-import type { PlaywrightPage } from "../../src/playback/playwright.js";
+import type { PlaywrightLocator, PlaywrightPage } from "../../src/playback/playwright.js";
 import type { BoundingBox } from "../../src/playback/types.js";
 
 function createMockPage(evaluateResult?: unknown): PlaywrightPage {
@@ -57,14 +59,30 @@ describe("checkHitTest", () => {
 
   it("returns null when the target element is the topmost element at its center", async () => {
     const page = createMockPage();
-    (page.evaluate as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+    const locator = (page.locator as ReturnType<typeof vi.fn>)("#btn");
+    locator.evaluate.mockResolvedValue(null);
     const result = await checkHitTest(page, box, "#btn");
     expect(result).toBeNull();
+    expect(page.locator).toHaveBeenCalledWith("#btn");
+  });
+
+  it("uses the resolved locator when provided", async () => {
+    const page = createMockPage();
+    const locator = {
+      evaluate: vi.fn().mockResolvedValue(null),
+    } as unknown as PlaywrightLocator;
+
+    const result = await checkHitTest(page, box, ".start-cta", locator);
+
+    expect(result).toBeNull();
+    expect(locator.evaluate).toHaveBeenCalled();
+    expect(page.evaluate).not.toHaveBeenCalled();
   });
 
   it("returns a warning when a different element obscures the target", async () => {
     const page = createMockPage();
-    (page.evaluate as ReturnType<typeof vi.fn>).mockResolvedValue({
+    const locator = (page.locator as ReturnType<typeof vi.fn>)("#btn");
+    locator.evaluate.mockResolvedValue({
       tag: "DIV",
       id: "modal-overlay",
       className: "modal-backdrop",
@@ -85,9 +103,10 @@ describe("checkHitTest", () => {
     expect(result).toBeNull();
   });
 
-  it("does not throw when page.evaluate throws", async () => {
+  it("does not throw when locator.evaluate throws", async () => {
     const page = createMockPage();
-    (page.evaluate as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("detached"));
+    const locator = (page.locator as ReturnType<typeof vi.fn>)("#btn");
+    locator.evaluate.mockRejectedValue(new Error("detached"));
     const result = await checkHitTest(page, box, "#btn");
     expect(result).toBeNull();
   });
@@ -96,30 +115,47 @@ describe("checkHitTest", () => {
 describe("checkPointerEvents", () => {
   it("returns null when pointer-events is not 'none'", async () => {
     const page = createMockPage();
-    (page.evaluate as ReturnType<typeof vi.fn>).mockResolvedValue("auto");
+    const locator = (page.locator as ReturnType<typeof vi.fn>)("#btn");
+    locator.evaluate.mockResolvedValue("auto");
     const result = await checkPointerEvents(page, "#btn");
     expect(result).toBeNull();
   });
 
   it("returns a warning when pointer-events is 'none'", async () => {
     const page = createMockPage();
-    (page.evaluate as ReturnType<typeof vi.fn>).mockResolvedValue("none");
+    const locator = (page.locator as ReturnType<typeof vi.fn>)("#btn");
+    locator.evaluate.mockResolvedValue("none");
     const result = await checkPointerEvents(page, "#btn");
     expect(result).not.toBeNull();
     expect(result).toContain("#btn");
     expect(result).toContain("pointer-events: none");
   });
 
+  it("uses the resolved locator when provided", async () => {
+    const page = createMockPage();
+    const locator = {
+      evaluate: vi.fn().mockResolvedValue("auto"),
+    } as unknown as PlaywrightLocator;
+
+    const result = await checkPointerEvents(page, ".start-cta", locator);
+
+    expect(result).toBeNull();
+    expect(locator.evaluate).toHaveBeenCalled();
+    expect(page.locator).not.toHaveBeenCalled();
+  });
+
   it("does not throw when page.evaluate throws", async () => {
     const page = createMockPage();
-    (page.evaluate as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("frame detached"));
+    const locator = (page.locator as ReturnType<typeof vi.fn>)("#btn");
+    locator.evaluate.mockRejectedValue(new Error("frame detached"));
     const result = await checkPointerEvents(page, "#btn");
     expect(result).toBeNull();
   });
 
   it("returns null when pointer-events is empty string", async () => {
     const page = createMockPage();
-    (page.evaluate as ReturnType<typeof vi.fn>).mockResolvedValue("");
+    const locator = (page.locator as ReturnType<typeof vi.fn>)("#btn");
+    locator.evaluate.mockResolvedValue("");
     const result = await checkPointerEvents(page, "#btn");
     expect(result).toBeNull();
   });
@@ -161,6 +197,19 @@ describe("checkTypedText", () => {
     locator.inputValue.mockRejectedValue(new Error("element detached"));
     const result = await checkTypedText(page, "#input", "test");
     expect(result).toBeNull();
+  });
+
+  it("uses the resolved locator when provided", async () => {
+    const page = createMockPage();
+    const locator = {
+      inputValue: vi.fn().mockResolvedValue("hello"),
+    } as unknown as PlaywrightLocator;
+
+    const result = await checkTypedText(page, "#input", "hello", locator);
+
+    expect(result).toBeNull();
+    expect(locator.inputValue).toHaveBeenCalled();
+    expect(page.locator).not.toHaveBeenCalled();
   });
 
   it("returns null for empty expected text", async () => {
@@ -247,6 +296,59 @@ describe("checkScrollPosition (#36)", () => {
     const result = await checkScrollPosition(page, undefined, 200, 0);
     expect(result).not.toBeNull();
     expect(result).toContain("Scroll position warning");
+  });
+
+  it("compares element scroll against a provided before position", async () => {
+    const page = createMockPage();
+    const locator = (page.locator as ReturnType<typeof vi.fn>)(".container");
+    locator.evaluate.mockResolvedValueOnce({ scrollLeft: 0, scrollTop: 260 });
+
+    const result = await checkElementScrollPosition({
+      locator,
+      selector: ".container",
+      requestedX: 0,
+      requestedY: 200,
+      before: {
+        scrollLeft: 0,
+        scrollTop: 100,
+      },
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it("warns when provided element before position shows insufficient movement", async () => {
+    const page = createMockPage();
+    const locator = (page.locator as ReturnType<typeof vi.fn>)(".container");
+    locator.evaluate.mockResolvedValueOnce({ scrollLeft: 0, scrollTop: 130 });
+
+    const result = await checkElementScrollPosition({
+      locator,
+      selector: ".container",
+      requestedX: 0,
+      requestedY: 200,
+      before: {
+        scrollLeft: 0,
+        scrollTop: 100,
+      },
+    });
+
+    expect(result).not.toBeNull();
+    expect(result).toContain(".container");
+  });
+
+  it("compares window scroll against a provided before position", async () => {
+    const page = createMockPage();
+    (page.evaluate as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ scrollX: 0, scrollY: 360 });
+
+    const result = await checkWindowScrollPosition({
+      page,
+      requestedX: 0,
+      requestedY: 300,
+      before: { scrollX: 0, scrollY: 100 },
+    });
+
+    expect(result).toBeNull();
   });
 });
 

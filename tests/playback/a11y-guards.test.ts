@@ -90,6 +90,18 @@ describe("checkActionability", () => {
     expect(result).toBeNull();
   });
 
+  it("returns null for click on a <select>", async () => {
+    const page = createMockPage();
+    (page.evaluate as ReturnType<typeof vi.fn>).mockResolvedValue({
+      tag: "SELECT",
+      role: null,
+      contentEditable: "inherit",
+      type: "select-one",
+    });
+    const result = await checkActionability(page, "#status", "click");
+    expect(result).toBeNull();
+  });
+
   it("returns null for click on an element with role=button", async () => {
     const page = createMockPage();
     (page.evaluate as ReturnType<typeof vi.fn>).mockResolvedValue({
@@ -99,6 +111,19 @@ describe("checkActionability", () => {
       type: null,
     });
     const result = await checkActionability(page, "#div-btn", "click");
+    expect(result).toBeNull();
+  });
+
+  it("returns null for click on a label associated with a form control", async () => {
+    const page = createMockPage();
+    (page.evaluate as ReturnType<typeof vi.fn>).mockResolvedValue({
+      tag: "LABEL",
+      role: null,
+      contentEditable: "inherit",
+      type: null,
+      labelsControl: true,
+    });
+    const result = await checkActionability(page, "[data-testid='plan-pro']", "click");
     expect(result).toBeNull();
   });
 

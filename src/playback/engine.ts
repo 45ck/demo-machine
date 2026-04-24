@@ -7,7 +7,7 @@ import { PlaybackStepError } from "./errors.js";
 import type { ActionEvent, BoundingBox, Pacing, PlaybackOptions, PlaybackResult } from "./types.js";
 import { selectorForEvent, selectorForEventFromInput, type Target } from "./selector.js";
 import { createNarrationWaiter } from "./narration-waiter.js";
-import { applyRedaction, checkSecrets, injectCursor } from "./overlays.js";
+import { applyRedaction, checkSecrets, hideCursor, injectCursor } from "./overlays.js";
 import { ChangeDetectionOrchestrator } from "./change-detection/orchestrator.js";
 import { detectOverlayLeaks } from "./overlay-leak-detector.js";
 import { checkAriaRoleConsistency } from "./a11y-guards.js";
@@ -39,7 +39,12 @@ const NO_PACING: Pacing = {
 async function executeStep(
   ctx: PlaybackContext,
   step: Chapter["steps"][number],
-  params: { events: ActionEvent[]; secretPatterns: string[]; stepIndex: number },
+  params: {
+    events: ActionEvent[];
+    redactionSelectors: string[];
+    secretPatterns: string[];
+    stepIndex: number;
+  },
 ): Promise<void> {
   const handler = actionHandlers[step.action];
   if (!handler) {
@@ -47,7 +52,7 @@ async function executeStep(
   }
   await handler(ctx, step, params.events, params.stepIndex);
   if (step.action === "navigate") {
-    await checkSecrets(ctx.page, params.secretPatterns);
+    await checkSecrets(ctx.page, params.secretPatterns, params.redactionSelectors);
   }
 }
 
@@ -96,6 +101,7 @@ async function executeStepOrRaise(params: {
   ctx: PlaybackContext;
   step: Chapter["steps"][number];
   events: ActionEvent[];
+  redactionSelectors: string[];
   secretPatterns: string[];
   stepIndex: number;
   chapterTitle: string;
@@ -105,6 +111,7 @@ async function executeStepOrRaise(params: {
   try {
     await executeStep(params.ctx, params.step, {
       events: params.events,
+      redactionSelectors: params.redactionSelectors,
       secretPatterns: params.secretPatterns,
       stepIndex: params.stepIndex,
     });
@@ -168,6 +175,7 @@ async function runChapters(params: {
   chapters: Chapter[];
   ctx: PlaybackContext;
   page: PlaywrightPage;
+  redactionSelectors: string[];
   secretPatterns: string[];
   settleDelayMs: number;
   onStepComplete?: ((event: ActionEvent) => Promise<void>) | undefined;
@@ -191,6 +199,7 @@ async function runChapters(params: {
         ctx: params.ctx,
         step,
         events: params.events,
+        redactionSelectors: params.redactionSelectors,
         secretPatterns: params.secretPatterns,
         stepIndex,
         chapterTitle: chapter.title,
@@ -343,6 +352,7 @@ export class PlaybackEngine {
       chapters,
       ctx,
       page: this.page,
+      redactionSelectors: this.options.redactionSelectors ?? [],
       secretPatterns: this.options.secretPatterns ?? [],
       settleDelayMs: pacing.settleDelayMs,
       onStepComplete: this.options.onStepComplete,
@@ -350,6 +360,8 @@ export class PlaybackEngine {
       events,
       startTimestamp,
     });
+
+    await hideCursor(this.page);
 
     // Post-playback: scan for orphaned overlay elements.
     const overlayLeaks = await detectOverlayLeaks(this.page);

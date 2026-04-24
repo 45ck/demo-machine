@@ -40,15 +40,8 @@ function isTogglePair(a: string, b: string): boolean {
   return (a === "check" && b === "uncheck") || (a === "uncheck" && b === "check");
 }
 
-/** Return true if both steps target the same selector. */
-function sameSelectorPair(a: ConflictStep, b: ConflictStep): boolean {
-  const selA = getSelector(a);
-  const selB = getSelector(b);
-  return Boolean(selA && selB && selA === selB);
-}
-
-function prefix(chapterIndex: number, i: number): string {
-  return `Chapter ${chapterIndex}, steps ${i}\u2192${i + 1}`;
+function prefix(chapterIndex: number, fromIndex: number, toIndex: number): string {
+  return `Chapter ${chapterIndex}, steps ${fromIndex}\u2192${toIndex}`;
 }
 
 /** Rule 1: navigate immediately followed by a page-interaction action. */
@@ -61,56 +54,7 @@ function checkNavigateThenInteract(
   if (curr.action === "navigate" && INTERACTION_ACTIONS.has(next.action ?? "")) {
     return warn(
       CHECK_NAME,
-      `${prefix(chapterIndex, i)}: "${next.action}" immediately after "navigate" \u2014 target may not exist on the new page`,
-    );
-  }
-  return null;
-}
-
-/** Rule 2: check/uncheck toggle on same selector without assertion. */
-function checkToggleConflict(
-  curr: ConflictStep,
-  next: ConflictStep,
-  chapterIndex: number,
-  i: number,
-): CheckResult | null {
-  if (isTogglePair(curr.action ?? "", next.action ?? "") && sameSelectorPair(curr, next)) {
-    const sel = getSelector(curr);
-    return warn(
-      CHECK_NAME,
-      `${prefix(chapterIndex, i)}: "${curr.action}" then "${next.action}" on same selector "${sel}" without intervening assertion`,
-    );
-  }
-  return null;
-}
-
-/** Rule 3: duplicate select on same selector without assertion. */
-function checkDuplicateSelect(
-  curr: ConflictStep,
-  next: ConflictStep,
-  chapterIndex: number,
-  i: number,
-): CheckResult | null {
-  if (curr.action === "select" && next.action === "select" && sameSelectorPair(curr, next)) {
-    return warn(
-      CHECK_NAME,
-      `${prefix(chapterIndex, i)}: duplicate "select" on same selector "${getSelector(curr)}" without intervening assertion`,
-    );
-  }
-  return null;
-}
-
-/** Rule 4: duplicate type on same selector without assertion. */
-function checkDuplicateType(
-  curr: ConflictStep,
-  next: ConflictStep,
-  chapterIndex: number,
-  i: number,
-): CheckResult | null {
-  if (curr.action === "type" && next.action === "type" && sameSelectorPair(curr, next)) {
-    return warn(
-      CHECK_NAME,
-      `${prefix(chapterIndex, i)}: duplicate "type" on same selector "${getSelector(curr)}" \u2014 may be redundant`,
+      `${prefix(chapterIndex, i, i + 1)}: "${next.action}" immediately after "navigate" \u2014 target may not exist on the new page`,
     );
   }
   return null;
@@ -123,12 +67,109 @@ type PairRule = (
   i: number,
 ) => CheckResult | null;
 
-const PAIR_RULES: PairRule[] = [
-  checkNavigateThenInteract,
-  checkToggleConflict,
-  checkDuplicateSelect,
-  checkDuplicateType,
-];
+const PAIR_RULES: PairRule[] = [checkNavigateThenInteract];
+
+interface PendingElementAction {
+  action: string;
+  stepIndex: number;
+}
+
+const SEQUENCE_ACTIONS = new Set(["check", "uncheck", "select", "type"]);
+
+interface SequenceWarningInput {
+  previous: PendingElementAction;
+  action: string;
+  selector: string;
+  chapterIndex: number;
+  stepIndex: number;
+}
+
+function buildSequenceWarning(input: SequenceWarningInput): CheckResult | null {
+  if (isTogglePair(input.previous.action, input.action)) {
+    return warn(
+      CHECK_NAME,
+      `${prefix(input.chapterIndex, input.previous.stepIndex, input.stepIndex)}: "${input.previous.action}" then "${input.action}" on same selector "${input.selector}" without intervening assertion`,
+    );
+  }
+
+  if (input.previous.action === "select" && input.action === "select") {
+    return warn(
+      CHECK_NAME,
+      `${prefix(input.chapterIndex, input.previous.stepIndex, input.stepIndex)}: duplicate "select" on same selector "${input.selector}" without intervening assertion`,
+    );
+  }
+
+  if (input.previous.action === "type" && input.action === "type") {
+    return warn(
+      CHECK_NAME,
+      `${prefix(input.chapterIndex, input.previous.stepIndex, input.stepIndex)}: duplicate "type" on same selector "${input.selector}" \u2014 may be redundant`,
+    );
+  }
+
+  return null;
+}
+
+function trackElementAction(params: {
+  pendingBySelector: Map<string, PendingElementAction>;
+  step: ConflictStep;
+  selector: string;
+  chapterIndex: number;
+  stepIndex: number;
+  results: CheckResult[];
+}): void {
+  const action = params.step.action ?? "";
+  if (!SEQUENCE_ACTIONS.has(action)) return;
+
+  const previous = params.pendingBySelector.get(params.selector);
+  if (previous) {
+    const warning = buildSequenceWarning({
+      previous,
+      action,
+      selector: params.selector,
+      chapterIndex: params.chapterIndex,
+      stepIndex: params.stepIndex,
+    });
+    if (warning) params.results.push(warning);
+  }
+
+  params.pendingBySelector.set(params.selector, {
+    action,
+    stepIndex: params.stepIndex,
+  });
+}
+
+function checkElementActionSequence(
+  steps: ConflictStep[],
+  chapterIndex: number,
+  results: CheckResult[],
+): void {
+  const pendingBySelector = new Map<string, PendingElementAction>();
+
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i]!;
+    const selector = getSelector(step);
+
+    if (step.action === "navigate") {
+      pendingBySelector.clear();
+      continue;
+    }
+
+    if (step.action === "assert") {
+      if (selector) pendingBySelector.delete(selector);
+      continue;
+    }
+
+    if (!selector) continue;
+    trackElementAction({
+      pendingBySelector,
+      step,
+      selector,
+      chapterIndex,
+      stepIndex: i,
+      results,
+    });
+  }
+}
 
 function checkChapterConflicts(
   steps: ConflictStep[],
@@ -147,6 +188,7 @@ function checkChapterConflicts(
       }
     }
   }
+  checkElementActionSequence(steps, chapterIndex, results);
 }
 
 function checkActionConflicts(ctx: CheckContext): CheckResult[] {

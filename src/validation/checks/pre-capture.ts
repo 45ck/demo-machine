@@ -1,3 +1,4 @@
+import { createRequire } from "node:module";
 import { registerCheck } from "../registry.js";
 import { pass, fail, warn } from "../types.js";
 import type { CheckContext, CheckResult } from "../types.js";
@@ -7,6 +8,7 @@ interface PreCaptureOptions {
 }
 
 const CHECK_NAME = "pre-capture";
+const require = createRequire(import.meta.url);
 
 function preCaptureCheck(ctx: CheckContext): CheckResult[] {
   const results: CheckResult[] = [];

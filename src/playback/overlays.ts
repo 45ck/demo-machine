@@ -28,10 +28,34 @@ export async function injectCursor(page: PlaywrightPage): Promise<void> {
   logger.info("Injected cursor CSS and element");
 }
 
-export async function checkSecrets(page: PlaywrightPage, patterns: string[]): Promise<void> {
+export async function hideCursor(page: PlaywrightPage): Promise<void> {
+  await page.evaluate((() => {
+    const cursor = document.getElementById("dm-cursor");
+    if (!cursor) return;
+    cursor.style.opacity = "0";
+    cursor.style.display = "none";
+  }) as (...args: unknown[]) => unknown);
+}
+
+export async function checkSecrets(
+  page: PlaywrightPage,
+  patterns: string[],
+  redactionSelectors: string[] = [],
+): Promise<void> {
   if (patterns.length === 0) return;
   const text = (await page.evaluate(
-    (() => document.body.innerText) as (...args: unknown[]) => unknown,
+    ((selectors: string[]) => {
+      const clone = document.body.cloneNode(true) as HTMLElement;
+      for (const selector of selectors) {
+        try {
+          clone.querySelectorAll(selector).forEach((el) => el.remove());
+        } catch {
+          // Invalid selectors are rejected by mask generation; this keeps the scan best-effort.
+        }
+      }
+      return clone.textContent ?? "";
+    }) as (...args: unknown[]) => unknown,
+    redactionSelectors as unknown,
   )) as string;
   const matches = scanForSecrets(text, patterns);
   for (const match of matches) {

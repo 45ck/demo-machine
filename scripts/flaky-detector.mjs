@@ -332,8 +332,7 @@ function printSummary(specResults) {
 
   for (const sr of specResults) {
     const structuralStatus = sr.structuralDiffs > 0 ? `${sr.structuralDiffs} diffs` : "stable";
-    const timingStatus =
-      sr.timingFlakyActions > 0 ? `${sr.timingFlakyActions} actions` : "stable";
+    const timingStatus = sr.timingFlakyActions > 0 ? `${sr.timingFlakyActions} actions` : "stable";
     console.log(
       `${col(sr.slug, 25)} ${col(sr.totalRuns, 6)} ${col(sr.successRuns, 9)} ${col(structuralStatus, 12)} ${col(timingStatus, 12)} ${col(sr.score.toFixed(1) + "%", 8)}`,
     );

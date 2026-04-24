@@ -277,6 +277,9 @@ const typeStepSchemaValidated = typeStepSchema.refine(needsSelector, selectorMsg
 const hoverStepSchemaValidated = hoverStepSchema.refine(needsSelector, selectorMsg("hover"));
 const assertStepSchemaValidated = assertStepSchema
   .refine(needsSelector, selectorMsg("assert"))
+  .refine((v) => v.count === undefined || Boolean(v.selector), {
+    message: 'assert count requires a CSS "selector"; structured "target" cannot be counted',
+  })
   .refine(
     (v) =>
       v.visible !== undefined ||

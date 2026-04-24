@@ -47,7 +47,7 @@ export const handleType: ActionHandler = async (ctx, step, events, stepIndex) =>
   // Runtime guard — readback check, warn but never block.
   // Only verify readback when we cleared first — append mode makes strict comparison unreliable.
   if (clear === true && step.selector) {
-    await checkTypedText(ctx.page, step.selector, step.text);
+    await checkTypedText(ctx.page, step.selector, step.text, locator);
   }
 
   events.push(

@@ -41,7 +41,10 @@ export const handleDragAndDrop: ActionHandler = async (ctx, step, events, stepIn
   // Runtime guards — warn but never block.
   await checkBoundingBoxStability(fromResolved.locator);
   if (step.from.selector) {
-    await checkPointerEvents(ctx.page, step.from.selector);
+    await checkPointerEvents(ctx.page, step.from.selector, fromResolved.locator);
+  }
+  if (step.to.selector) {
+    await checkPointerEvents(ctx.page, step.to.selector, toResolved.locator);
   }
 
   await ctx.moveCursorTo(fromBox);

@@ -5,6 +5,8 @@ import { PlaybackEngine } from "../../src/playback/engine.js";
 import type { Chapter } from "../../src/spec/types.js";
 import type { ActionEvent, BoundingBox, Pacing } from "../../src/playback/types.js";
 import * as visuals from "../../src/playback/visuals.js";
+import * as guards from "../../src/playback/guards.js";
+import { detectOverlayLeaks } from "../../src/playback/overlay-leak-detector.js";
 
 vi.mock("../../src/redaction/mask.js", () => ({
   generateBlurStyles: vi.fn((selectors: string[]) =>
@@ -48,12 +50,16 @@ vi.mock("../../src/playback/overlay-leak-detector.js", () => ({
 }));
 
 vi.mock("../../src/playback/guards.js", () => ({
+  checkElementScrollPosition: vi.fn().mockResolvedValue(null),
   checkHitTest: vi.fn().mockResolvedValue(null),
   checkPointerEvents: vi.fn().mockResolvedValue(null),
   checkTypedText: vi.fn().mockResolvedValue(null),
   checkScrollPosition: vi.fn().mockResolvedValue(null),
+  checkWindowScrollPosition: vi.fn().mockResolvedValue(null),
   checkBoundingBoxStability: vi.fn().mockResolvedValue(null),
   checkNetworkIdle: vi.fn().mockResolvedValue(null),
+  readElementScrollPosition: vi.fn().mockResolvedValue({ scrollLeft: 0, scrollTop: 0 }),
+  readWindowScrollPosition: vi.fn().mockResolvedValue({ scrollX: 0, scrollY: 0 }),
 }));
 
 vi.mock("../../src/playback/a11y-guards.js", () => ({
@@ -183,6 +189,9 @@ describe("actionHandlers", () => {
     vi.mocked(visuals.showKeyBadge).mockClear();
     vi.mocked(visuals.showFilePickerOverlay).mockClear();
     vi.mocked(visuals.showSelectOverlay).mockClear();
+    vi.mocked(guards.checkHitTest).mockClear();
+    vi.mocked(guards.checkPointerEvents).mockClear();
+    vi.mocked(guards.checkTypedText).mockClear();
   });
 
   it("handles navigate action", async () => {
@@ -242,6 +251,7 @@ describe("actionHandlers", () => {
     expect(ctx.page.locator).toHaveBeenCalledWith(".menu");
     const loc = (ctx.page.locator as unknown as ReturnType<typeof vi.fn>).mock.results[0]!.value;
     expect(loc.hover).toHaveBeenCalled();
+    expect(guards.checkPointerEvents).toHaveBeenCalledWith(ctx.page, ".menu", loc);
     expect(events).toHaveLength(1);
   });
 
@@ -418,6 +428,8 @@ describe("actionHandlers", () => {
     await actionHandlers["check"]!(ctx, step, events, 0);
     const loc = (ctx.page.locator as unknown as ReturnType<typeof vi.fn>).mock.results[0]!.value;
     expect(loc.setChecked).toHaveBeenCalledWith(true, expect.anything());
+    expect(guards.checkHitTest).toHaveBeenCalledWith(ctx.page, expect.anything(), "#cb", loc);
+    expect(guards.checkPointerEvents).toHaveBeenCalledWith(ctx.page, "#cb", loc);
     expect(events).toHaveLength(1);
     expect(events[0]!.action).toBe("check");
   });
@@ -436,6 +448,8 @@ describe("actionHandlers", () => {
     await actionHandlers["select"]!(ctx, step, events, 0);
     const loc = (ctx.page.locator as unknown as ReturnType<typeof vi.fn>).mock.results[0]!.value;
     expect(loc.selectOption).toHaveBeenCalledWith({ value: "pro" }, expect.anything());
+    expect(guards.checkHitTest).toHaveBeenCalledWith(ctx.page, expect.anything(), "#plan", loc);
+    expect(guards.checkPointerEvents).toHaveBeenCalledWith(ctx.page, "#plan", loc);
     expect(events).toHaveLength(1);
     expect(events[0]!.action).toBe("select");
   });
@@ -483,6 +497,8 @@ describe("actionHandlers", () => {
     expect(ctx.page.locator).toHaveBeenCalledWith("#b");
     const loc = (ctx.page.locator as unknown as ReturnType<typeof vi.fn>).mock.results[0]!.value;
     expect(loc.dragTo).toHaveBeenCalled();
+    expect(guards.checkPointerEvents).toHaveBeenCalledWith(ctx.page, "#a", loc);
+    expect(guards.checkPointerEvents).toHaveBeenCalledWith(ctx.page, "#b", loc);
     expect(events).toHaveLength(1);
     expect(events[0]!.action).toBe("dragAndDrop");
     expect(events[0]!.selector).toContain("#a");
@@ -567,6 +583,7 @@ describe("actionHandlers", () => {
     expect(loc.fill).toHaveBeenCalledWith("", expect.anything());
     expect(loc.click).toHaveBeenCalled();
     expect(ctx.page.keyboard.type).toHaveBeenCalledWith("hello", { delay: 50 });
+    expect(guards.checkTypedText).toHaveBeenCalledWith(ctx.page, "#input", "hello", loc);
     expect(events).toHaveLength(1);
     expect(events[0]!.action).toBe("type");
   });
@@ -577,6 +594,7 @@ describe("PlaybackEngine", () => {
 
   beforeEach(() => {
     page = createMockPage();
+    vi.mocked(detectOverlayLeaks).mockClear();
   });
 
   it("executes chapters in order and returns result", async () => {
@@ -646,6 +664,31 @@ describe("PlaybackEngine", () => {
 
     expect(page.addStyleTag).toHaveBeenCalledWith(
       expect.objectContaining({ content: expect.stringContaining("#dm-cursor") }),
+    );
+  });
+
+  it("hides the persistent cursor before scanning for overlay leaks", async () => {
+    const chapters: Chapter[] = [
+      {
+        title: "Test",
+        steps: [{ action: "wait", timeout: 100 }],
+      },
+    ];
+
+    const engine = new PlaybackEngine(page, {
+      baseUrl: "https://example.com",
+      pacing: TEST_PACING,
+    });
+    await engine.execute(chapters);
+
+    const evaluate = page.evaluate as unknown as ReturnType<typeof vi.fn>;
+    const hideCursorCallIndex = evaluate.mock.calls.findIndex(([fn]) =>
+      String(fn).includes('cursor.style.display = "none"'),
+    );
+
+    expect(hideCursorCallIndex).toBeGreaterThanOrEqual(0);
+    expect(evaluate.mock.invocationCallOrder[hideCursorCallIndex]).toBeLessThan(
+      vi.mocked(detectOverlayLeaks).mock.invocationCallOrder[0]!,
     );
   });
 

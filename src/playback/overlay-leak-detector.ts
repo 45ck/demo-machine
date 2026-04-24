@@ -1,7 +1,4 @@
 import type { PlaywrightPage } from "./playwright.js";
-import { createLogger } from "../utils/logger.js";
-
-const logger = createLogger("overlay-leak");
 
 interface LeakedOverlay {
   id: string;
@@ -53,7 +50,6 @@ export async function detectOverlayLeaks(page: PlaywrightPage): Promise<string[]
     for (const leak of leaks) {
       const identifier = leak.id || leak.className;
       const msg = `Overlay leak: "${identifier}" is still visible after playback (display=${leak.display}, opacity=${leak.opacity})`;
-      logger.warn(msg);
       warnings.push(msg);
     }
     return warnings;

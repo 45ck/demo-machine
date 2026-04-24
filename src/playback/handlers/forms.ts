@@ -38,8 +38,8 @@ export const handleCheck: ActionHandler = async (ctx, step, events, stepIndex) =
 
   // Runtime guards — warn but never block.
   if (step.selector) {
-    await checkHitTest(ctx.page, box, step.selector);
-    await checkPointerEvents(ctx.page, step.selector);
+    await checkHitTest(ctx.page, box, step.selector, locator);
+    await checkPointerEvents(ctx.page, step.selector, locator);
     await checkActionability(ctx.page, step.selector, "check");
     await checkSemanticFormTarget(ctx.page, step.selector, "check");
   }
@@ -77,8 +77,8 @@ export const handleUncheck: ActionHandler = async (ctx, step, events, stepIndex)
 
   // Runtime guards — warn but never block.
   if (step.selector) {
-    await checkHitTest(ctx.page, box, step.selector);
-    await checkPointerEvents(ctx.page, step.selector);
+    await checkHitTest(ctx.page, box, step.selector, locator);
+    await checkPointerEvents(ctx.page, step.selector, locator);
     await checkActionability(ctx.page, step.selector, "uncheck");
     await checkSemanticFormTarget(ctx.page, step.selector, "uncheck");
   }
@@ -116,8 +116,8 @@ export const handleSelect: ActionHandler = async (ctx, step, events, stepIndex) 
 
   // Runtime guards — warn but never block.
   if (step.selector) {
-    await checkHitTest(ctx.page, box, step.selector);
-    await checkPointerEvents(ctx.page, step.selector);
+    await checkHitTest(ctx.page, box, step.selector, locator);
+    await checkPointerEvents(ctx.page, step.selector, locator);
     await checkActionability(ctx.page, step.selector, "select");
     await checkSemanticFormTarget(ctx.page, step.selector, "select");
   }
@@ -179,8 +179,8 @@ export const handleSelectFirstNonPlaceholder: ActionHandler = async (
 
   // Runtime guards — warn but never block.
   if (step.selector) {
-    await checkHitTest(ctx.page, box, step.selector);
-    await checkPointerEvents(ctx.page, step.selector);
+    await checkHitTest(ctx.page, box, step.selector, locator);
+    await checkPointerEvents(ctx.page, step.selector, locator);
     await checkActionability(ctx.page, step.selector, "select");
     await checkSemanticFormTarget(ctx.page, step.selector, "select");
   }

@@ -1,9 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { preflight, PreflightError } from "../../src/validation/preflight.js";
+import { runPhase } from "../../src/validation/registry.js";
 import type { CheckContext } from "../../src/validation/types.js";
-
-// Import checks so they self-register
-import "../../src/validation/checks/spec-chapters.js";
 
 function makeCtx(overrides?: Partial<CheckContext>): CheckContext {
   return {
@@ -18,6 +16,25 @@ function makeCtx(overrides?: Partial<CheckContext>): CheckContext {
 }
 
 describe("preflight", () => {
+  it("registers the complete pre-capture V&V check suite", async () => {
+    const results = await runPhase("pre-capture", makeCtx());
+    const checkNames = new Set(results.map((r) => r.checkName));
+
+    for (const expected of [
+      "action-conflicts",
+      "narration-timing",
+      "playwright-installed",
+      "spec-chapters",
+      "spec-files",
+      "spec-narration",
+      "spec-pacing",
+      "spec-selectors",
+      "spec-steps",
+    ]) {
+      expect(checkNames.has(expected)).toBe(true);
+    }
+  });
+
   it("resolves when all checks pass", async () => {
     await expect(preflight(makeCtx())).resolves.toBeUndefined();
   });

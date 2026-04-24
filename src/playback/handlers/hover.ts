@@ -21,7 +21,7 @@ export const handleHover: ActionHandler = async (ctx, step, events, stepIndex) =
   // Runtime guards — warn but never block.
   await checkBoundingBoxStability(locator);
   if (step.selector) {
-    await checkPointerEvents(ctx.page, step.selector);
+    await checkPointerEvents(ctx.page, step.selector, locator);
   }
 
   await ctx.moveCursorTo(box);

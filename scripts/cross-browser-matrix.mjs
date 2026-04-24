@@ -234,14 +234,7 @@ async function main() {
         console.log(`  [CAPTURE] ${slug} / ${browser}`);
 
         const captureEnv = { ...process.env, BROWSER: browser };
-        const args = [
-          "dist/cli.js",
-          "capture",
-          specPath,
-          "--output",
-          outDir,
-          "--no-narration",
-        ];
+        const args = ["dist/cli.js", "capture", specPath, "--output", outDir, "--no-narration"];
 
         const code = await run("node", args, { cwd: root, env: captureEnv });
         captureResults.push({ slug, browser, exitCode: code, outDir });
@@ -276,7 +269,9 @@ async function main() {
 
     const availableBrowsers = Object.keys(browserEvents);
     if (availableBrowsers.length < 2) {
-      console.log(`  ${slug}: only ${availableBrowsers.length} browser(s) available — skipping comparison`);
+      console.log(
+        `  ${slug}: only ${availableBrowsers.length} browser(s) available — skipping comparison`,
+      );
       comparisons.push({
         slug,
         browsersAvailable: availableBrowsers,
@@ -303,15 +298,14 @@ async function main() {
           actionCountA: seqA.length,
           actionCountB: seqB.length,
           structuralDiffs: diffs.filter(
-            (d) => d.type === "count-mismatch" || d.type === "action-type" || d.type === "extra-action",
+            (d) =>
+              d.type === "count-mismatch" || d.type === "action-type" || d.type === "extra-action",
           ).length,
           timingDiffs: diffs.filter((d) => d.type === "duration-divergence").length,
           diffs,
         });
 
-        const structCount = diffs.filter(
-          (d) => d.type !== "duration-divergence",
-        ).length;
+        const structCount = diffs.filter((d) => d.type !== "duration-divergence").length;
 
         const icon = structCount === 0 ? "OK" : "DIFF";
         console.log(

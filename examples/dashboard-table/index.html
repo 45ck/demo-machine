@@ -97,7 +97,22 @@
         text-align: left;
         color: rgba(255, 255, 255, 0.86);
         user-select: none;
+      }
+      .sort-header {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: inherit;
         cursor: pointer;
+        display: block;
+        font: inherit;
+        padding: 0;
+        text-align: left;
+        width: 100%;
+      }
+      .sort-header:focus-visible {
+        outline: 2px solid rgba(255, 106, 139, 0.75);
+        outline-offset: 3px;
       }
       tr:hover td {
         background: rgba(255, 255, 255, 0.03);
@@ -159,7 +174,7 @@
       <div class="panel">
         <div class="toolbar">
           <input id="q" data-testid="search" placeholder="Search name or email…" />
-          <select id="status" data-testid="status">
+          <select id="status" data-testid="status" aria-label="Filter by status">
             <option value="all">All statuses</option>
             <option value="active">Active</option>
             <option value="invited">Invited</option>
@@ -171,9 +186,21 @@
         <table>
           <thead>
             <tr>
-              <th data-testid="th-name" data-col="name">Name</th>
-              <th data-testid="th-email" data-col="email">Email</th>
-              <th data-testid="th-status" data-col="status">Status</th>
+              <th>
+                <button class="sort-header" data-testid="th-name" data-col="name" type="button">
+                  Name
+                </button>
+              </th>
+              <th>
+                <button class="sort-header" data-testid="th-email" data-col="email" type="button">
+                  Email
+                </button>
+              </th>
+              <th>
+                <button class="sort-header" data-testid="th-status" data-col="status" type="button">
+                  Status
+                </button>
+              </th>
             </tr>
           </thead>
           <tbody id="tbody" data-testid="tbody"></tbody>
@@ -245,7 +272,7 @@
       q.addEventListener("input", apply);
       status.addEventListener("change", apply);
 
-      document.querySelectorAll("th").forEach((th) => {
+      document.querySelectorAll(".sort-header").forEach((th) => {
         th.addEventListener("click", () => {
           const col = th.dataset.col;
           if (state.sortBy === col) state.dir = state.dir === "asc" ? "desc" : "asc";

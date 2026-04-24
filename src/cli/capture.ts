@@ -17,6 +17,7 @@ import {
   resolveChangeDetectionConfig,
 } from "./capture-runtime.js";
 import { runPreSteps } from "../playback/presteps.js";
+import { preflight } from "../validation/preflight.js";
 import { attachMonitors, collectIssues } from "../validation/monitor-runner.js";
 import { runPostflight } from "./capture-postflight.js";
 import * as path from "node:path";
@@ -249,6 +250,17 @@ export async function captureFromSpec(params: {
   const { PlaybackEngine } = await import("../playback/engine.js");
   const pw = await import("playwright");
   const spec = params.spec;
+  const specDir =
+    params.specDir ??
+    (params.specPath ? path.dirname(path.resolve(params.specPath)) : process.cwd());
+
+  await preflight({
+    spec,
+    ...(params.specPath ? { specPath: params.specPath } : {}),
+    specDir,
+    opts: params.opts,
+    settings: params.settings,
+  });
 
   // Spec-level selectApproach as fallback when CLI flag was not provided.
   if (!process.env["DM_SELECT_APPROACH"] && spec.meta.selectApproach) {

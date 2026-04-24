@@ -221,12 +221,16 @@
       .task-checkbox {
         width: 22px;
         height: 22px;
+        padding: 0;
+        background: transparent;
         border: 2px solid #475569;
         border-radius: 6px;
+        color: white;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
+        font: inherit;
         transition: all 0.2s;
         flex-shrink: 0;
       }
@@ -449,7 +453,7 @@
           .map(
             (t) => `
         <li class="task-item" data-id="${t.id}">
-          <div class="task-checkbox ${t.done ? "checked" : ""}" onclick="toggleTask(${t.id})"></div>
+          <button class="task-checkbox ${t.done ? "checked" : ""}" type="button" aria-pressed="${t.done ? "true" : "false"}" aria-label="${t.done ? "Mark task as active" : "Mark task as completed"}" onclick="toggleTask(${t.id})"></button>
           <span class="task-text ${t.done ? "done" : ""}">${t.text}</span>
           <button class="task-delete" onclick="deleteTask(${t.id})">Delete</button>
         </li>

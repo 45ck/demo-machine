@@ -20,6 +20,8 @@ function relativeSpecPath(specPath) {
   return specPath.replaceAll("\\", "/");
 }
 
+const STANDALONE_SPECS = new Set(["examples/meta-demo.demo.yaml"]);
+
 function collectStepTargetStrategies(step, targetStrategies) {
   if (typeof step?.selector === "string" && step.selector.trim().length > 0) {
     targetStrategies.add("css");
@@ -145,7 +147,8 @@ async function main() {
   const actualSpecs = uniq(
     exampleFiles
       .filter((entry) => entry.isFile() && /\.demo\.ya?ml$/i.test(entry.name))
-      .map((entry) => relativeSpecPath(path.posix.join("examples", entry.name))),
+      .map((entry) => relativeSpecPath(path.posix.join("examples", entry.name)))
+      .filter((spec) => !STANDALONE_SPECS.has(spec)),
   );
 
   for (const spec of actualSpecs) {

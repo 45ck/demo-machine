@@ -128,7 +128,13 @@ function keyTimestamps(durationSec) {
   ];
 }
 
-const FRAME_NAMES = ["frame-01.png", "frame-02.png", "frame-03.png", "frame-04.png", "frame-05.png"];
+const FRAME_NAMES = [
+  "frame-01.png",
+  "frame-02.png",
+  "frame-03.png",
+  "frame-04.png",
+  "frame-05.png",
+];
 
 // ---------------------------------------------------------------------------
 // Main
@@ -321,7 +327,9 @@ async function main() {
   }
 
   console.log("");
-  console.log(`${opts.update ? "Updated" : "Extracted"} ${extracted} frame(s) across ${demos.length} demo(s).`);
+  console.log(
+    `${opts.update ? "Updated" : "Extracted"} ${extracted} frame(s) across ${demos.length} demo(s).`,
+  );
   console.log(`Baselines saved to: ${path.relative(root, targetRoot)}`);
 }
 

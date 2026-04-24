@@ -117,10 +117,7 @@ function slugToTitle(slug) {
 function generateTitleCard(text, outPath, durationSec, width, height) {
   // Escape special characters for ffmpeg drawtext filter.
   // Colons and backslashes need escaping; single quotes are replaced.
-  const escaped = text
-    .replace(/\\/g, "\\\\\\\\")
-    .replace(/:/g, "\\:")
-    .replace(/'/g, "\u2019");
+  const escaped = text.replace(/\\/g, "\\\\\\\\").replace(/:/g, "\\:").replace(/'/g, "\u2019");
 
   const cmd = [
     "ffmpeg -y -hide_banner -loglevel error",
@@ -205,7 +202,9 @@ function addCrossfades(segmentPaths, fadeDuration, outPath) {
     // For simplicity, we compute each segment's duration.
     const offset = computeXfadeOffset(segmentPaths, i, fadeDuration);
     const outLabel = i === segmentPaths.length - 1 ? "[outv]" : `[v${i}]`;
-    filterParts.push(`${prevLabel}[${i}:v]xfade=transition=fade:duration=${fadeDuration}:offset=${offset.toFixed(3)}${outLabel}`);
+    filterParts.push(
+      `${prevLabel}[${i}:v]xfade=transition=fade:duration=${fadeDuration}:offset=${offset.toFixed(3)}${outLabel}`,
+    );
     prevLabel = outLabel;
   }
 
@@ -329,7 +328,9 @@ async function main() {
     }
 
     const title = slugToTitle(slug);
-    console.log(`  ${slug} — ${durationSec.toFixed(1)}s total, extracting ${opts.clipDuration}s clip`);
+    console.log(
+      `  ${slug} — ${durationSec.toFixed(1)}s total, extracting ${opts.clipDuration}s clip`,
+    );
 
     // Generate title card.
     const titlePath = path.join(tmpDir, `${String(segmentIndex).padStart(4, "0")}-title-raw.mp4`);

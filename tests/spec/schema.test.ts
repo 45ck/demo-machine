@@ -379,6 +379,24 @@ describe("demoSpecSchema", () => {
       const result = stepSchema.safeParse({ action: "clickFirstVisible" });
       expect(result.success).toBe(false);
     });
+
+    it("rejects assert count with structured target", () => {
+      const result = stepSchema.safeParse({
+        action: "assert",
+        target: { by: "text", text: "Total" },
+        count: 2,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("accepts assert count with CSS selector", () => {
+      const result = stepSchema.safeParse({
+        action: "assert",
+        selector: ".row",
+        count: 2,
+      });
+      expect(result.success).toBe(true);
+    });
   });
 
   /* ---------- Pacing ---------------------------------------------- */

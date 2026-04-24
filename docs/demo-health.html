@@ -1,500 +1,1239 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>demo-machine - Demo Health Dashboard</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>demo-machine - Demo Health Dashboard</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-    body {
-      background: #0d0f14;
-      color: #e2e8f0;
-      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
-      min-height: 100vh;
-      padding: 24px;
-    }
+      body {
+        background: #0d0f14;
+        color: #e2e8f0;
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          sans-serif;
+        min-height: 100vh;
+        padding: 24px;
+      }
 
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
 
-    .header h1 {
-      font-size: 20px;
-      font-weight: 700;
-      color: #f1f5f9;
-      letter-spacing: -0.02em;
-    }
+      .header h1 {
+        font-size: 20px;
+        font-weight: 700;
+        color: #f1f5f9;
+        letter-spacing: -0.02em;
+      }
 
-    .header-meta {
-      font-size: 11px;
-      color: #475569;
-    }
+      .header-meta {
+        font-size: 11px;
+        color: #475569;
+      }
 
-    /* Summary bar */
-    .summary {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
+      /* Summary bar */
+      .summary {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
 
-    .summary-card {
-      background: #141720;
-      border: 1px solid #1e2330;
-      border-radius: 8px;
-      padding: 14px 20px;
-      min-width: 130px;
-      flex: 1;
-    }
+      .summary-card {
+        background: #141720;
+        border: 1px solid #1e2330;
+        border-radius: 8px;
+        padding: 14px 20px;
+        min-width: 130px;
+        flex: 1;
+      }
 
-    .summary-card .label {
-      font-size: 11px;
-      font-weight: 600;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 4px;
-    }
+      .summary-card .label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 4px;
+      }
 
-    .summary-card .value {
-      font-size: 28px;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-    }
+      .summary-card .value {
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
 
-    .summary-card .value.total   { color: #e2e8f0; }
-    .summary-card .value.pass    { color: #4ade80; }
-    .summary-card .value.fail    { color: #f87171; }
-    .summary-card .value.warn    { color: #facc15; }
-    .summary-card .value.missing { color: #64748b; }
+      .summary-card .value.total {
+        color: #e2e8f0;
+      }
+      .summary-card .value.pass {
+        color: #4ade80;
+      }
+      .summary-card .value.fail {
+        color: #f87171;
+      }
+      .summary-card .value.warn {
+        color: #facc15;
+      }
+      .summary-card .value.missing {
+        color: #64748b;
+      }
 
-    /* Controls */
-    .controls {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
+      /* Controls */
+      .controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
 
-    .search-box {
-      background: #141720;
-      border: 1px solid #2d3448;
-      border-radius: 6px;
-      color: #e2e8f0;
-      font-size: 13px;
-      padding: 7px 12px;
-      width: 260px;
-      outline: none;
-      transition: border-color 0.15s;
-    }
+      .search-box {
+        background: #141720;
+        border: 1px solid #2d3448;
+        border-radius: 6px;
+        color: #e2e8f0;
+        font-size: 13px;
+        padding: 7px 12px;
+        width: 260px;
+        outline: none;
+        transition: border-color 0.15s;
+      }
 
-    .search-box:focus {
-      border-color: #2563eb;
-    }
+      .search-box:focus {
+        border-color: #2563eb;
+      }
 
-    .search-box::placeholder {
-      color: #475569;
-    }
+      .search-box::placeholder {
+        color: #475569;
+      }
 
-    .filter-btn {
-      background: #1e2330;
-      border: 1px solid #2d3448;
-      color: #94a3b8;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 6px 12px;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background 0.12s, color 0.12s, border-color 0.12s;
-    }
+      .filter-btn {
+        background: #1e2330;
+        border: 1px solid #2d3448;
+        color: #94a3b8;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 6px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition:
+          background 0.12s,
+          color 0.12s,
+          border-color 0.12s;
+      }
 
-    .filter-btn:hover,
-    .filter-btn.active {
-      background: #2563eb;
-      border-color: #2563eb;
-      color: #fff;
-    }
+      .filter-btn:hover,
+      .filter-btn.active {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: #fff;
+      }
 
-    /* Table */
-    .table-wrap {
-      overflow-x: auto;
-      border-radius: 8px;
-      border: 1px solid #1e2330;
-    }
+      /* Table */
+      .table-wrap {
+        overflow-x: auto;
+        border-radius: 8px;
+        border: 1px solid #1e2330;
+      }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
 
-    thead th {
-      background: #141720;
-      color: #94a3b8;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 10px 14px;
-      text-align: left;
-      border-bottom: 1px solid #1e2330;
-      cursor: pointer;
-      user-select: none;
-      white-space: nowrap;
-      position: relative;
-    }
+      thead th {
+        background: #141720;
+        color: #94a3b8;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 10px 14px;
+        text-align: left;
+        border-bottom: 1px solid #1e2330;
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+        position: relative;
+      }
 
-    thead th:hover {
-      color: #e2e8f0;
-    }
+      thead th:hover {
+        color: #e2e8f0;
+      }
 
-    thead th .sort-arrow {
-      margin-left: 4px;
-      font-size: 10px;
-      color: #475569;
-    }
+      thead th .sort-arrow {
+        margin-left: 4px;
+        font-size: 10px;
+        color: #475569;
+      }
 
-    thead th.sorted .sort-arrow {
-      color: #2563eb;
-    }
+      thead th.sorted .sort-arrow {
+        color: #2563eb;
+      }
 
-    tbody tr {
-      border-bottom: 1px solid #1a1e2a;
-      transition: background 0.1s;
-    }
+      tbody tr {
+        border-bottom: 1px solid #1a1e2a;
+        transition: background 0.1s;
+      }
 
-    tbody tr:hover {
-      background: #141720;
-    }
+      tbody tr:hover {
+        background: #141720;
+      }
 
-    tbody td {
-      padding: 10px 14px;
-      white-space: nowrap;
-    }
+      tbody td {
+        padding: 10px 14px;
+        white-space: nowrap;
+      }
 
-    /* Status badge */
-    .badge {
-      display: inline-block;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
+      /* Status badge */
+      .badge {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
 
-    .badge-pass    { background: #14532d; color: #4ade80; }
-    .badge-fail    { background: #450a0a; color: #f87171; }
-    .badge-warn    { background: #422006; color: #facc15; }
-    .badge-missing { background: #1e293b; color: #64748b; }
+      .badge-pass {
+        background: #14532d;
+        color: #4ade80;
+      }
+      .badge-fail {
+        background: #450a0a;
+        color: #f87171;
+      }
+      .badge-warn {
+        background: #422006;
+        color: #facc15;
+      }
+      .badge-missing {
+        background: #1e293b;
+        color: #64748b;
+      }
 
-    /* Sparkline bar */
-    .bar-cell {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+      /* Sparkline bar */
+      .bar-cell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
 
-    .bar-track {
-      width: 80px;
-      height: 6px;
-      background: #1e2330;
-      border-radius: 3px;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
+      .bar-track {
+        width: 80px;
+        height: 6px;
+        background: #1e2330;
+        border-radius: 3px;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
 
-    .bar-fill {
-      height: 100%;
-      border-radius: 3px;
-      transition: width 0.3s;
-    }
+      .bar-fill {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.3s;
+      }
 
-    .bar-fill.duration { background: #3b82f6; }
-    .bar-fill.size     { background: #8b5cf6; }
+      .bar-fill.duration {
+        background: #3b82f6;
+      }
+      .bar-fill.size {
+        background: #8b5cf6;
+      }
 
-    .bar-value {
-      font-size: 12px;
-      color: #94a3b8;
-      min-width: 50px;
-    }
+      .bar-value {
+        font-size: 12px;
+        color: #94a3b8;
+        min-width: 50px;
+      }
 
-    /* Action type pills */
-    .action-pills {
-      display: flex;
-      gap: 3px;
-      flex-wrap: wrap;
-    }
+      /* Action type pills */
+      .action-pills {
+        display: flex;
+        gap: 3px;
+        flex-wrap: wrap;
+      }
 
-    .action-pill {
-      font-size: 9px;
-      font-weight: 600;
-      padding: 1px 5px;
-      border-radius: 3px;
-      background: #1e2330;
-      color: #64748b;
-    }
+      .action-pill {
+        font-size: 9px;
+        font-weight: 600;
+        padding: 1px 5px;
+        border-radius: 3px;
+        background: #1e2330;
+        color: #64748b;
+      }
 
-    /* Narration coverage mini-bar */
-    .coverage-cell {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
+      /* Narration coverage mini-bar */
+      .coverage-cell {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
 
-    .coverage-track {
-      width: 50px;
-      height: 6px;
-      background: #1e2330;
-      border-radius: 3px;
-      overflow: hidden;
-    }
+      .coverage-track {
+        width: 50px;
+        height: 6px;
+        background: #1e2330;
+        border-radius: 3px;
+        overflow: hidden;
+      }
 
-    .coverage-fill {
-      height: 100%;
-      border-radius: 3px;
-      background: #22c55e;
-    }
+      .coverage-fill {
+        height: 100%;
+        border-radius: 3px;
+        background: #22c55e;
+      }
 
-    .coverage-value {
-      font-size: 12px;
-      color: #94a3b8;
-    }
+      .coverage-value {
+        font-size: 12px;
+        color: #94a3b8;
+      }
 
-    .muted { color: #475569; }
+      .muted {
+        color: #475569;
+      }
 
-    .quality-score {
-      font-weight: 600;
-    }
-    .quality-score.perfect { color: #4ade80; }
-    .quality-score.good    { color: #facc15; }
-    .quality-score.bad     { color: #f87171; }
+      .quality-score {
+        font-weight: 600;
+      }
+      .quality-score.perfect {
+        color: #4ade80;
+      }
+      .quality-score.good {
+        color: #facc15;
+      }
+      .quality-score.bad {
+        color: #f87171;
+      }
 
-    .timestamp {
-      font-size: 11px;
-      color: #64748b;
-    }
-  </style>
-</head>
-<body>
+      .timestamp {
+        font-size: 11px;
+        color: #64748b;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>demo-machine - Demo Health Dashboard</h1>
+      <span class="header-meta">Generated 2026-04-24T01:38:12.049Z</span>
+    </div>
 
-<div class="header">
-  <h1>demo-machine - Demo Health Dashboard</h1>
-  <span class="header-meta">Generated 2026-03-25T03:27:39.072Z</span>
-</div>
+    <div class="summary">
+      <div class="summary-card">
+        <div class="label">Total Demos</div>
+        <div class="value total">27</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Passing</div>
+        <div class="value pass">27</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Failing</div>
+        <div class="value fail">0</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Warnings</div>
+        <div class="value warn">0</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Missing</div>
+        <div class="value missing">0</div>
+      </div>
+    </div>
 
-<div class="summary">
-  <div class="summary-card">
-    <div class="label">Total Demos</div>
-    <div class="value total">27</div>
-  </div>
-  <div class="summary-card">
-    <div class="label">Passing</div>
-    <div class="value pass">27</div>
-  </div>
-  <div class="summary-card">
-    <div class="label">Failing</div>
-    <div class="value fail">0</div>
-  </div>
-  <div class="summary-card">
-    <div class="label">Warnings</div>
-    <div class="value warn">0</div>
-  </div>
-  <div class="summary-card">
-    <div class="label">Missing</div>
-    <div class="value missing">0</div>
-  </div>
-</div>
+    <div class="controls">
+      <input type="text" class="search-box" id="searchBox" placeholder="Filter demos..." />
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="pass">Pass</button>
+      <button class="filter-btn" data-filter="fail">Fail</button>
+      <button class="filter-btn" data-filter="warn">Warn</button>
+      <button class="filter-btn" data-filter="missing">Missing</button>
+    </div>
 
-<div class="controls">
-  <input type="text" class="search-box" id="searchBox" placeholder="Filter demos..." />
-  <button class="filter-btn active" data-filter="all">All</button>
-  <button class="filter-btn" data-filter="pass">Pass</button>
-  <button class="filter-btn" data-filter="fail">Fail</button>
-  <button class="filter-btn" data-filter="warn">Warn</button>
-  <button class="filter-btn" data-filter="missing">Missing</button>
-</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-col="slug">Demo <span class="sort-arrow"></span></th>
+            <th data-col="status">Status <span class="sort-arrow"></span></th>
+            <th data-col="durationSec">Duration <span class="sort-arrow"></span></th>
+            <th data-col="actionCount">Actions <span class="sort-arrow"></span></th>
+            <th data-col="actionTypes">Action Types</th>
+            <th data-col="narrationCoverage">Narration <span class="sort-arrow"></span></th>
+            <th data-col="videoSizeMb">Video Size <span class="sort-arrow"></span></th>
+            <th data-col="qualityScore">Quality <span class="sort-arrow"></span></th>
+            <th data-col="lastCaptureTimestamp">Last Capture <span class="sort-arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
 
-<div class="table-wrap">
-  <table>
-    <thead>
-      <tr>
-        <th data-col="slug">Demo <span class="sort-arrow"></span></th>
-        <th data-col="status">Status <span class="sort-arrow"></span></th>
-        <th data-col="durationSec">Duration <span class="sort-arrow"></span></th>
-        <th data-col="actionCount">Actions <span class="sort-arrow"></span></th>
-        <th data-col="actionTypes">Action Types</th>
-        <th data-col="narrationCoverage">Narration <span class="sort-arrow"></span></th>
-        <th data-col="mp4SizeMb">File Size <span class="sort-arrow"></span></th>
-        <th data-col="qualityScore">Quality <span class="sort-arrow"></span></th>
-        <th data-col="lastCaptureTimestamp">Last Capture <span class="sort-arrow"></span></th>
-      </tr>
-    </thead>
-    <tbody id="tableBody"></tbody>
-  </table>
-</div>
+    <script>
+      const demos = [
+        {
+          slug: "async-skeleton",
+          title: "AsyncSkeleton - Metrics Dashboard",
+          status: "pass",
+          durationSec: 10.38,
+          resolution: null,
+          actionCount: 15,
+          actionTypes: { navigate: 1, assert: 8, wait: 1, screenshot: 3, click: 2 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 1.29,
+          lastCaptureTimestamp: "2026-04-24T01:35:49.905Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\async-skeleton.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 2,
+          stepCount: 15,
+          eventCount: 15,
+        },
+        {
+          slug: "auth-otp",
+          title: "AuthFlow - OTP Sign-In Demo",
+          status: "pass",
+          durationSec: 11.61,
+          resolution: null,
+          actionCount: 12,
+          actionTypes: { navigate: 1, assert: 5, click: 4, type: 2 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 1.49,
+          lastCaptureTimestamp: "2026-04-24T01:32:31.882Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\auth-otp.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 3,
+          stepCount: 12,
+          eventCount: 12,
+        },
+        {
+          slug: "chart-tooltips",
+          title: "ChartLab - Hover Tooltips Demo",
+          status: "pass",
+          durationSec: 3.11,
+          resolution: null,
+          actionCount: 5,
+          actionTypes: { navigate: 1, assert: 3, hover: 1 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 0.47,
+          lastCaptureTimestamp: "2026-04-24T01:34:25.971Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\chart-tooltips.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 1,
+          stepCount: 5,
+          eventCount: 5,
+        },
+        {
+          slug: "controls-lab",
+          title: "ControlRoom - Inputs Demo",
+          status: "pass",
+          durationSec: 19.24,
+          resolution: null,
+          actionCount: 10,
+          actionTypes: {
+            navigate: 1,
+            assert: 3,
+            check: 1,
+            uncheck: 1,
+            selectFirstNonPlaceholder: 1,
+            select: 1,
+            upload: 1,
+            dragAndDrop: 1,
+          },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 2.24,
+          lastCaptureTimestamp: "2026-04-24T01:34:54.453Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\controls-lab.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 2,
+          stepCount: 10,
+          eventCount: 10,
+        },
+        {
+          slug: "controls-lab-autosync",
+          title: "ControlRoom - Inputs Demo (Auto-Sync)",
+          status: "pass",
+          durationSec: 19.08,
+          resolution: null,
+          actionCount: 9,
+          actionTypes: {
+            navigate: 1,
+            check: 1,
+            uncheck: 1,
+            selectFirstNonPlaceholder: 1,
+            select: 1,
+            upload: 1,
+            assert: 2,
+            dragAndDrop: 1,
+          },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 2.24,
+          lastCaptureTimestamp: "2026-04-24T01:35:15.874Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\controls-lab-autosync.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 2,
+          stepCount: 9,
+          eventCount: 9,
+        },
+        {
+          slug: "dashboard-table",
+          title: "DashLite - Table Dashboard Demo",
+          status: "pass",
+          durationSec: 13.23,
+          resolution: null,
+          actionCount: 15,
+          actionTypes: { navigate: 1, assert: 3, click: 4, type: 1, wait: 2, press: 4 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 1.61,
+          lastCaptureTimestamp: "2026-04-24T01:34:06.787Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\dashboard-table.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 2,
+          stepCount: 15,
+          eventCount: 15,
+        },
+        {
+          slug: "dashboard-table-autosync",
+          title: "DashLite - Table Dashboard (Auto-Sync)",
+          status: "pass",
+          durationSec: 6.89,
+          resolution: null,
+          actionCount: 6,
+          actionTypes: { navigate: 1, click: 2, type: 1, wait: 2 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 0.88,
+          lastCaptureTimestamp: "2026-04-24T01:34:16.062Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\dashboard-table-autosync.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 1,
+          stepCount: 6,
+          eventCount: 6,
+        },
+        {
+          slug: "dashboard-table-redaction",
+          title: "DashLite - Redaction Demo",
+          status: "pass",
+          durationSec: 2.47,
+          resolution: null,
+          actionCount: 2,
+          actionTypes: { navigate: 1, wait: 1 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 0.39,
+          lastCaptureTimestamp: "2026-04-24T01:34:20.444Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\dashboard-table-redaction.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 1,
+          stepCount: 2,
+          eventCount: 2,
+        },
+        {
+          slug: "drag-sort",
+          title: "DragSort - Reorder Tasks",
+          status: "pass",
+          durationSec: 4.72,
+          resolution: null,
+          actionCount: 9,
+          actionTypes: { navigate: 1, assert: 6, dragAndDrop: 1, screenshot: 1 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 0.65,
+          lastCaptureTimestamp: "2026-04-24T01:35:27.443Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\drag-sort.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 1,
+          stepCount: 9,
+          eventCount: 9,
+        },
+        {
+          slug: "file-uploader",
+          title: "FileUploader - Upload Preview",
+          status: "pass",
+          durationSec: 8.48,
+          resolution: null,
+          actionCount: 11,
+          actionTypes: { navigate: 1, assert: 6, upload: 2, screenshot: 2 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 1.01,
+          lastCaptureTimestamp: "2026-04-24T01:35:37.722Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\file-uploader.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 1,
+          stepCount: 11,
+          eventCount: 11,
+        },
+        {
+          slug: "form-wizard",
+          title: "FlowForm - Onboarding Wizard",
+          status: "pass",
+          durationSec: 17.35,
+          resolution: null,
+          actionCount: 15,
+          actionTypes: { navigate: 1, wait: 4, click: 6, type: 2, assert: 2 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 2.11,
+          lastCaptureTimestamp: "2026-04-24T01:31:54.646Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\form-wizard.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 4,
+          stepCount: 15,
+          eventCount: 15,
+        },
+        {
+          slug: "form-wizard-autosync",
+          title: "FlowForm - Onboarding Wizard (Auto-Sync)",
+          status: "pass",
+          durationSec: 16.33,
+          resolution: null,
+          actionCount: 13,
+          actionTypes: { navigate: 1, wait: 4, click: 6, type: 2 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 2,
+          lastCaptureTimestamp: "2026-04-24T01:32:13.152Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\form-wizard-autosync.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 4,
+          stepCount: 13,
+          eventCount: 13,
+        },
+        {
+          slug: "form-wizard-redaction",
+          title: "FlowForm - Redaction Demo",
+          status: "pass",
+          durationSec: 2.5,
+          resolution: null,
+          actionCount: 2,
+          actionTypes: { navigate: 1, wait: 1 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 0.38,
+          lastCaptureTimestamp: "2026-04-24T01:32:17.822Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\form-wizard-redaction.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 1,
+          stepCount: 2,
+          eventCount: 2,
+        },
+        {
+          slug: "hello-world",
+          title: "Hello World Demo",
+          status: "pass",
+          durationSec: 6.6,
+          resolution: null,
+          actionCount: 7,
+          actionTypes: { navigate: 1, assert: 3, clickFirstVisible: 1, type: 1, wait: 1 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 0.84,
+          lastCaptureTimestamp: "2026-04-24T01:31:06.391Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\hello-world.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 1,
+          stepCount: 7,
+          eventCount: 7,
+        },
+        {
+          slug: "infinite-scroll",
+          title: "ScrollForge - Infinite Scroll Demo",
+          status: "pass",
+          durationSec: 8.37,
+          resolution: null,
+          actionCount: 8,
+          actionTypes: { navigate: 1, assert: 2, wait: 3, scroll: 2 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 1.05,
+          lastCaptureTimestamp: "2026-04-24T01:33:40.071Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\infinite-scroll.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 2,
+          stepCount: 8,
+          eventCount: 8,
+        },
+        {
+          slug: "infinite-scroll-autosync",
+          title: "ScrollForge - Infinite Scroll (Auto-Sync)",
+          status: "pass",
+          durationSec: 4.49,
+          resolution: null,
+          actionCount: 4,
+          actionTypes: { navigate: 1, scroll: 1, wait: 1, assert: 1 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 0.64,
+          lastCaptureTimestamp: "2026-04-24T01:33:46.746Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\infinite-scroll-autosync.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 1,
+          stepCount: 4,
+          eventCount: 4,
+        },
+        {
+          slug: "infinite-scroll-redaction",
+          title: "ScrollForge - Redaction Demo",
+          status: "pass",
+          durationSec: 2.46,
+          resolution: null,
+          actionCount: 2,
+          actionTypes: { navigate: 1, wait: 1 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 0.38,
+          lastCaptureTimestamp: "2026-04-24T01:33:51.165Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\infinite-scroll-redaction.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 1,
+          stepCount: 2,
+          eventCount: 2,
+        },
+        {
+          slug: "modals-popovers",
+          title: "OverlayKit - Modals and Popovers Demo",
+          status: "pass",
+          durationSec: 11.81,
+          resolution: null,
+          actionCount: 11,
+          actionTypes: { navigate: 1, hover: 1, assert: 3, wait: 2, click: 3, type: 1 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 1.43,
+          lastCaptureTimestamp: "2026-04-24T01:32:46.212Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\modals-popovers.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 2,
+          stepCount: 11,
+          eventCount: 11,
+        },
+        {
+          slug: "modals-popovers-autosync",
+          title: "OverlayKit - Modals and Popovers (Auto-Sync)",
+          status: "pass",
+          durationSec: 11.16,
+          resolution: null,
+          actionCount: 8,
+          actionTypes: { navigate: 1, hover: 1, wait: 2, click: 3, type: 1 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 1.36,
+          lastCaptureTimestamp: "2026-04-24T01:32:59.423Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\modals-popovers-autosync.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 1,
+          stepCount: 8,
+          eventCount: 8,
+        },
+        {
+          slug: "modals-popovers-redaction",
+          title: "OverlayKit - Redaction Demo",
+          status: "pass",
+          durationSec: 3.64,
+          resolution: null,
+          actionCount: 3,
+          actionTypes: { navigate: 1, click: 1, wait: 1 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 0.38,
+          lastCaptureTimestamp: "2026-04-24T01:33:04.999Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\modals-popovers-redaction.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 1,
+          stepCount: 3,
+          eventCount: 3,
+        },
+        {
+          slug: "seeded-api",
+          title: "SeededAPI - Notes with preSteps",
+          status: "pass",
+          durationSec: 5.7,
+          resolution: null,
+          actionCount: 10,
+          actionTypes: { navigate: 1, assert: 5, screenshot: 2, click: 2 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 0.74,
+          lastCaptureTimestamp: "2026-04-24T01:35:57.561Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\seeded-api.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 2,
+          stepCount: 10,
+          eventCount: 10,
+        },
+        {
+          slug: "selector-stress",
+          title: "SelectorGym - Disambiguation Demo",
+          status: "pass",
+          durationSec: 2.71,
+          resolution: null,
+          actionCount: 3,
+          actionTypes: { navigate: 1, click: 1, assert: 1 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 0.43,
+          lastCaptureTimestamp: "2026-04-24T01:35:20.909Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\selector-stress.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 1,
+          stepCount: 3,
+          eventCount: 3,
+        },
+        {
+          slug: "spa-router",
+          title: "RouteLab - SPA Router Demo",
+          status: "pass",
+          durationSec: 9.74,
+          resolution: null,
+          actionCount: 16,
+          actionTypes: { navigate: 1, assert: 6, wait: 5, click: 2, back: 1, forward: 1 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 1.19,
+          lastCaptureTimestamp: "2026-04-24T01:33:16.523Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\spa-router.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 3,
+          stepCount: 16,
+          eventCount: 16,
+        },
+        {
+          slug: "spa-router-autosync",
+          title: "RouteLab - SPA Router (Auto-Sync)",
+          status: "pass",
+          durationSec: 5.67,
+          resolution: null,
+          actionCount: 5,
+          actionTypes: { navigate: 1, click: 2, wait: 2 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 0.64,
+          lastCaptureTimestamp: "2026-04-24T01:33:24.169Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\spa-router-autosync.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 1,
+          stepCount: 5,
+          eventCount: 5,
+        },
+        {
+          slug: "spa-router-redaction",
+          title: "RouteLab - Redaction Demo",
+          status: "pass",
+          durationSec: 3.64,
+          resolution: null,
+          actionCount: 3,
+          actionTypes: { navigate: 1, click: 1, wait: 1 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 0.52,
+          lastCaptureTimestamp: "2026-04-24T01:33:29.700Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\spa-router-redaction.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 1,
+          stepCount: 3,
+          eventCount: 3,
+        },
+        {
+          slug: "todo-app",
+          title: "TaskFlow - Task Manager Demo",
+          status: "pass",
+          durationSec: 26.91,
+          resolution: null,
+          actionCount: 20,
+          actionTypes: { navigate: 1, wait: 8, click: 8, type: 3 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 2.86,
+          lastCaptureTimestamp: "2026-04-24T01:31:35.185Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\todo-app.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 5,
+          stepCount: 20,
+          eventCount: 20,
+        },
+        {
+          slug: "virtual-table",
+          title: "GridV - Virtualized Table Demo",
+          status: "pass",
+          durationSec: 5.27,
+          resolution: null,
+          actionCount: 5,
+          actionTypes: { navigate: 1, assert: 2, scroll: 1, wait: 1 },
+          narrationCoverage: null,
+          narrationSegmentCount: 0,
+          narrationOverlapCount: 0,
+          videoExists: true,
+          videoFormat: "webm",
+          videoSizeMb: 0.77,
+          lastCaptureTimestamp: "2026-04-24T01:34:33.090Z",
+          specPath: "C:\\Projects\\demo-machine\\examples\\virtual-table.demo.yaml",
+          qualityScore: 100,
+          checksPassed: 1,
+          checksTotal: 1,
+          chapterCount: 1,
+          stepCount: 5,
+          eventCount: 5,
+        },
+      ];
+      const maxDuration = 26.91;
+      const maxSize = 2.86;
 
-<script>
-const demos = [{"slug":"async-skeleton","title":"AsyncSkeleton - Metrics Dashboard","status":"pass","durationSec":12.66,"resolution":null,"actionCount":15,"actionTypes":{"navigate":1,"assert":8,"wait":1,"screenshot":3,"click":2},"narrationCoverage":20,"narrationSegmentCount":3,"narrationOverlapCount":0,"mp4Exists":true,"mp4SizeMb":0.45,"lastCaptureTimestamp":"2026-03-24T05:29:14.767Z","specPath":"C:\\Projects\\demo-machine\\examples\\async-skeleton.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":2,"stepCount":15,"eventCount":15},{"slug":"auth-otp","title":"AuthFlow - OTP Sign-In Demo","status":"pass","durationSec":14.98,"resolution":null,"actionCount":12,"actionTypes":{"navigate":1,"assert":5,"click":4,"type":2},"narrationCoverage":41.7,"narrationSegmentCount":5,"narrationOverlapCount":3,"mp4Exists":true,"mp4SizeMb":2.09,"lastCaptureTimestamp":"2026-03-24T05:29:40.961Z","specPath":"C:\\Projects\\demo-machine\\examples\\auth-otp.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":3,"stepCount":12,"eventCount":12},{"slug":"chart-tooltips","title":"ChartLab - Hover Tooltips Demo","status":"pass","durationSec":3.95,"resolution":null,"actionCount":5,"actionTypes":{"navigate":1,"assert":3,"hover":1},"narrationCoverage":40,"narrationSegmentCount":2,"narrationOverlapCount":1,"mp4Exists":true,"mp4SizeMb":0.53,"lastCaptureTimestamp":"2026-03-24T05:29:54.420Z","specPath":"C:\\Projects\\demo-machine\\examples\\chart-tooltips.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":1,"stepCount":5,"eventCount":5},{"slug":"controls-lab","title":"ControlRoom - Inputs Demo","status":"pass","durationSec":17.3,"resolution":null,"actionCount":10,"actionTypes":{"navigate":1,"assert":3,"check":1,"uncheck":1,"selectFirstNonPlaceholder":1,"select":1,"upload":1,"dragAndDrop":1},"narrationCoverage":40,"narrationSegmentCount":4,"narrationOverlapCount":0,"mp4Exists":true,"mp4SizeMb":1.65,"lastCaptureTimestamp":"2026-03-24T05:30:49.213Z","specPath":"C:\\Projects\\demo-machine\\examples\\controls-lab.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":2,"stepCount":10,"eventCount":10},{"slug":"controls-lab-autosync","title":"ControlRoom - Inputs Demo (Auto-Sync)","status":"pass","durationSec":18.79,"resolution":null,"actionCount":9,"actionTypes":{"navigate":1,"check":1,"uncheck":1,"selectFirstNonPlaceholder":1,"select":1,"upload":1,"assert":2,"dragAndDrop":1},"narrationCoverage":100,"narrationSegmentCount":9,"narrationOverlapCount":7,"mp4Exists":true,"mp4SizeMb":2.15,"lastCaptureTimestamp":"2026-03-24T05:30:20.251Z","specPath":"C:\\Projects\\demo-machine\\examples\\controls-lab-autosync.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":2,"stepCount":9,"eventCount":9},{"slug":"dashboard-table","title":"DashLite - Table Dashboard Demo","status":"pass","durationSec":16.67,"resolution":null,"actionCount":15,"actionTypes":{"navigate":1,"assert":3,"click":4,"type":1,"wait":2,"press":4},"narrationCoverage":33.3,"narrationSegmentCount":5,"narrationOverlapCount":2,"mp4Exists":true,"mp4SizeMb":1.86,"lastCaptureTimestamp":"2026-03-24T05:31:46.364Z","specPath":"C:\\Projects\\demo-machine\\examples\\dashboard-table.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":2,"stepCount":15,"eventCount":15},{"slug":"dashboard-table-autosync","title":"DashLite - Table Dashboard (Auto-Sync)","status":"pass","durationSec":8.33,"resolution":null,"actionCount":6,"actionTypes":{"navigate":1,"click":2,"type":1,"wait":2},"narrationCoverage":50,"narrationSegmentCount":3,"narrationOverlapCount":1,"mp4Exists":true,"mp4SizeMb":1.02,"lastCaptureTimestamp":"2026-03-24T05:31:09.400Z","specPath":"C:\\Projects\\demo-machine\\examples\\dashboard-table-autosync.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":1,"stepCount":6,"eventCount":6},{"slug":"dashboard-table-redaction","title":"DashLite - Redaction Demo","status":"pass","durationSec":2.75,"resolution":null,"actionCount":2,"actionTypes":{"navigate":1,"wait":1},"narrationCoverage":50,"narrationSegmentCount":1,"narrationOverlapCount":0,"mp4Exists":true,"mp4SizeMb":0.4,"lastCaptureTimestamp":"2026-03-24T05:31:19.854Z","specPath":"C:\\Projects\\demo-machine\\examples\\dashboard-table-redaction.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":1,"stepCount":2,"eventCount":2},{"slug":"drag-sort","title":"DragSort - Reorder Tasks","status":"pass","durationSec":5.64,"resolution":null,"actionCount":9,"actionTypes":{"navigate":1,"assert":6,"dragAndDrop":1,"screenshot":1},"narrationCoverage":22.2,"narrationSegmentCount":2,"narrationOverlapCount":1,"mp4Exists":true,"mp4SizeMb":0.5,"lastCaptureTimestamp":"2026-03-24T05:32:06.108Z","specPath":"C:\\Projects\\demo-machine\\examples\\drag-sort.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":1,"stepCount":9,"eventCount":9},{"slug":"file-uploader","title":"FileUploader - Upload Preview","status":"pass","durationSec":10.8,"resolution":null,"actionCount":11,"actionTypes":{"navigate":1,"assert":6,"upload":2,"screenshot":2},"narrationCoverage":27.3,"narrationSegmentCount":3,"narrationOverlapCount":1,"mp4Exists":true,"mp4SizeMb":0.72,"lastCaptureTimestamp":"2026-03-24T05:32:24.126Z","specPath":"C:\\Projects\\demo-machine\\examples\\file-uploader.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":1,"stepCount":11,"eventCount":11},{"slug":"form-wizard","title":"FlowForm - Onboarding Wizard","status":"pass","durationSec":20.03,"resolution":null,"actionCount":15,"actionTypes":{"navigate":1,"wait":4,"click":6,"type":2,"assert":2},"narrationCoverage":40,"narrationSegmentCount":6,"narrationOverlapCount":1,"mp4Exists":true,"mp4SizeMb":1.89,"lastCaptureTimestamp":"2026-03-24T05:33:30.730Z","specPath":"C:\\Projects\\demo-machine\\examples\\form-wizard.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":4,"stepCount":15,"eventCount":15},{"slug":"form-wizard-autosync","title":"FlowForm - Onboarding Wizard (Auto-Sync)","status":"pass","durationSec":20.37,"resolution":null,"actionCount":13,"actionTypes":{"navigate":1,"wait":4,"click":6,"type":2},"narrationCoverage":53.8,"narrationSegmentCount":7,"narrationOverlapCount":1,"mp4Exists":true,"mp4SizeMb":1.97,"lastCaptureTimestamp":"2026-03-24T05:32:51.258Z","specPath":"C:\\Projects\\demo-machine\\examples\\form-wizard-autosync.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":4,"stepCount":13,"eventCount":13},{"slug":"form-wizard-redaction","title":"FlowForm - Redaction Demo","status":"pass","durationSec":2.76,"resolution":null,"actionCount":2,"actionTypes":{"navigate":1,"wait":1},"narrationCoverage":50,"narrationSegmentCount":1,"narrationOverlapCount":0,"mp4Exists":true,"mp4SizeMb":0.31,"lastCaptureTimestamp":"2026-03-24T05:33:03.948Z","specPath":"C:\\Projects\\demo-machine\\examples\\form-wizard-redaction.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":1,"stepCount":2,"eventCount":2},{"slug":"hello-world","title":"Hello World Demo","status":"pass","durationSec":7.66,"resolution":null,"actionCount":7,"actionTypes":{"navigate":1,"assert":3,"clickFirstVisible":1,"type":1,"wait":1},"narrationCoverage":28.6,"narrationSegmentCount":2,"narrationOverlapCount":0,"mp4Exists":true,"mp4SizeMb":0.55,"lastCaptureTimestamp":"2026-03-24T05:33:48.176Z","specPath":"C:\\Projects\\demo-machine\\examples\\hello-world.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":1,"stepCount":7,"eventCount":7},{"slug":"infinite-scroll","title":"ScrollForge - Infinite Scroll Demo","status":"pass","durationSec":8.62,"resolution":null,"actionCount":8,"actionTypes":{"navigate":1,"assert":2,"wait":3,"scroll":2},"narrationCoverage":37.5,"narrationSegmentCount":3,"narrationOverlapCount":2,"mp4Exists":true,"mp4SizeMb":1.09,"lastCaptureTimestamp":"2026-03-24T05:34:24.179Z","specPath":"C:\\Projects\\demo-machine\\examples\\infinite-scroll.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":2,"stepCount":8,"eventCount":8},{"slug":"infinite-scroll-autosync","title":"ScrollForge - Infinite Scroll (Auto-Sync)","status":"pass","durationSec":4.41,"resolution":null,"actionCount":4,"actionTypes":{"navigate":1,"scroll":1,"wait":1,"assert":1},"narrationCoverage":75,"narrationSegmentCount":3,"narrationOverlapCount":2,"mp4Exists":true,"mp4SizeMb":0.74,"lastCaptureTimestamp":"2026-03-24T05:33:59.763Z","specPath":"C:\\Projects\\demo-machine\\examples\\infinite-scroll-autosync.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":1,"stepCount":4,"eventCount":4},{"slug":"infinite-scroll-redaction","title":"ScrollForge - Redaction Demo","status":"pass","durationSec":2.72,"resolution":null,"actionCount":2,"actionTypes":{"navigate":1,"wait":1},"narrationCoverage":50,"narrationSegmentCount":1,"narrationOverlapCount":0,"mp4Exists":true,"mp4SizeMb":0.35,"lastCaptureTimestamp":"2026-03-24T05:34:08.983Z","specPath":"C:\\Projects\\demo-machine\\examples\\infinite-scroll-redaction.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":1,"stepCount":2,"eventCount":2},{"slug":"modals-popovers","title":"OverlayKit - Modals and Popovers Demo","status":"pass","durationSec":16.36,"resolution":null,"actionCount":11,"actionTypes":{"navigate":1,"hover":1,"assert":3,"wait":2,"click":3,"type":1},"narrationCoverage":36.4,"narrationSegmentCount":4,"narrationOverlapCount":1,"mp4Exists":true,"mp4SizeMb":0.63,"lastCaptureTimestamp":"2026-03-24T05:35:25.058Z","specPath":"C:\\Projects\\demo-machine\\examples\\modals-popovers.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":2,"stepCount":11,"eventCount":11},{"slug":"modals-popovers-autosync","title":"OverlayKit - Modals and Popovers (Auto-Sync)","status":"pass","durationSec":16,"resolution":null,"actionCount":8,"actionTypes":{"navigate":1,"hover":1,"wait":2,"click":3,"type":1},"narrationCoverage":62.5,"narrationSegmentCount":5,"narrationOverlapCount":1,"mp4Exists":true,"mp4SizeMb":0.71,"lastCaptureTimestamp":"2026-03-24T05:34:47.294Z","specPath":"C:\\Projects\\demo-machine\\examples\\modals-popovers-autosync.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":1,"stepCount":8,"eventCount":8},{"slug":"modals-popovers-redaction","title":"OverlayKit - Redaction Demo","status":"pass","durationSec":5.11,"resolution":null,"actionCount":3,"actionTypes":{"navigate":1,"click":1,"wait":1},"narrationCoverage":66.7,"narrationSegmentCount":2,"narrationOverlapCount":1,"mp4Exists":true,"mp4SizeMb":0.42,"lastCaptureTimestamp":"2026-03-24T05:34:59.800Z","specPath":"C:\\Projects\\demo-machine\\examples\\modals-popovers-redaction.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":1,"stepCount":3,"eventCount":3},{"slug":"seeded-api","title":"SeededAPI - Notes with preSteps","status":"pass","durationSec":8.03,"resolution":null,"actionCount":10,"actionTypes":{"navigate":1,"assert":5,"screenshot":2,"click":2},"narrationCoverage":30,"narrationSegmentCount":3,"narrationOverlapCount":2,"mp4Exists":true,"mp4SizeMb":0.51,"lastCaptureTimestamp":"2026-03-24T05:35:41.171Z","specPath":"C:\\Projects\\demo-machine\\examples\\seeded-api.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":2,"stepCount":10,"eventCount":10},{"slug":"selector-stress","title":"SelectorGym - Disambiguation Demo","status":"pass","durationSec":3.64,"resolution":null,"actionCount":3,"actionTypes":{"navigate":1,"click":1,"assert":1},"narrationCoverage":66.7,"narrationSegmentCount":2,"narrationOverlapCount":1,"mp4Exists":true,"mp4SizeMb":0.72,"lastCaptureTimestamp":"2026-03-24T05:35:53.159Z","specPath":"C:\\Projects\\demo-machine\\examples\\selector-stress.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":1,"stepCount":3,"eventCount":3},{"slug":"spa-router","title":"RouteLab - SPA Router Demo","status":"pass","durationSec":11.15,"resolution":null,"actionCount":16,"actionTypes":{"navigate":1,"assert":6,"wait":5,"click":2,"back":1,"forward":1},"narrationCoverage":25,"narrationSegmentCount":4,"narrationOverlapCount":1,"mp4Exists":true,"mp4SizeMb":0.74,"lastCaptureTimestamp":"2026-03-24T05:36:35.100Z","specPath":"C:\\Projects\\demo-machine\\examples\\spa-router.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":3,"stepCount":16,"eventCount":16},{"slug":"spa-router-autosync","title":"RouteLab - SPA Router (Auto-Sync)","status":"pass","durationSec":6.47,"resolution":null,"actionCount":5,"actionTypes":{"navigate":1,"click":2,"wait":2},"narrationCoverage":60,"narrationSegmentCount":3,"narrationOverlapCount":1,"mp4Exists":true,"mp4SizeMb":0.58,"lastCaptureTimestamp":"2026-03-24T05:36:06.942Z","specPath":"C:\\Projects\\demo-machine\\examples\\spa-router-autosync.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":1,"stepCount":5,"eventCount":5},{"slug":"spa-router-redaction","title":"RouteLab - Redaction Demo","status":"pass","durationSec":4.28,"resolution":null,"actionCount":3,"actionTypes":{"navigate":1,"click":1,"wait":1},"narrationCoverage":66.7,"narrationSegmentCount":2,"narrationOverlapCount":1,"mp4Exists":true,"mp4SizeMb":0.47,"lastCaptureTimestamp":"2026-03-24T05:36:17.413Z","specPath":"C:\\Projects\\demo-machine\\examples\\spa-router-redaction.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":1,"stepCount":3,"eventCount":3},{"slug":"todo-app","title":"TaskFlow - Task Manager Demo","status":"pass","durationSec":33.3,"resolution":null,"actionCount":20,"actionTypes":{"navigate":1,"wait":8,"click":8,"type":3},"narrationCoverage":40,"narrationSegmentCount":8,"narrationOverlapCount":1,"mp4Exists":true,"mp4SizeMb":1.19,"lastCaptureTimestamp":"2026-03-24T05:37:14.560Z","specPath":"C:\\Projects\\demo-machine\\examples\\todo-app.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":5,"stepCount":20,"eventCount":20},{"slug":"virtual-table","title":"GridV - Virtualized Table Demo","status":"pass","durationSec":4.27,"resolution":null,"actionCount":5,"actionTypes":{"navigate":1,"assert":2,"scroll":1,"wait":1},"narrationCoverage":40,"narrationSegmentCount":2,"narrationOverlapCount":1,"mp4Exists":true,"mp4SizeMb":1.01,"lastCaptureTimestamp":"2026-03-24T05:37:28.619Z","specPath":"C:\\Projects\\demo-machine\\examples\\virtual-table.demo.yaml","qualityScore":100,"checksPassed":1,"checksTotal":1,"chapterCount":1,"stepCount":5,"eventCount":5}];
-const maxDuration = 33.3;
-const maxSize = 2.15;
+      let currentFilter = "all";
+      let currentSearch = "";
+      let sortCol = "slug";
+      let sortAsc = true;
 
-let currentFilter = "all";
-let currentSearch = "";
-let sortCol = "slug";
-let sortAsc = true;
+      function escapeHtml(s) {
+        return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      }
 
-function escapeHtml(s) {
-  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-}
+      function statusBadge(s) {
+        return '<span class="badge badge-' + s + '">' + s + "</span>";
+      }
 
-function statusBadge(s) {
-  return '<span class="badge badge-' + s + '">' + s + '</span>';
-}
+      function barHtml(value, max, cls) {
+        if (value == null) return '<span class="muted">--</span>';
+        const pct = Math.min(100, (value / max) * 100).toFixed(1);
+        return (
+          '<div class="bar-cell">' +
+          '<div class="bar-track"><div class="bar-fill ' +
+          cls +
+          '" style="width:' +
+          pct +
+          '%"></div></div>' +
+          '<span class="bar-value">' +
+          value +
+          (cls === "duration" ? "s" : " MB") +
+          "</span>" +
+          "</div>"
+        );
+      }
 
-function barHtml(value, max, cls) {
-  if (value == null) return '<span class="muted">--</span>';
-  const pct = Math.min(100, (value / max) * 100).toFixed(1);
-  return '<div class="bar-cell">' +
-    '<div class="bar-track"><div class="bar-fill ' + cls + '" style="width:' + pct + '%"></div></div>' +
-    '<span class="bar-value">' + value + (cls === "duration" ? "s" : " MB") + '</span>' +
-    '</div>';
-}
+      function actionPillsHtml(types) {
+        if (!types || Object.keys(types).length === 0) return '<span class="muted">--</span>';
+        return (
+          '<div class="action-pills">' +
+          Object.entries(types)
+            .sort((a, b) => b[1] - a[1])
+            .map(function (e) {
+              return '<span class="action-pill">' + escapeHtml(e[0]) + ":" + e[1] + "</span>";
+            })
+            .join("") +
+          "</div>"
+        );
+      }
 
-function actionPillsHtml(types) {
-  if (!types || Object.keys(types).length === 0) return '<span class="muted">--</span>';
-  return '<div class="action-pills">' +
-    Object.entries(types)
-      .sort((a, b) => b[1] - a[1])
-      .map(function(e) { return '<span class="action-pill">' + escapeHtml(e[0]) + ':' + e[1] + '</span>'; })
-      .join("") +
-    '</div>';
-}
+      function coverageHtml(pct) {
+        if (pct == null) return '<span class="muted">--</span>';
+        return (
+          '<div class="coverage-cell">' +
+          '<div class="coverage-track"><div class="coverage-fill" style="width:' +
+          Math.min(100, pct) +
+          '%"></div></div>' +
+          '<span class="coverage-value">' +
+          pct +
+          "%</span>" +
+          "</div>"
+        );
+      }
 
-function coverageHtml(pct) {
-  if (pct == null) return '<span class="muted">--</span>';
-  return '<div class="coverage-cell">' +
-    '<div class="coverage-track"><div class="coverage-fill" style="width:' + Math.min(100, pct) + '%"></div></div>' +
-    '<span class="coverage-value">' + pct + '%</span>' +
-    '</div>';
-}
+      function qualityHtml(score) {
+        if (score == null) return '<span class="muted">--</span>';
+        var cls = score >= 100 ? "perfect" : score >= 70 ? "good" : "bad";
+        return '<span class="quality-score ' + cls + '">' + score + "%</span>";
+      }
 
-function qualityHtml(score) {
-  if (score == null) return '<span class="muted">--</span>';
-  var cls = score >= 100 ? "perfect" : score >= 70 ? "good" : "bad";
-  return '<span class="quality-score ' + cls + '">' + score + '%</span>';
-}
+      function timestampHtml(ts) {
+        if (!ts) return '<span class="muted">--</span>';
+        try {
+          var d = new Date(ts);
+          return '<span class="timestamp">' + d.toLocaleString() + "</span>";
+        } catch (e) {
+          return '<span class="timestamp">' + escapeHtml(ts) + "</span>";
+        }
+      }
 
-function timestampHtml(ts) {
-  if (!ts) return '<span class="muted">--</span>';
-  try {
-    var d = new Date(ts);
-    return '<span class="timestamp">' + d.toLocaleString() + '</span>';
-  } catch(e) {
-    return '<span class="timestamp">' + escapeHtml(ts) + '</span>';
-  }
-}
+      function sortValue(demo, col) {
+        switch (col) {
+          case "slug":
+            return demo.slug.toLowerCase();
+          case "status":
+            return ["pass", "warn", "fail", "missing"].indexOf(demo.status);
+          case "durationSec":
+            return demo.durationSec ?? -1;
+          case "actionCount":
+            return demo.actionCount ?? -1;
+          case "narrationCoverage":
+            return demo.narrationCoverage ?? -1;
+          case "videoSizeMb":
+            return demo.videoSizeMb ?? -1;
+          case "qualityScore":
+            return demo.qualityScore ?? -1;
+          case "lastCaptureTimestamp":
+            return demo.lastCaptureTimestamp ?? "";
+          default:
+            return "";
+        }
+      }
 
-function sortValue(demo, col) {
-  switch (col) {
-    case "slug": return demo.slug.toLowerCase();
-    case "status": return ["pass","warn","fail","missing"].indexOf(demo.status);
-    case "durationSec": return demo.durationSec ?? -1;
-    case "actionCount": return demo.actionCount ?? -1;
-    case "narrationCoverage": return demo.narrationCoverage ?? -1;
-    case "mp4SizeMb": return demo.mp4SizeMb ?? -1;
-    case "qualityScore": return demo.qualityScore ?? -1;
-    case "lastCaptureTimestamp": return demo.lastCaptureTimestamp ?? "";
-    default: return "";
-  }
-}
+      function render() {
+        var filtered = demos.filter(function (d) {
+          if (currentFilter !== "all" && d.status !== currentFilter) return false;
+          if (
+            currentSearch &&
+            d.slug.toLowerCase().indexOf(currentSearch) === -1 &&
+            (d.title || "").toLowerCase().indexOf(currentSearch) === -1
+          )
+            return false;
+          return true;
+        });
 
-function render() {
-  var filtered = demos.filter(function(d) {
-    if (currentFilter !== "all" && d.status !== currentFilter) return false;
-    if (currentSearch && d.slug.toLowerCase().indexOf(currentSearch) === -1 &&
-        (d.title || "").toLowerCase().indexOf(currentSearch) === -1) return false;
-    return true;
-  });
+        filtered.sort(function (a, b) {
+          var va = sortValue(a, sortCol);
+          var vb = sortValue(b, sortCol);
+          if (va < vb) return sortAsc ? -1 : 1;
+          if (va > vb) return sortAsc ? 1 : -1;
+          return 0;
+        });
 
-  filtered.sort(function(a, b) {
-    var va = sortValue(a, sortCol);
-    var vb = sortValue(b, sortCol);
-    if (va < vb) return sortAsc ? -1 : 1;
-    if (va > vb) return sortAsc ? 1 : -1;
-    return 0;
-  });
+        var html = "";
+        for (var i = 0; i < filtered.length; i++) {
+          var d = filtered[i];
+          html +=
+            "<tr>" +
+            "<td><strong>" +
+            escapeHtml(d.slug) +
+            "</strong></td>" +
+            "<td>" +
+            statusBadge(d.status) +
+            "</td>" +
+            "<td>" +
+            barHtml(d.durationSec, maxDuration, "duration") +
+            "</td>" +
+            "<td>" +
+            (d.actionCount || '<span class="muted">--</span>') +
+            "</td>" +
+            "<td>" +
+            actionPillsHtml(d.actionTypes) +
+            "</td>" +
+            "<td>" +
+            coverageHtml(d.narrationCoverage) +
+            "</td>" +
+            "<td>" +
+            barHtml(d.videoSizeMb, maxSize, "size") +
+            "</td>" +
+            "<td>" +
+            qualityHtml(d.qualityScore) +
+            "</td>" +
+            "<td>" +
+            timestampHtml(d.lastCaptureTimestamp) +
+            "</td>" +
+            "</tr>";
+        }
 
-  var html = "";
-  for (var i = 0; i < filtered.length; i++) {
-    var d = filtered[i];
-    html += "<tr>" +
-      "<td><strong>" + escapeHtml(d.slug) + "</strong></td>" +
-      "<td>" + statusBadge(d.status) + "</td>" +
-      "<td>" + barHtml(d.durationSec, maxDuration, "duration") + "</td>" +
-      "<td>" + (d.actionCount || '<span class="muted">--</span>') + "</td>" +
-      "<td>" + actionPillsHtml(d.actionTypes) + "</td>" +
-      "<td>" + coverageHtml(d.narrationCoverage) + "</td>" +
-      "<td>" + barHtml(d.mp4SizeMb, maxSize, "size") + "</td>" +
-      "<td>" + qualityHtml(d.qualityScore) + "</td>" +
-      "<td>" + timestampHtml(d.lastCaptureTimestamp) + "</td>" +
-      "</tr>";
-  }
+        document.getElementById("tableBody").innerHTML = html;
 
-  document.getElementById("tableBody").innerHTML = html;
+        // Update sort arrows
+        document.querySelectorAll("thead th").forEach(function (th) {
+          var arrow = th.querySelector(".sort-arrow");
+          if (!arrow) return;
+          th.classList.remove("sorted");
+          arrow.textContent = "";
+          if (th.dataset.col === sortCol) {
+            th.classList.add("sorted");
+            arrow.textContent = sortAsc ? " \u25B2" : " \u25BC";
+          }
+        });
+      }
 
-  // Update sort arrows
-  document.querySelectorAll("thead th").forEach(function(th) {
-    var arrow = th.querySelector(".sort-arrow");
-    if (!arrow) return;
-    th.classList.remove("sorted");
-    arrow.textContent = "";
-    if (th.dataset.col === sortCol) {
-      th.classList.add("sorted");
-      arrow.textContent = sortAsc ? " \u25B2" : " \u25BC";
-    }
-  });
-}
+      // Sort on header click
+      document.querySelectorAll("thead th[data-col]").forEach(function (th) {
+        th.addEventListener("click", function () {
+          var col = th.dataset.col;
+          if (col === "actionTypes") return; // not sortable
+          if (sortCol === col) {
+            sortAsc = !sortAsc;
+          } else {
+            sortCol = col;
+            sortAsc = true;
+          }
+          render();
+        });
+      });
 
-// Sort on header click
-document.querySelectorAll("thead th[data-col]").forEach(function(th) {
-  th.addEventListener("click", function() {
-    var col = th.dataset.col;
-    if (col === "actionTypes") return; // not sortable
-    if (sortCol === col) {
-      sortAsc = !sortAsc;
-    } else {
-      sortCol = col;
-      sortAsc = true;
-    }
-    render();
-  });
-});
+      // Filter buttons
+      document.querySelectorAll(".filter-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          document.querySelectorAll(".filter-btn").forEach(function (b) {
+            b.classList.remove("active");
+          });
+          btn.classList.add("active");
+          currentFilter = btn.dataset.filter;
+          render();
+        });
+      });
 
-// Filter buttons
-document.querySelectorAll(".filter-btn").forEach(function(btn) {
-  btn.addEventListener("click", function() {
-    document.querySelectorAll(".filter-btn").forEach(function(b) { b.classList.remove("active"); });
-    btn.classList.add("active");
-    currentFilter = btn.dataset.filter;
-    render();
-  });
-});
+      // Search
+      document.getElementById("searchBox").addEventListener("input", function (e) {
+        currentSearch = e.target.value.toLowerCase().trim();
+        render();
+      });
 
-// Search
-document.getElementById("searchBox").addEventListener("input", function(e) {
-  currentSearch = e.target.value.toLowerCase().trim();
-  render();
-});
-
-render();
-</script>
-</body>
+      render();
+    </script>
+  </body>
 </html>

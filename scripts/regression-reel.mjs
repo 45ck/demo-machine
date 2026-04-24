@@ -116,7 +116,13 @@ function keyTimestamps(durationSec) {
   ];
 }
 
-const FRAME_NAMES = ["frame-01.png", "frame-02.png", "frame-03.png", "frame-04.png", "frame-05.png"];
+const FRAME_NAMES = [
+  "frame-01.png",
+  "frame-02.png",
+  "frame-03.png",
+  "frame-04.png",
+  "frame-05.png",
+];
 
 /**
  * Extract a single frame from an MP4 as a PNG.
@@ -175,7 +181,9 @@ function createNewPanel(framePath, outPath, width, height) {
 function createSlideshow(imagePaths, title, outPath, frameDurationSec, width, height) {
   // Write a concat list with each image as a duration entry.
   const listPath = outPath.replace(/\.mp4$/, "-list.txt");
-  const listLines = imagePaths.map((p) => `file '${p.replace(/\\/g, "/")}'\nduration ${frameDurationSec}`);
+  const listLines = imagePaths.map(
+    (p) => `file '${p.replace(/\\/g, "/")}'\nduration ${frameDurationSec}`,
+  );
   // The concat demuxer needs the last file repeated (without duration) to avoid truncation.
   listLines.push(`file '${imagePaths[imagePaths.length - 1].replace(/\\/g, "/")}'`);
 
@@ -183,10 +191,7 @@ function createSlideshow(imagePaths, title, outPath, frameDurationSec, width, he
   writeFileSync(listPath, listContent, "utf8");
 
   // Escape title for drawtext filter.
-  const escaped = title
-    .replace(/\\/g, "\\\\\\\\")
-    .replace(/:/g, "\\:")
-    .replace(/'/g, "\u2019");
+  const escaped = title.replace(/\\/g, "\\\\\\\\").replace(/:/g, "\\:").replace(/'/g, "\u2019");
 
   // Build the slideshow.
   const cmd = [
@@ -303,7 +308,9 @@ async function main() {
     const baselineDir = path.join(baselinesRoot, slug);
     const hasBaseline = await fileExists(baselineDir);
 
-    console.log(`  ${slug} — ${durationSec.toFixed(1)}s, baseline: ${hasBaseline ? "yes" : "no (NEW)"}`);
+    console.log(
+      `  ${slug} — ${durationSec.toFixed(1)}s, baseline: ${hasBaseline ? "yes" : "no (NEW)"}`,
+    );
 
     // Extract current frames.
     const currentFrames = [];
@@ -338,7 +345,14 @@ async function main() {
     // Create a slideshow for this demo.
     const title = slugToTitle(slug) + (hasBaseline ? "  [Baseline | Current]" : "  [NEW]");
     const slideshowPath = path.join(demoTmpDir, "slideshow.mp4");
-    createSlideshow(comparisonFrames, title, slideshowPath, FRAME_DURATION_SEC, REEL_WIDTH, REEL_HEIGHT);
+    createSlideshow(
+      comparisonFrames,
+      title,
+      slideshowPath,
+      FRAME_DURATION_SEC,
+      REEL_WIDTH,
+      REEL_HEIGHT,
+    );
     slideshowPaths.push(slideshowPath);
 
     reelMeta.push({
@@ -385,7 +399,9 @@ async function main() {
   console.log(`Regression reel: ${path.relative(root, outputPath)}`);
   console.log(`Metadata:        ${path.relative(root, metaPath)}`);
   console.log(`Duration:        ${finalDuration.toFixed(1)}s`);
-  console.log(`Demos:           ${reelMeta.length} (${metaJson.withBaseline} with baselines, ${metaJson.withoutBaseline} new)`);
+  console.log(
+    `Demos:           ${reelMeta.length} (${metaJson.withBaseline} with baselines, ${metaJson.withoutBaseline} new)`,
+  );
 }
 
 main().catch((err) => {

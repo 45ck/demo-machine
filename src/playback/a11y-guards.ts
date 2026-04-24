@@ -1,16 +1,16 @@
 import type { PlaywrightPage } from "./playwright.js";
 import { createLogger } from "../utils/logger.js";
+export { checkAriaRoleConsistency } from "./aria-role-consistency.js";
 
 const logger = createLogger("a11y-guards");
 
-// ---------------------------------------------------------------------------
 // Internal types returned from page.evaluate()
-// ---------------------------------------------------------------------------
 interface ElementInfo {
   tag: string;
   role: string | null;
   contentEditable: string;
   type: string | null;
+  labelsControl?: boolean;
 }
 
 interface UnlabelledElement {
@@ -20,26 +20,22 @@ interface UnlabelledElement {
   selector: string;
 }
 
-interface RoleViolation {
-  selector: string;
-  role: string;
-  missingProps: string[];
-}
-
-// ---------------------------------------------------------------------------
 // Shared role constants
-// ---------------------------------------------------------------------------
 const ROLE_CHECKBOX = "checkbox";
 const ROLE_SWITCH = "switch";
 const ROLE_RADIO = "radio";
 
-// ---------------------------------------------------------------------------
 // Validation logic — extracted from the main functions to reduce complexity
-// ---------------------------------------------------------------------------
 
-function isValidClickTarget(tag: string, role: string | null): boolean {
-  const validTags = new Set(["BUTTON", "A", "INPUT", "SUMMARY"]);
-  return validTags.has(tag) || role === "button" || role === "link" || role === "menuitem";
+function isValidClickTarget(tag: string, role: string | null, labelsControl = false): boolean {
+  const validTags = new Set(["BUTTON", "A", "INPUT", "SELECT", "SUMMARY"]);
+  return (
+    validTags.has(tag) ||
+    (tag === "LABEL" && labelsControl) ||
+    role === "button" ||
+    role === "link" ||
+    role === "menuitem"
+  );
 }
 
 function isValidTypeTarget(tag: string, role: string | null, contentEditable: string): boolean {
@@ -66,7 +62,7 @@ function isActionabilityValid(
 ): boolean {
   switch (action) {
     case "click":
-      return isValidClickTarget(tag, role);
+      return isValidClickTarget(tag, role, info.labelsControl);
     case "type":
       return isValidTypeTarget(tag, role, info.contentEditable);
     case "check":
@@ -79,9 +75,7 @@ function isActionabilityValid(
   }
 }
 
-// ---------------------------------------------------------------------------
 // #35: Actionability Attribute Validator
-// ---------------------------------------------------------------------------
 const VALIDATED_ACTIONS = new Set(["click", "type", "check", "uncheck", "select"]);
 
 /**
@@ -113,6 +107,12 @@ export async function checkActionability(
           role: el.getAttribute("role"),
           contentEditable: htmlEl.contentEditable ?? "inherit",
           type: (el as HTMLInputElement).type ?? null,
+          labelsControl:
+            el.tagName === "LABEL" &&
+            Boolean(
+              (el as HTMLLabelElement).control ||
+              el.querySelector("input, button, select, textarea"),
+            ),
         };
       }) as (...args: unknown[]) => unknown,
       selector as unknown,
@@ -137,9 +137,7 @@ export async function checkActionability(
   }
 }
 
-// ---------------------------------------------------------------------------
 // #64: Missing Label Detection
-// ---------------------------------------------------------------------------
 /**
  * Post-navigate, scan all interactive elements and check they have an
  * accessible name via aria-label, aria-labelledby, associated <label>,
@@ -230,9 +228,7 @@ export async function checkMissingLabels(page: PlaywrightPage): Promise<string[]
   }
 }
 
-// ---------------------------------------------------------------------------
 // #71: Semantic HTML Validation for Form Steps
-// ---------------------------------------------------------------------------
 
 const FORM_ACTIONS = new Set(["type", "check", "uncheck", "select"]);
 
@@ -315,89 +311,5 @@ export async function checkSemanticFormTarget(
     return msg;
   } catch {
     return null;
-  }
-}
-
-// ---------------------------------------------------------------------------
-// #61: ARIA Role Consistency Audit
-// ---------------------------------------------------------------------------
-
-/**
- * Map of ARIA roles to their required properties.
- * Based on WAI-ARIA 1.2 specification.
- */
-const ARIA_CHECKED = "aria-checked";
-const ARIA_VALUENOW = "aria-valuenow";
-
-const REQUIRED_ARIA_PROPS: Record<string, string[]> = {
-  checkbox: [ARIA_CHECKED],
-  combobox: ["aria-expanded"],
-  heading: ["aria-level"],
-  meter: [ARIA_VALUENOW],
-  option: ["aria-selected"],
-  radio: [ARIA_CHECKED],
-  scrollbar: ["aria-controls", ARIA_VALUENOW],
-  separator: [], // only when focusable: aria-valuenow
-  slider: [ARIA_VALUENOW, "aria-valuemin", "aria-valuemax"],
-  spinbutton: [ARIA_VALUENOW],
-  switch: [ARIA_CHECKED],
-};
-
-/**
- * After each interactive step, scan elements with explicit role attributes
- * and validate required ARIA properties are present.
- *
- * Returns an array of warning strings (one per violation).
- * Never throws — returns [] on any error.
- */
-export async function checkAriaRoleConsistency(page: PlaywrightPage): Promise<string[]> {
-  try {
-    const requiredMap = REQUIRED_ARIA_PROPS;
-    const violations = (await page.evaluate(
-      ((required: Record<string, string[]>) => {
-        const results: Array<{
-          selector: string;
-          role: string;
-          missingProps: string[];
-        }> = [];
-
-        for (const el of Array.from(document.querySelectorAll("[role]"))) {
-          if (el.closest("[id^=dm-], [class*=dm-]")) continue;
-
-          const role = el.getAttribute("role")?.toLowerCase();
-          if (!role || !required[role]) continue;
-
-          const requiredProps = required[role];
-          if (!requiredProps) continue;
-          const missing = requiredProps.filter((prop) => !el.hasAttribute(prop));
-          if (missing.length === 0) continue;
-
-          const tag = el.tagName.toLowerCase();
-          const id = el.id;
-          const classNames = Array.from(el.classList).slice(0, 2).join(".");
-          let sel = tag;
-          if (id) sel += `#${id}`;
-          else if (classNames) sel += `.${classNames}`;
-
-          results.push({ selector: sel, role, missingProps: missing });
-        }
-        return results;
-      }) as (...args: unknown[]) => unknown,
-      requiredMap as unknown,
-    )) as RoleViolation[] | null;
-
-    if (!violations || violations.length === 0) return [];
-
-    const warnings: string[] = [];
-    for (const v of violations) {
-      const msg =
-        `ARIA role warning: "${v.selector}" has role="${v.role}" ` +
-        `but is missing required properties: ${v.missingProps.join(", ")}`;
-      logger.warn(msg);
-      warnings.push(msg);
-    }
-    return warnings;
-  } catch {
-    return [];
   }
 }

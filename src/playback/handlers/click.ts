@@ -28,8 +28,8 @@ export const handleClick: ActionHandler = async (ctx, step, events, stepIndex) =
   // Runtime guards — warn but never block.
   await checkBoundingBoxStability(locator);
   if (step.selector) {
-    await checkHitTest(ctx.page, box, step.selector);
-    await checkPointerEvents(ctx.page, step.selector);
+    await checkHitTest(ctx.page, box, step.selector, locator);
+    await checkPointerEvents(ctx.page, step.selector, locator);
     await checkActionability(ctx.page, step.selector, "click");
   }
 
@@ -69,8 +69,8 @@ export const handleClickFirstVisible: ActionHandler = async (ctx, step, events, 
   // Runtime guards — warn but never block.
   await checkBoundingBoxStability(locator);
   if (step.selector) {
-    await checkHitTest(ctx.page, box, step.selector);
-    await checkPointerEvents(ctx.page, step.selector);
+    await checkHitTest(ctx.page, box, step.selector, locator);
+    await checkPointerEvents(ctx.page, step.selector, locator);
     await checkActionability(ctx.page, step.selector, "click");
   }
 

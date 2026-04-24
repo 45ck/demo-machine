@@ -37,8 +37,7 @@ const MUTATIONS = {
     apply(yaml) {
       return yaml.replaceAll("data-filter", "data-tab");
     },
-    description:
-      'Changed attribute "data-filter" to "data-tab" in filter button selectors',
+    description: 'Changed attribute "data-filter" to "data-tab" in filter button selectors',
     fix: 'Reverted attribute back to "data-filter"',
   },
 };
@@ -168,9 +167,7 @@ function captureFailure(brokenSpecPath) {
   try {
     exec(cmd);
     // If capture somehow succeeds, that is unexpected but not fatal.
-    console.log(
-      "  WARNING: Capture succeeded — the mutation may not have broken the spec.",
-    );
+    console.log("  WARNING: Capture succeeded — the mutation may not have broken the spec.");
   } catch {
     console.log("  Capture failed as expected (broken selector).");
   }
@@ -199,9 +196,7 @@ function createHealedSpec(specPath) {
   writeFileSync(healedPath, original, "utf8");
 
   console.log(`  Healed spec: ${path.relative(ROOT, healedPath)}`);
-  console.log(
-    "  (In production, heal-spec would analyze failure.json + failure.html",
-  );
+  console.log("  (In production, heal-spec would analyze failure.json + failure.html");
   console.log("   and use AI to fix the broken selectors automatically.)");
 
   return healedPath;
@@ -263,8 +258,7 @@ function generateComparisonVideo({ failurePng, videoWebm, mutation }) {
   const showcase = path.join(OUTPUT_BASE, "healing-showcase.mp4");
 
   // Escape colons and backslashes for ffmpeg drawtext on Windows.
-  const escapeDrawtext = (s) =>
-    s.replaceAll("\\", "\\\\").replaceAll(":", "\\:");
+  const escapeDrawtext = (s) => s.replaceAll("\\", "\\\\").replaceAll(":", "\\:");
 
   // --- Part 1: "BEFORE: Broken Selector" title card (5s) ---
   const beforeText = escapeDrawtext(`BEFORE: ${mutation.label}`);
@@ -371,13 +365,7 @@ function generateComparisonVideo({ failurePng, videoWebm, mutation }) {
 // Step 6 — Generate report
 // ---------------------------------------------------------------------------
 
-function generateReport({
-  specPath,
-  mutation,
-  failureJsonPath,
-  afterDir,
-  showcasePath,
-}) {
+function generateReport({ specPath, mutation, failureJsonPath, afterDir, showcasePath }) {
   banner("Step 6: Generating report");
 
   let failureMessage = "(no failure.json found)";
@@ -476,9 +464,7 @@ function main() {
     process.exit(2);
   }
 
-  banner(
-    `Healing Demo — spec: ${opts.spec}, mutation: ${opts.mutation}`,
-  );
+  banner(`Healing Demo — spec: ${opts.spec}, mutation: ${opts.mutation}`);
 
   ensureDir(OUTPUT_BASE);
 
@@ -486,9 +472,7 @@ function main() {
   try {
     execQuiet("ffmpeg -version");
   } catch {
-    console.error(
-      "ffmpeg is required on PATH. Install it and try again.",
-    );
+    console.error("ffmpeg is required on PATH. Install it and try again.");
     process.exit(2);
   }
 

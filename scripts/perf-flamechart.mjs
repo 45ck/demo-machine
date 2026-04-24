@@ -106,8 +106,7 @@ async function analyseDemo(demoDir, slug) {
 
   const firstEvent = events[0];
   const lastEvent = events[events.length - 1];
-  const captureSpanMs =
-    lastEvent.timestamp + (lastEvent.duration ?? 0) - firstEvent.timestamp;
+  const captureSpanMs = lastEvent.timestamp + (lastEvent.duration ?? 0) - firstEvent.timestamp;
 
   // Find the first non-navigate action to compute navigation time
   let firstNonNavIdx = events.findIndex(
@@ -372,7 +371,11 @@ function generateHTML(demos) {
 }
 
 function escapeHtml(s) {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 async function main() {
