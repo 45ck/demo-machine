@@ -165,7 +165,15 @@ async function main() {
     const startOne = Date.now();
 
     // Phase 1: Capture
-    const captureArgs = ["dist/cli.js", "capture", spec, "--output", outDir, "--no-narration"];
+    const captureArgs = [
+      "dist/cli.js",
+      "capture",
+      spec,
+      "--output",
+      outDir,
+      "--overwrite",
+      "--no-narration",
+    ];
     if (opts.headed) captureArgs.push("--no-headless");
 
     const captureCode = await run("node", captureArgs, { cwd: ROOT });
@@ -202,6 +210,7 @@ async function main() {
         "kokoro",
         "--output",
         outDir,
+        "--overwrite",
       ];
       const editCode = await run("node", editArgs, { cwd: ROOT });
       const editElapsed = Date.now() - startOne;

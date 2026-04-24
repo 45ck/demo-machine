@@ -7,6 +7,22 @@ vi.mock("../../../src/pipeline.js", () => ({
   runFullPipeline: vi.fn(),
 }));
 
+const fakeRunResult = {
+  title: "My Demo",
+  outputDir: resolve("output", "my-demo", "20260424-120000-000"),
+  videoPath: resolve("output", "my-demo", "20260424-120000-000", "video.webm"),
+  renderedVideoPath: resolve("output", "my-demo", "20260424-120000-000", "output.mp4"),
+  eventCount: 2,
+  artifacts: {
+    tracePath: resolve("output", "my-demo", "20260424-120000-000", "trace.zip"),
+    eventLogPath: resolve("output", "my-demo", "20260424-120000-000", "events.json"),
+    environmentPath: resolve("output", "my-demo", "20260424-120000-000", "environment.json"),
+    verificationPath: resolve("output", "my-demo", "20260424-120000-000", "verification.json"),
+  },
+  qualityReportPath: resolve("output", "my-demo", "20260424-120000-000", "quality.json"),
+  qualityStatus: "pass" as const,
+};
+
 describe("run-pipeline tool", () => {
   let server: McpServer;
   let registeredTools: Map<string, { handler: (...args: unknown[]) => Promise<unknown> }>;
@@ -31,7 +47,7 @@ describe("run-pipeline tool", () => {
 
   it("runs pipeline with default options", async () => {
     const { runFullPipeline } = await import("../../../src/pipeline.js");
-    vi.mocked(runFullPipeline).mockResolvedValue(undefined);
+    vi.mocked(runFullPipeline).mockResolvedValue(fakeRunResult);
 
     const handler = registeredTools.get("run-pipeline")!.handler;
     const result = (await handler({ specPath: "test.demo.yaml" })) as {
@@ -39,20 +55,22 @@ describe("run-pipeline tool", () => {
     };
 
     expect(runFullPipeline).toHaveBeenCalledWith(resolve("test.demo.yaml"), {
-      output: "./output",
+      overwrite: false,
       narration: true,
       edit: true,
       renderer: "ffmpeg",
       ttsProvider: "kokoro",
       headless: true,
     });
-    expect(result.content[0]!.text).toContain("Pipeline complete");
-    expect(result.content[0]!.text).toContain("./output");
+    const parsed = JSON.parse(result.content[0]!.text) as Record<string, unknown>;
+    expect(parsed["outputDir"]).toBe(fakeRunResult.outputDir);
+    expect(parsed["renderedVideoPath"]).toBe(fakeRunResult.renderedVideoPath);
+    expect(parsed["qualityReportPath"]).toBe(fakeRunResult.qualityReportPath);
   });
 
   it("passes custom options through", async () => {
     const { runFullPipeline } = await import("../../../src/pipeline.js");
-    vi.mocked(runFullPipeline).mockResolvedValue(undefined);
+    vi.mocked(runFullPipeline).mockResolvedValue(fakeRunResult);
 
     const handler = registeredTools.get("run-pipeline")!.handler;
     await handler({
@@ -67,6 +85,7 @@ describe("run-pipeline tool", () => {
       resolve("test.demo.yaml"),
       expect.objectContaining({
         output: "./custom-out",
+        overwrite: false,
         narration: false,
         headless: false,
         ttsProvider: "openai",

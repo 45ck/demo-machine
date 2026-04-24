@@ -21,6 +21,12 @@ export function registerRunTool(server: McpServer): void {
         .describe(
           "Select dropdown visual approach: A (cloned listbox), B (keyboard nav), C (fake overlay, default), D (custom hook via registerCustomSelectApproach)",
         ),
+      overwrite: z
+        .boolean()
+        .optional()
+        .describe(
+          "Allow writing into an explicit output directory that already has demo artifacts",
+        ),
     },
     async (args) => {
       try {
@@ -28,20 +34,21 @@ export function registerRunTool(server: McpServer): void {
         const path = await import("node:path");
         const resolvedPath = path.resolve(args.specPath);
         const { runFullPipeline } = await import("../../pipeline.js");
-        await runFullPipeline(resolvedPath, {
-          output: args.output ?? "./output",
+        const result = await runFullPipeline(resolvedPath, {
+          ...(args.output !== undefined ? { output: args.output } : {}),
+          overwrite: args.overwrite ?? false,
           narration: args.narration ?? true,
           edit: true,
           renderer: args.renderer ?? "ffmpeg",
           ttsProvider: args.ttsProvider ?? "kokoro",
           headless: args.headless ?? true,
-          selectApproach: args.selectApproach,
+          ...(args.selectApproach ? { selectApproach: args.selectApproach } : {}),
         });
         return {
           content: [
             {
               type: "text" as const,
-              text: `Pipeline complete. Output in: ${args.output ?? "./output"}`,
+              text: JSON.stringify(result, null, 2),
             },
           ],
         };

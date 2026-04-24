@@ -185,6 +185,7 @@ describe("MCP prompts", () => {
   it("heal-spec defaults output dir to ./output", async () => {
     const { readFile } = await import("node:fs/promises");
     vi.mocked(readFile)
+      .mockRejectedValueOnce(new Error("ENOENT"))
       .mockResolvedValueOnce("meta:\n  title: Demo\n")
       .mockRejectedValueOnce(new Error("ENOENT"))
       .mockRejectedValueOnce(new Error("ENOENT"))
@@ -195,7 +196,24 @@ describe("MCP prompts", () => {
 
     const text = result.messages[0]!.content.text;
     expect(text).toContain(resolve("./output"));
-    expect(readFile).toHaveBeenCalledTimes(4);
+    expect(readFile).toHaveBeenCalledTimes(5);
+  });
+
+  it("heal-spec uses output/latest.json when output dir is omitted", async () => {
+    const { readFile } = await import("node:fs/promises");
+    const latestDir = resolve("output", "checkout", "20260424-010203-004");
+    vi.mocked(readFile)
+      .mockResolvedValueOnce(JSON.stringify({ outputDir: latestDir }))
+      .mockResolvedValueOnce("meta:\n  title: Demo\n")
+      .mockResolvedValueOnce('{"error":"missing"}')
+      .mockResolvedValueOnce("<html></html>")
+      .mockResolvedValueOnce("[]");
+
+    const handler = registeredPrompts.get("heal-spec")!.handler;
+    const result = (await handler({ specPath: "demo.yaml" })) as PromptMessages;
+
+    expect(result.messages[0]!.content.text).toContain(latestDir);
+    expect(readFile).toHaveBeenCalledWith(join(resolve("./output"), "latest.json"), "utf8");
   });
 
   // --- demo-from-url ---
@@ -336,6 +354,7 @@ describe("MCP prompts", () => {
   it("review-demo works without spec path", async () => {
     const { readFile } = await import("node:fs/promises");
     vi.mocked(readFile)
+      .mockRejectedValueOnce(new Error("ENOENT"))
       .mockResolvedValueOnce("[]")
       .mockResolvedValueOnce("{}")
       .mockResolvedValueOnce("WEBVTT")
@@ -347,12 +366,13 @@ describe("MCP prompts", () => {
     const text = result.messages[0]!.content.text;
     expect(text).toContain(resolve("./output"));
     expect(text).not.toContain("Spec file:");
-    expect(readFile).toHaveBeenCalledTimes(4);
+    expect(readFile).toHaveBeenCalledTimes(5);
   });
 
   it("review-demo handles missing artifacts gracefully", async () => {
     const { readFile } = await import("node:fs/promises");
     vi.mocked(readFile)
+      .mockRejectedValueOnce(new Error("ENOENT"))
       .mockRejectedValueOnce(new Error("ENOENT"))
       .mockRejectedValueOnce(new Error("ENOENT"))
       .mockRejectedValueOnce(new Error("ENOENT"))

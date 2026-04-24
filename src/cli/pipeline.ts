@@ -1,4 +1,5 @@
 import type { DemoSpec } from "../spec/types.js";
+import type { RunResult } from "../pipeline-types.js";
 import { createLogger } from "../utils/logger.js";
 import type { GlobalOptions } from "./options.js";
 import type { NarrationSettings } from "./narration.js";
@@ -6,6 +7,7 @@ import { captureFromSpec } from "./capture.js";
 import { prepareNarration, writeSubtitlesFromTimed } from "./narration.js";
 import { displayTimelineAndSaveSegments } from "./timeline-display.js";
 import { runPostRenderQualityGate } from "./quality-gate.js";
+import { writeLatestOutputPointer } from "./output.js";
 
 export { runEditPipeline } from "./edit-pipeline.js";
 export { runPostRenderQualityGate } from "./quality-gate.js";
@@ -133,7 +135,11 @@ async function runEditPhase(params: {
   spec: DemoSpec;
   opts: GlobalOptions;
   settings: NarrationSettings;
-}): Promise<void> {
+}): Promise<{
+  outputPath: string;
+  qualityReportPath?: string | undefined;
+  qualityStatus?: "pass" | "warn" | "fail" | undefined;
+}> {
   const timelineMod = await import("../editor/timeline.js");
   const { workingCapture, trim } = await prepareTrimmedCapture({
     capture: params.capture,
@@ -182,7 +188,7 @@ async function runEditPhase(params: {
 
   const screenshotData = buildNonEmptyScreenshotData(params.capture.screenshotData);
 
-  await runPostRenderQualityGate({
+  const quality = await runPostRenderQualityGate({
     outputPath,
     outputDir: params.opts.output,
     verificationPath: params.capture.artifacts?.verificationPath,
@@ -194,6 +200,54 @@ async function runEditPhase(params: {
   });
 
   log.info(`Output: ${outputPath}`);
+  return {
+    outputPath,
+    ...(quality.qualityReportPath ? { qualityReportPath: quality.qualityReportPath } : {}),
+    qualityStatus: quality.status,
+  };
+}
+
+function buildCaptureRunResult(capture: Awaited<ReturnType<typeof captureFromSpec>>): RunResult {
+  return {
+    title: capture.spec.meta.title,
+    outputDir: capture.outputDir,
+    videoPath: capture.videoPath,
+    eventCount: capture.events.length,
+    ...(capture.artifacts ? { artifacts: capture.artifacts } : {}),
+  };
+}
+
+function buildEditedRunResult(
+  capture: Awaited<ReturnType<typeof captureFromSpec>>,
+  edit: Awaited<ReturnType<typeof runEditPhase>>,
+): RunResult {
+  return {
+    ...buildCaptureRunResult(capture),
+    renderedVideoPath: edit.outputPath,
+    ...(edit.qualityReportPath ? { qualityReportPath: edit.qualityReportPath } : {}),
+    qualityStatus: edit.qualityStatus,
+  };
+}
+
+async function writeLatestForRunResult(params: {
+  result: RunResult;
+  opts: GlobalOptions;
+  mode: "capture" | "run";
+  specPath?: string | undefined;
+}): Promise<void> {
+  await writeLatestOutputPointer({
+    outputRoot: params.opts.outputRoot,
+    mode: params.mode,
+    title: params.result.title,
+    ...(params.specPath ? { specPath: params.specPath } : {}),
+    outputDir: params.result.outputDir,
+    videoPath: params.result.videoPath,
+    ...(params.result.renderedVideoPath
+      ? { renderedVideoPath: params.result.renderedVideoPath }
+      : {}),
+    eventCount: params.result.eventCount,
+    ...(params.result.artifacts ? { artifacts: params.result.artifacts } : {}),
+  });
 }
 
 export async function runFullPipeline(params: {
@@ -203,7 +257,7 @@ export async function runFullPipeline(params: {
   specDir?: string | undefined;
   opts: GlobalOptions;
   settings: NarrationSettings;
-}): Promise<void> {
+}): Promise<RunResult> {
   const capture = await captureFromSpec({
     spec: params.spec,
     ...(params.specPath ? { specPath: params.specPath } : {}),
@@ -214,13 +268,28 @@ export async function runFullPipeline(params: {
 
   if (!params.opts.edit) {
     log.info(`Capture complete: ${capture.videoPath}`);
-    return;
+    const result = buildCaptureRunResult(capture);
+    await writeLatestForRunResult({
+      result,
+      opts: params.opts,
+      mode: "capture",
+      ...(params.specPath ? { specPath: params.specPath } : {}),
+    });
+    return result;
   }
 
-  await runEditPhase({
+  const edit = await runEditPhase({
     capture,
     spec: params.spec,
     opts: params.opts,
     settings: params.settings,
   });
+  const result = buildEditedRunResult(capture, edit);
+  await writeLatestForRunResult({
+    result,
+    opts: params.opts,
+    mode: "run",
+    ...(params.specPath ? { specPath: params.specPath } : {}),
+  });
+  return result;
 }

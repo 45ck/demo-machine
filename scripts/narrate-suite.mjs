@@ -113,6 +113,7 @@ async function main() {
         specPath,
         "--output",
         captureDir,
+        "--overwrite",
         "--tts-provider",
         opts.provider,
       ];

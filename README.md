@@ -14,7 +14,7 @@
 [![npm](https://img.shields.io/npm/v/demo-machine)](https://www.npmjs.com/package/demo-machine)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Tests](https://img.shields.io/badge/Tests-1032%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-1044%20passing-brightgreen)](tests/)
 [![Playwright](https://img.shields.io/badge/Playwright-Browser%20Automation-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev)
 [![FFmpeg](https://img.shields.io/badge/FFmpeg-Video%20Rendering-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org)
 
@@ -193,7 +193,6 @@ pnpm build
 
 ```bash
 node dist/cli.js run examples/todo-app.demo.yaml \
-  --output ./output \
   --no-headless
 ```
 
@@ -202,7 +201,7 @@ This will:
 1. Start the included todo-app dev server
 2. Launch a browser with smooth cursor and natural typing
 3. Record the session via Playwright
-4. Render a polished MP4 with overlays to `./output/output.mp4`
+4. Render a polished MP4 with overlays to `./output/todo-app/<run-id>/output.mp4`
 
 ## Usage
 
@@ -262,7 +261,9 @@ demo-machine examples list --search upload
 demo-machine examples show file-uploader
 ```
 
-`capture` and `run` write these artifacts into `--output`:
+`capture`, `run`, and `edit` use safe output directories by default. When `--output` is not supplied, each run writes to `./output/<spec-slug>/<run-id>` so repeat demos keep their own artifacts. Automatic runs also update `./output/latest.json` with the concrete output directory and primary artifacts. When `--output` is supplied, demo-machine uses that exact directory and refuses to write over known demo artifacts unless `--overwrite` is passed.
+
+`capture` and `run` write these artifacts into the resolved output directory:
 
 - `video.webm` (raw recording)
 - `events.json` (event log)
@@ -272,7 +273,7 @@ demo-machine examples show file-uploader
 - `screenshots/manifest.json` plus step/assert/chapter screenshots when visual evidence is collected
 - `trace.zip` (Playwright trace)
 
-`run` also writes `quality.json` after rendering. Warning-only quality results exit successfully but remain visible in the report; failed post-render checks write the report before the command exits non-zero.
+`run` also writes `output.mp4` and `quality.json` after rendering. Warning-only quality results exit successfully but remain visible in the report; failed post-render checks write the report before the command exits non-zero.
 
 `edit` expects `video.webm` to be in the same directory as the `events.json` you pass. If `metadata.json` exists, it will be used automatically.
 
@@ -280,26 +281,27 @@ demo-machine examples show file-uploader
 
 ### Options
 
-| Flag                        | Default    | Description                                    |
-| --------------------------- | ---------- | ---------------------------------------------- | --- | --- | ------------------------------- |
-| `-o, --output <dir>`        | `./output` | Output directory                               |
-| `--no-narration`            | —          | Skip TTS narration                             |
-| `--no-edit`                 | —          | For `run`, raw capture only and skip rendering |
-| `--no-headless`             | —          | Show the browser window                        |
-| `--renderer <name>`         | `ffmpeg`   | Video renderer                                 |
-| `--tts-provider <name>`     | `kokoro`   | TTS: kokoro (local), openai, elevenlabs, piper |
-| `--tts-voice <id>`          | —          | Provider-specific voice id                     |
-| `--narration-sync <mode>`   | `manual`   | `manual`, `auto-sync`, or `warn-only`          |
-| `--narration-buffer <ms>`   | `500`      | Lead-in buffer for narration sync              |
-| `--resolution <WxH>`        | spec value | Override capture resolution                    |
-| `--change-detection <mode>` | spec value | `error`, `warn`, or `off`                      |
-| `--strict-geometry`         | —          | Fail on viewport geometry mismatch             |
-| `--from-chapter <title>`    | —          | Trim output to start from a chapter            |
-| `--from-step <index>`       | —          | Trim output to start from a step index         |
-| `--trim-start-ms <ms>`      | `0`        | Additional render trim offset                  |
-| `--select-approach <A       | B          | C                                              | D>` | `C` | Select dropdown visual strategy |
-| `--timeline`                | —          | Print narration timeline after rendering       |
-| `--verbose`                 | —          | Debug logging                                  |
+| Flag                             | Default                | Description                                                     |
+| -------------------------------- | ---------------------- | --------------------------------------------------------------- |
+| `-o, --output <dir>`             | `./output/<slug>/<id>` | Output directory. Explicit paths are protected from collisions. |
+| `--overwrite`                    | —                      | Allow writing into an explicit output directory with artifacts. |
+| `--no-narration`                 | —                      | Skip TTS narration.                                             |
+| `--no-edit`                      | —                      | For `run`, raw capture only and skip rendering.                 |
+| `--no-headless`                  | —                      | Show the browser window.                                        |
+| `--renderer <name>`              | `ffmpeg`               | Video renderer.                                                 |
+| `--tts-provider <name>`          | `kokoro`               | TTS: kokoro (local), openai, elevenlabs, piper.                 |
+| `--tts-voice <id>`               | —                      | Provider-specific voice id.                                     |
+| `--narration-sync <mode>`        | `manual`               | `manual`, `auto-sync`, or `warn-only`.                          |
+| `--narration-buffer <ms>`        | `500`                  | Lead-in buffer for narration sync.                              |
+| `--resolution <WxH>`             | spec value             | Override capture resolution.                                    |
+| `--change-detection <mode>`      | spec value             | `error`, `warn`, or `off`.                                      |
+| `--strict-geometry`              | —                      | Fail on viewport geometry mismatch.                             |
+| `--from-chapter <title>`         | —                      | Trim output to start from a chapter.                            |
+| `--from-step <index>`            | —                      | Trim output to start from a step index.                         |
+| `--trim-start-ms <ms>`           | `0`                    | Additional render trim offset.                                  |
+| `--select-approach <A\|B\|C\|D>` | `C`                    | Select dropdown visual strategy.                                |
+| `--timeline`                     | —                      | Print narration timeline after rendering.                       |
+| `--verbose`                      | —                      | Debug logging.                                                  |
 
 `init` also accepts `--healthcheck <url>` so demo-machine can wait for a stable app readiness endpoint before capture.
 
@@ -487,7 +489,7 @@ src/
   utils/              # Logger, process helpers
   mcp-server.ts       # MCP server entry point (demo-machine-mcp binary)
   mcp/                # MCP tools, resources, and prompts
-tests/                # 1032 tests across 94 files
+tests/                # 1044 tests across 96 files
 examples/             # Example specs + demo apps
 ```
 

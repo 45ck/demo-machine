@@ -10,7 +10,8 @@ vi.mock("../../../src/pipeline.js", () => ({
 }));
 
 const fakeResult = {
-  videoPath: "./output/output.mp4",
+  outputDir: resolve("output", "my-demo", "20260424-120000-000"),
+  videoPath: resolve("output", "my-demo", "20260424-120000-000", "video.webm"),
   events: [{} as ActionEvent, {} as ActionEvent],
   spec: {
     meta: { title: "My Demo", resolution: { width: 1920, height: 1080 } },
@@ -18,11 +19,11 @@ const fakeResult = {
   } as unknown as DemoSpec,
   startTimestamp: 1000,
   artifacts: {
-    tracePath: "./output/trace.zip",
-    eventLogPath: "./output/events.json",
-    metadataPath: "./output/metadata.json",
-    environmentPath: "./output/environment.json",
-    verificationPath: "./output/verification.json",
+    tracePath: resolve("output", "my-demo", "20260424-120000-000", "trace.zip"),
+    eventLogPath: resolve("output", "my-demo", "20260424-120000-000", "events.json"),
+    metadataPath: resolve("output", "my-demo", "20260424-120000-000", "metadata.json"),
+    environmentPath: resolve("output", "my-demo", "20260424-120000-000", "environment.json"),
+    verificationPath: resolve("output", "my-demo", "20260424-120000-000", "verification.json"),
   },
 };
 
@@ -58,7 +59,8 @@ describe("capture-spec tool", () => {
     };
 
     const parsed = JSON.parse(result.content[0]!.text) as Record<string, unknown>;
-    expect(parsed["videoPath"]).toBe("./output/output.mp4");
+    expect(parsed["outputDir"]).toBe(fakeResult.outputDir);
+    expect(parsed["videoPath"]).toBe(fakeResult.videoPath);
     expect(parsed["eventCount"]).toBe(2);
     expect(parsed["title"]).toBe("My Demo");
     expect(parsed["artifacts"]).toEqual(fakeResult.artifacts);
@@ -73,7 +75,7 @@ describe("capture-spec tool", () => {
 
     expect(captureFromSpec).toHaveBeenCalledWith(
       resolve("test.demo.yaml"),
-      expect.objectContaining({ narration: false, edit: false }),
+      expect.objectContaining({ narration: false, edit: false, overwrite: false }),
     );
   });
 

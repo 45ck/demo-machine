@@ -94,4 +94,7 @@ Use `demo-machine examples list` to find a nearby product pattern before writing
    - `demo-machine validate` (fast feedback)
    - `demo-machine capture` (real browser)
 5. Iterate with artifacts:
+   - Use the run summary to open the resolved output directory.
    - On failure, use `trace.zip` plus `failure.png`/`failure.html`/`failure.json`.
+   - Let default output create a new `./output/<spec-slug>/<run-id>` folder for repeat attempts; `./output/latest.json` points to the newest automatic run.
+   - Use `--output` plus `--overwrite` only for a deliberate fixed handoff path.

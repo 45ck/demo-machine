@@ -37,6 +37,7 @@ interface CaptureArtifacts {
 }
 
 export interface CaptureResult {
+  outputDir: string;
   videoPath: string;
   events: ActionEvent[];
   spec: DemoSpec;
@@ -144,6 +145,7 @@ async function finalizeSuccessfulCapture(params: {
   });
 
   return {
+    outputDir: params.captureOpts.outputDir,
     videoPath: bundle.videoPath,
     events: params.events,
     spec: params.spec,

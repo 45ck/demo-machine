@@ -161,6 +161,7 @@ function captureFailure(brokenSpecPath) {
     JSON.stringify(brokenSpecPath),
     "--output",
     JSON.stringify(beforeDir),
+    "--overwrite",
     "--no-narration",
   ].join(" ");
 
@@ -219,6 +220,7 @@ function captureSuccess(healedSpecPath) {
     JSON.stringify(healedSpecPath),
     "--output",
     JSON.stringify(afterDir),
+    "--overwrite",
     "--no-narration",
   ].join(" ");
 

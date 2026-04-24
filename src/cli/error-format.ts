@@ -1,5 +1,6 @@
 import { SpecLoadError } from "../spec/loader.js";
 import { PreflightError } from "../validation/errors.js";
+import { OutputCollisionError } from "./output.js";
 
 interface FormatCliErrorOptions {
   verbose?: boolean | undefined;
@@ -27,6 +28,14 @@ export function formatCliError(error: unknown, opts: FormatCliErrorOptions = {})
 
   if (error instanceof SpecLoadError) {
     return error.message;
+  }
+
+  if (error instanceof OutputCollisionError) {
+    return [
+      error.message,
+      `Existing artifacts: ${error.artifactNames.join(", ")}`,
+      "Suggestion: choose a new --output directory or pass --overwrite after confirming these artifacts can be replaced.",
+    ].join("\n");
   }
 
   if (error instanceof Error) {

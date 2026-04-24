@@ -197,7 +197,7 @@ async function main() {
 
   // 5. Run the full pipeline (capture + edit + narration)
   try {
-    const cliArgs = ["dist/cli.js", "run", SPEC, "--output", OUTPUT_DIR];
+    const cliArgs = ["dist/cli.js", "run", SPEC, "--output", OUTPUT_DIR, "--overwrite"];
 
     if (!opts.narration) {
       cliArgs.push("--no-narration");

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { formatCliError } from "../../src/cli/error-format.js";
+import { OutputCollisionError } from "../../src/cli/output.js";
 import { SpecLoadError } from "../../src/spec/loader.js";
 import { PreflightError } from "../../src/validation/errors.js";
 
@@ -40,5 +41,12 @@ describe("formatCliError", () => {
         "  Suggestion: Use target.by role or a stable data-testid.",
       ].join("\n"),
     );
+  });
+
+  it("formats output collisions with artifact names and remediation", () => {
+    const error = new OutputCollisionError("C:\\demo\\output", ["events.json", "output.mp4"]);
+
+    expect(formatCliError(error)).toContain("Existing artifacts: events.json, output.mp4");
+    expect(formatCliError(error)).toContain("choose a new --output directory");
   });
 });

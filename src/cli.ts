@@ -11,6 +11,9 @@ import { runFullPipeline, runEditPipeline } from "./cli/pipeline.js";
 import { runDoctor } from "./cli/doctor.js";
 import { initSpec } from "./cli/init.js";
 import { formatCliError } from "./cli/error-format.js";
+import { resolveOutputOptions, writeLatestOutputPointer } from "./cli/output.js";
+import { formatCaptureSummary, formatRunSummary } from "./cli/run-summary.js";
+import { preflight } from "./validation/preflight.js";
 import { getPackageVersion } from "./version.js";
 
 const logger = createLogger("cli");
@@ -23,6 +26,7 @@ program
   .configureHelp({ showGlobalOptions: true })
   .version(getPackageVersion())
   .option("-o, --output <dir>", "Output directory", "./output")
+  .option("--overwrite", "Allow replacing demo artifacts in explicit --output", false)
   .option("--no-narration", "Skip narration")
   .option("--no-edit", "For run: skip editing/rendering and keep raw capture only")
   .option("--renderer <name>", "Renderer: ffmpeg", "ffmpeg")
@@ -146,21 +150,13 @@ program
     applyGlobalOptions(opts);
     try {
       const spec = await loadSpec(specPath);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const { resolveNarrationSettings: resolveNarrSettings } = await import("./cli/narration.js");
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const settings = resolveNarrSettings({
+      const settings = resolveNarrationSettings({
         spec,
         opts,
         getOptionSource: (name: string) => program.getOptionValueSource(name),
       });
       const pathMod = await import("node:path");
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const { preflight: preflightCheck } = await import("./validation/preflight.js");
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      await preflightCheck({
+      await preflight({
         spec,
         specPath,
         specDir: pathMod.dirname(pathMod.resolve(specPath)),
@@ -192,13 +188,37 @@ program
     applyGlobalOptions(opts);
     try {
       const spec = await loadSpec(specPath);
+      const { opts: outputOpts } = await resolveOutputOptions({
+        opts,
+        spec,
+        specPath,
+        outputWasExplicit: program.getOptionValueSource("output") === "cli",
+      });
       const settings = resolveNarrationSettings({
         spec,
-        opts,
+        opts: outputOpts,
         getOptionSource: (name) => program.getOptionValueSource(name),
       });
-      const bundle = await captureFromSpec({ spec, specPath, opts, settings });
-      logger.info(`Capture complete: ${bundle.videoPath}`);
+      const bundle = await captureFromSpec({ spec, specPath, opts: outputOpts, settings });
+      await writeLatestOutputPointer({
+        outputRoot: outputOpts.outputRoot,
+        mode: "capture",
+        title: bundle.spec.meta.title,
+        specPath,
+        outputDir: bundle.outputDir,
+        videoPath: bundle.videoPath,
+        eventCount: bundle.events.length,
+        ...(bundle.artifacts ? { artifacts: bundle.artifacts } : {}),
+      });
+      logger.info(
+        formatCaptureSummary({
+          title: bundle.spec.meta.title,
+          outputDir: bundle.outputDir,
+          videoPath: bundle.videoPath,
+          eventCount: bundle.events.length,
+          ...(bundle.artifacts ? { artifacts: bundle.artifacts } : {}),
+        }),
+      );
     } catch (err) {
       logger.error(formatCliError(err, { verbose: opts.verbose }));
       process.exitCode = 1;
@@ -213,12 +233,19 @@ program
     applyGlobalOptions(opts);
     try {
       const spec = await loadSpec(specPath);
+      const { opts: outputOpts } = await resolveOutputOptions({
+        opts,
+        spec,
+        specPath,
+        outputWasExplicit: program.getOptionValueSource("output") === "cli",
+      });
       const settings = resolveNarrationSettings({
         spec,
-        opts,
+        opts: outputOpts,
         getOptionSource: (name) => program.getOptionValueSource(name),
       });
-      await runFullPipeline({ spec, specPath, opts, settings });
+      const result = await runFullPipeline({ spec, specPath, opts: outputOpts, settings });
+      logger.info(formatRunSummary(result));
     } catch (err) {
       logger.error(formatCliError(err, { verbose: opts.verbose }));
       process.exitCode = 1;
@@ -262,7 +289,14 @@ program
     const opts = program.opts<GlobalOptions>();
     applyGlobalOptions(opts);
     try {
-      await runEditPipeline(eventsPath, opts, cmdOpts.spec);
+      const spec = cmdOpts.spec ? await loadSpec(cmdOpts.spec) : undefined;
+      const { opts: outputOpts } = await resolveOutputOptions({
+        opts,
+        spec,
+        specPath: cmdOpts.spec ?? eventsPath,
+        outputWasExplicit: program.getOptionValueSource("output") === "cli",
+      });
+      await runEditPipeline(eventsPath, outputOpts, cmdOpts.spec);
     } catch (err) {
       logger.error(formatCliError(err, { verbose: opts.verbose }));
       process.exitCode = 1;

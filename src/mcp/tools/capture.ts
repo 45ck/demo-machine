@@ -25,6 +25,12 @@ export function registerCaptureTool(server: McpServer): void {
         .describe(
           "Select dropdown visual approach: A (cloned listbox), B (keyboard nav), C (fake overlay, default), D (custom hook via registerCustomSelectApproach)",
         ),
+      overwrite: z
+        .boolean()
+        .optional()
+        .describe(
+          "Allow writing into an explicit output directory that already has demo artifacts",
+        ),
     },
     async (args) => {
       try {
@@ -33,13 +39,14 @@ export function registerCaptureTool(server: McpServer): void {
         const resolvedPath = path.resolve(args.specPath);
         const { captureFromSpec } = await import("../../pipeline.js");
         const result = await captureFromSpec(resolvedPath, {
-          output: args.output ?? "./output",
+          ...(args.output !== undefined ? { output: args.output } : {}),
+          overwrite: args.overwrite ?? false,
           narration: args.narration ?? false,
           edit: false,
           renderer: "ffmpeg",
           ttsProvider: args.ttsProvider ?? "kokoro",
           headless: args.headless ?? true,
-          selectApproach: args.selectApproach,
+          ...(args.selectApproach ? { selectApproach: args.selectApproach } : {}),
         });
         return {
           content: [
@@ -47,6 +54,7 @@ export function registerCaptureTool(server: McpServer): void {
               type: "text" as const,
               text: JSON.stringify(
                 {
+                  outputDir: result.outputDir,
                   videoPath: result.videoPath,
                   eventCount: result.events.length,
                   title: result.spec.meta.title,

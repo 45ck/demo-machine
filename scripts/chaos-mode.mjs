@@ -346,7 +346,15 @@ const mutators = {
  */
 function runCapture(specPath, outputDir, timeoutMs) {
   return new Promise((resolve) => {
-    const args = ["dist/cli.js", "capture", specPath, "--output", outputDir, "--no-narration"];
+    const args = [
+      "dist/cli.js",
+      "capture",
+      specPath,
+      "--output",
+      outputDir,
+      "--overwrite",
+      "--no-narration",
+    ];
     const startMs = Date.now();
     let timedOut = false;
     let settled = false;

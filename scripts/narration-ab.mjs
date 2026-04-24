@@ -368,6 +368,7 @@ async function main() {
       specPath,
       "--output",
       captureDir,
+      "--overwrite",
       "--no-narration",
     ]);
 
@@ -423,6 +424,7 @@ async function main() {
       specPath,
       "--output",
       variantDir,
+      "--overwrite",
       "--tts-provider",
       opts.provider,
       "--tts-voice",

@@ -234,7 +234,15 @@ async function main() {
         console.log(`  [CAPTURE] ${slug} / ${browser}`);
 
         const captureEnv = { ...process.env, BROWSER: browser };
-        const args = ["dist/cli.js", "capture", specPath, "--output", outDir, "--no-narration"];
+        const args = [
+          "dist/cli.js",
+          "capture",
+          specPath,
+          "--output",
+          outDir,
+          "--overwrite",
+          "--no-narration",
+        ];
 
         const code = await run("node", args, { cwd: root, env: captureEnv });
         captureResults.push({ slug, browser, exitCode: code, outDir });

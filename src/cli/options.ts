@@ -4,6 +4,11 @@ import type { SelectApproach } from "../playback/handlers/select-approaches.js";
 
 export interface GlobalOptions {
   output: string;
+  overwrite: boolean;
+  outputMode?: "automatic" | "explicit" | undefined;
+  outputRoot?: string | undefined;
+  outputSlug?: string | undefined;
+  outputRunId?: string | undefined;
   narration: boolean;
   edit: boolean;
   renderer: string;

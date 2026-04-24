@@ -172,7 +172,7 @@ async function main() {
     const args = ["dist/cli.js", opts.mode, spec];
     if (opts.mode !== "validate") {
       // Keep suite runs lightweight: no narration, and avoid post-processing unless explicitly requested.
-      args.push("--output", outDir, "--no-narration");
+      args.push("--output", outDir, "--overwrite", "--no-narration");
       if (opts.mode === "run") args.push("--no-edit");
       if (opts.headed) args.push("--no-headless");
     }

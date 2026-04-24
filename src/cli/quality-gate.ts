@@ -30,6 +30,11 @@ interface RunPostRenderQualityGateParams {
   screenshotData?: ScreenshotData;
 }
 
+interface PostRenderQualityGateSummary {
+  qualityReportPath?: string | undefined;
+  status: "pass" | "warn" | "fail";
+}
+
 /** Build narration-to-action index lookup by walking spec chapters. */
 function buildNarrationToActionMap(spec: DemoSpec): number[] {
   const map: number[] = [];
@@ -166,7 +171,7 @@ function logQualitySummary(gate: QualityGateResult): void {
 
 export async function runPostRenderQualityGate(
   params: RunPostRenderQualityGateParams,
-): Promise<void> {
+): Promise<PostRenderQualityGateSummary> {
   const qualityMod = await import("../quality/runner.js");
 
   try {
@@ -198,8 +203,10 @@ export async function runPostRenderQualityGate(
       qualityReportPath: reportPath,
       status: qualityStatus(gate),
     });
+    const status = qualityStatus(gate);
     throwIfQualityFailed(gate);
     logQualitySummary(gate);
+    return { status, ...(reportPath ? { qualityReportPath: reportPath } : {}) };
   } catch (err) {
     if (err instanceof Error && err.message.startsWith("Quality gate failed:")) throw err;
     const reportPath = await writeQualityErrorReport({

@@ -325,6 +325,7 @@ async function main() {
         specPath,
         "--output",
         tmpOut,
+        "--overwrite",
         "--no-narration",
         "--resolution",
         "960x540",
@@ -401,6 +402,7 @@ async function main() {
         path.resolve(root, "examples/todo-app.demo.yaml"),
         "--output",
         tmpOut,
+        "--overwrite",
       ];
       if (opts.headed) args.push("--no-headless");
       const code = await run("node", args, { cwd: root });

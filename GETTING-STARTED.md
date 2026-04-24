@@ -17,16 +17,18 @@ Install FFmpeg and make sure it is on your `PATH` before running the full render
 ## Run A Known Demo
 
 ```bash
-node dist/cli.js run examples/todo-app.demo.yaml --output ./output --no-headless
+node dist/cli.js run examples/todo-app.demo.yaml --no-headless
 ```
 
 For a raw capture without editing or narration:
 
 ```bash
-node dist/cli.js capture examples/hello-world.demo.yaml --output ./output/hello --no-narration
+node dist/cli.js capture examples/hello-world.demo.yaml --no-narration
 ```
 
-Expected capture artifacts:
+By default each run writes to `./output/<spec-slug>/<run-id>` so repeat demos do not overwrite each other, and `./output/latest.json` points to the most recent automatic run. Supplying `--output <dir>` uses that exact directory; if it already contains demo artifacts, pass `--overwrite` only after confirming the old artifacts can be replaced.
+
+Expected capture artifacts in the resolved output directory:
 
 - `video.webm`
 - `events.json`

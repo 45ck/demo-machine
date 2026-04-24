@@ -162,7 +162,11 @@ export {
   writeSubtitles,
   extractBranding,
 } from "./pipeline.js";
-export type { PipelineOptions, CaptureResult as PipelineCaptureResult } from "./pipeline.js";
+export type {
+  PipelineOptions,
+  CaptureResult as PipelineCaptureResult,
+  RunResult as PipelineRunResult,
+} from "./pipeline.js";
 
 // Redaction
 export { generateBlurStyles } from "./redaction/mask.js";

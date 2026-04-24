@@ -52,14 +52,17 @@ describe("runPostRenderQualityGate", () => {
       "utf8",
     );
 
-    await expect(
-      runPostRenderQualityGate({
-        outputPath: "output.mp4",
-        outputDir: tempDir,
-        verificationPath,
-        spec,
-      }),
-    ).resolves.toBeUndefined();
+    const result = await runPostRenderQualityGate({
+      outputPath: "output.mp4",
+      outputDir: tempDir,
+      verificationPath,
+      spec,
+    });
+
+    expect(result).toEqual({
+      qualityReportPath: join(tempDir, "quality.json"),
+      status: "warn",
+    });
 
     const quality = JSON.parse(await readFile(join(tempDir, "quality.json"), "utf8")) as {
       summary: Record<string, number>;

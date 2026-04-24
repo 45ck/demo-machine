@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
-
+import { resolveOutputDirFromLatest } from "./output-latest.js";
 type PromptResult = {
   messages: Array<{ role: "user"; content: { type: "text"; text: string } }>;
 };
@@ -16,9 +16,7 @@ export async function readFileOrFallback(filePath: string): Promise<string> {
 const SPEC_CONTENT_LABEL = "Spec content:";
 
 export function msg(text: string): PromptResult {
-  return {
-    messages: [{ role: "user" as const, content: { type: "text" as const, text } }],
-  };
+  return { messages: [{ role: "user" as const, content: { type: "text" as const, text } }] };
 }
 
 export async function debugDemoHandler({
@@ -94,7 +92,7 @@ export async function healSpecHandler({
   outputDir: string | undefined;
 }): Promise<PromptResult> {
   const resolvedSpecPath = resolve(specPath);
-  const resolvedOutputDir = resolve(outputDir ?? "./output");
+  const resolvedOutputDir = await resolveOutputDirFromLatest(outputDir);
 
   const specContent = await readFileOrFallback(resolvedSpecPath);
   const failureJson = await readFileOrFallback(join(resolvedOutputDir, "failure.json"));
@@ -249,7 +247,7 @@ export async function reviewDemoHandler({
   outputDir: string | undefined;
   specPath: string | undefined;
 }): Promise<PromptResult> {
-  const resolvedOutputDir = resolve(outputDir ?? "./output");
+  const resolvedOutputDir = await resolveOutputDirFromLatest(outputDir);
 
   const eventsContent = await readFileOrFallback(join(resolvedOutputDir, "events.json"));
   const metadataContent = await readFileOrFallback(join(resolvedOutputDir, "metadata.json"));

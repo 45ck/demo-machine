@@ -3,12 +3,14 @@ import type { ActionEvent } from "./playback/types.js";
 import type { Timeline } from "./editor/types.js";
 import type { NarrationPreSynthesisResult } from "./utils/narration-sync-types.js";
 import type { TimedNarrationSegment, NarrationMixResult } from "./narration/types.js";
+import type { PipelineArtifacts, RunResult } from "./pipeline-types.js";
 import { createLogger } from "./utils/logger.js";
 
 const log = createLogger("pipeline");
 
 export interface PipelineOptions {
-  output: string;
+  output?: string | undefined;
+  overwrite?: boolean | undefined;
   narration: boolean;
   edit: boolean;
   renderer: string;
@@ -25,20 +27,15 @@ export interface PipelineOptions {
 }
 
 export interface CaptureResult {
+  outputDir: string;
   videoPath: string;
   events: ActionEvent[];
   spec: DemoSpec;
   startTimestamp: number;
-  artifacts?:
-    | {
-        tracePath: string;
-        eventLogPath: string;
-        metadataPath?: string | undefined;
-        environmentPath: string;
-        verificationPath: string;
-      }
-    | undefined;
+  artifacts?: PipelineArtifacts | undefined;
 }
+
+export type { RunResult } from "./pipeline-types.js";
 
 export function extractBranding(
   spec: DemoSpec,
@@ -156,7 +153,8 @@ export async function prepareNarration(params: {
 
 function toGlobalOptions(opts: PipelineOptions): import("./cli/options.js").GlobalOptions {
   return {
-    output: opts.output,
+    output: opts.output ?? "./output",
+    overwrite: opts.overwrite ?? false,
     narration: opts.narration,
     edit: opts.edit,
     renderer: opts.renderer,
@@ -183,9 +181,16 @@ export async function captureFromSpec(
 
   const spec = await loadSpec(specPath);
   const globalOpts = toGlobalOptions(opts);
+  const { resolveOutputOptions, writeLatestOutputPointer } = await import("./cli/output.js");
+  const { opts: outputOpts } = await resolveOutputOptions({
+    opts: globalOpts,
+    spec,
+    specPath,
+    outputWasExplicit: opts.output !== undefined,
+  });
   const settings = resolveNarrationSettings({
     spec,
-    opts: globalOpts,
+    opts: outputOpts,
     getOptionSource: () => undefined,
   });
 
@@ -193,37 +198,55 @@ export async function captureFromSpec(
     spec,
     specPath,
     ...(opts.specDir !== undefined ? { specDir: opts.specDir } : {}),
-    opts: globalOpts,
+    opts: outputOpts,
     settings,
+  });
+  await writeLatestOutputPointer({
+    outputRoot: outputOpts.outputRoot,
+    mode: "capture",
+    title: bundle.spec.meta.title,
+    specPath,
+    outputDir: bundle.outputDir,
+    videoPath: bundle.videoPath,
+    eventCount: bundle.events.length,
+    ...(bundle.artifacts ? { artifacts: bundle.artifacts } : {}),
   });
 
   return {
+    outputDir: bundle.outputDir,
     videoPath: bundle.videoPath,
     events: bundle.events,
     spec: bundle.spec,
     startTimestamp: bundle.startTimestamp,
-    artifacts: bundle.artifacts,
+    ...(bundle.artifacts ? { artifacts: bundle.artifacts } : {}),
   };
 }
 
-export async function runFullPipeline(specPath: string, opts: PipelineOptions): Promise<void> {
+export async function runFullPipeline(specPath: string, opts: PipelineOptions): Promise<RunResult> {
   const { loadSpec } = await import("./spec/loader.js");
   const { resolveNarrationSettings } = await import("./cli/narration.js");
   const pipelineMod = await import("./cli/pipeline.js");
 
   const spec = await loadSpec(specPath);
   const globalOpts = toGlobalOptions(opts);
+  const { resolveOutputOptions } = await import("./cli/output.js");
+  const { opts: outputOpts } = await resolveOutputOptions({
+    opts: globalOpts,
+    spec,
+    specPath,
+    outputWasExplicit: opts.output !== undefined,
+  });
   const settings = resolveNarrationSettings({
     spec,
-    opts: globalOpts,
+    opts: outputOpts,
     getOptionSource: () => undefined,
   });
 
-  await pipelineMod.runFullPipeline({
+  return await pipelineMod.runFullPipeline({
     spec,
     specPath,
     ...(opts.specDir !== undefined ? { specDir: opts.specDir } : {}),
-    opts: globalOpts,
+    opts: outputOpts,
     settings,
   });
 }
