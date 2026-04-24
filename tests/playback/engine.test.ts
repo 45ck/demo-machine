@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { actionHandlers } from "../../src/playback/actions.js";
 import type { PlaywrightPage, PlaybackContext } from "../../src/playback/actions.js";
 import { PlaybackEngine } from "../../src/playback/engine.js";
+import { ScreenshotCollector } from "../../src/playback/screenshot-collector.js";
 import type { Chapter } from "../../src/spec/types.js";
 import type { ActionEvent, BoundingBox, Pacing } from "../../src/playback/types.js";
 import * as visuals from "../../src/playback/visuals.js";
@@ -767,6 +768,35 @@ describe("PlaybackEngine", () => {
     expect(onStepComplete).toHaveBeenCalledTimes(2);
     expect(onStepComplete.mock.calls[0]![0]!.action).toBe("navigate");
     expect(onStepComplete.mock.calls[1]![0]!.action).toBe("click");
+  });
+
+  it("populates screenshot collector data during real playback", async () => {
+    const chapters: Chapter[] = [
+      {
+        title: "Capture",
+        steps: [
+          { action: "assert", selector: "#headline", visible: true },
+          { action: "click", selector: "#btn" },
+        ],
+      },
+    ];
+    const collector = new ScreenshotCollector();
+
+    const engine = new PlaybackEngine(page, {
+      baseUrl: "https://example.com",
+      screenshotCollector: collector,
+    });
+    await engine.execute(chapters);
+
+    const results = collector.getResults();
+    expect(results.chapterTitleScreenshots.size).toBe(1);
+    expect(results.stepScreenshots.size).toBe(2);
+    expect(results.assertScreenshotPairs).toHaveLength(1);
+    expect(results.assertScreenshotPairs[0]!.stepIndex).toBe(0);
+    expect(results.cursorPositions).toEqual([
+      { stepIndex: 1, cursorX: 50, cursorY: 25, targetCenterX: 50, targetCenterY: 25 },
+    ]);
+    expect(page.screenshot).toHaveBeenCalledTimes(5);
   });
 
   it("does not call onStepComplete when not provided", async () => {

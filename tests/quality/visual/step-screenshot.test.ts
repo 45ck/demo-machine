@@ -51,7 +51,28 @@ describe("checkStepScreenshots", () => {
     expect(results[0]!.status).toBe("pass");
   });
 
-  it("fails when consecutive screenshots differ significantly", () => {
+  it("warns when consecutive screenshots differ substantially but not catastrophically", () => {
+    const gray = solidPng(10, 10, 128, 128, 128);
+    const mixed = new PNG({ width: 10, height: 10 });
+    for (let i = 0; i < 100; i++) {
+      const offset = i * 4;
+      const white = i < 50;
+      mixed.data[offset] = white ? 255 : 128;
+      mixed.data[offset + 1] = white ? 255 : 128;
+      mixed.data[offset + 2] = white ? 255 : 128;
+      mixed.data[offset + 3] = 255;
+    }
+    const screenshots = new Map<number, Buffer>();
+    screenshots.set(0, gray);
+    screenshots.set(1, PNG.sync.write(mixed));
+    const results = checkStepScreenshots(baseCtx({ stepScreenshots: screenshots }));
+    const warn = results.find((r) => r.status === "warn");
+    expect(warn).toBeDefined();
+    expect(warn!.message).toContain("0→1");
+    expect(warn!.message).toContain("pixel mismatch");
+  });
+
+  it("fails when consecutive screenshots differ catastrophically", () => {
     const gray = solidPng(10, 10, 128, 128, 128);
     const white = solidPng(10, 10, 255, 255, 255);
     const screenshots = new Map<number, Buffer>();

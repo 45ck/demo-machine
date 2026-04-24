@@ -14,7 +14,7 @@
 [![npm](https://img.shields.io/npm/v/demo-machine)](https://www.npmjs.com/package/demo-machine)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Tests](https://img.shields.io/badge/Tests-1010%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-1015%20passing-brightgreen)](tests/)
 [![Playwright](https://img.shields.io/badge/Playwright-Browser%20Automation-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev)
 [![FFmpeg](https://img.shields.io/badge/FFmpeg-Video%20Rendering-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org)
 
@@ -453,7 +453,7 @@ src/
   utils/              # Logger, process helpers
   mcp-server.ts       # MCP server entry point (demo-machine-mcp binary)
   mcp/                # MCP tools, resources, and prompts
-tests/                # 1010 tests across 89 files
+tests/                # 1015 tests across 90 files
 examples/             # Example specs + demo apps
 ```
 

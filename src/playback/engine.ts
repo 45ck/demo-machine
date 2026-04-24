@@ -11,6 +11,8 @@ import { applyRedaction, checkSecrets, hideCursor, injectCursor } from "./overla
 import { ChangeDetectionOrchestrator } from "./change-detection/orchestrator.js";
 import { detectOverlayLeaks } from "./overlay-leak-detector.js";
 import { checkAriaRoleConsistency } from "./a11y-guards.js";
+import { wrapWithScreenshotCapture } from "./capture-hooks.js";
+import type { ScreenshotCollector } from "./screenshot-collector.js";
 
 const logger = createLogger("playback");
 
@@ -44,13 +46,17 @@ async function executeStep(
     redactionSelectors: string[];
     secretPatterns: string[];
     stepIndex: number;
+    screenshotCollector?: ScreenshotCollector | undefined;
   },
 ): Promise<void> {
   const handler = actionHandlers[step.action];
   if (!handler) {
     throw new Error(`Unknown action: ${step.action}`);
   }
-  await handler(ctx, step, params.events, params.stepIndex);
+  const effectiveHandler = params.screenshotCollector
+    ? wrapWithScreenshotCapture(handler, params.screenshotCollector)
+    : handler;
+  await effectiveHandler(ctx, step, params.events, params.stepIndex);
   if (step.action === "navigate") {
     await checkSecrets(ctx.page, params.secretPatterns, params.redactionSelectors);
   }
@@ -107,6 +113,7 @@ async function executeStepOrRaise(params: {
   chapterTitle: string;
   selector: string;
   startTimestamp: number;
+  screenshotCollector?: ScreenshotCollector | undefined;
 }): Promise<void> {
   try {
     await executeStep(params.ctx, params.step, {
@@ -114,6 +121,7 @@ async function executeStepOrRaise(params: {
       redactionSelectors: params.redactionSelectors,
       secretPatterns: params.secretPatterns,
       stepIndex: params.stepIndex,
+      screenshotCollector: params.screenshotCollector,
     });
   } catch (err) {
     raisePlaybackStepError({
@@ -182,10 +190,13 @@ async function runChapters(params: {
   changeDetection?: ChangeDetectionOrchestrator | undefined;
   events: ActionEvent[];
   startTimestamp: number;
+  screenshotCollector?: ScreenshotCollector | undefined;
 }): Promise<void> {
   let stepIndex = 0;
-  for (const chapter of params.chapters) {
+  for (let chapterIndex = 0; chapterIndex < params.chapters.length; chapterIndex++) {
+    const chapter = params.chapters[chapterIndex]!;
     logger.info(`Starting chapter: ${chapter.title}`);
+    await params.screenshotCollector?.captureChapterTitle(chapterIndex, params.page);
     for (const step of chapter.steps) {
       const selector = selectorForError(step);
       const shouldCheck = params.changeDetection?.shouldCheck(step) ?? false;
@@ -205,6 +216,7 @@ async function runChapters(params: {
         chapterTitle: chapter.title,
         selector,
         startTimestamp: params.startTimestamp,
+        screenshotCollector: params.screenshotCollector,
       });
 
       // User callback errors should propagate as-is (caller-owned failure mode).
@@ -359,6 +371,7 @@ export class PlaybackEngine {
       changeDetection,
       events,
       startTimestamp,
+      screenshotCollector: this.options.screenshotCollector,
     });
 
     await hideCursor(this.page);

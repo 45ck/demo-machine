@@ -1,5 +1,6 @@
 import type { DetectorSignal } from "./change-detection/types.js";
 import type { BoundingBox } from "./geometry.js";
+import type { ScreenshotCollector } from "./screenshot-collector.js";
 
 export type { BoundingBox } from "./geometry.js";
 
@@ -42,6 +43,7 @@ export interface PlaybackOptions {
   secretPatterns?: string[] | undefined;
   pacing?: Pacing | undefined;
   onStepComplete?: ((event: ActionEvent) => Promise<void>) | undefined;
+  screenshotCollector?: ScreenshotCollector | undefined;
   narration?:
     | {
         mode: import("../utils/narration-sync-types.js").NarrationSyncMode;

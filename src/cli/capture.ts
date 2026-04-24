@@ -191,6 +191,7 @@ async function captureWithBrowser(params: CaptureWithBrowserParams): Promise<Cap
     settings: params.settings,
     timing: narrationPrep.timing,
     changeDetection: resolveChangeDetectionConfig(params.spec, params.opts),
+    screenshotCollector,
   });
 
   const monitors = attachMonitors(session.page, { runnerUrl: session.baseUrl });

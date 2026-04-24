@@ -47,6 +47,9 @@ export function createPlaybackEngine(params: {
   changeDetection?:
     | import("../playback/change-detection/config.js").ChangeDetectionConfig
     | undefined;
+  screenshotCollector?:
+    | import("../playback/screenshot-collector.js").ScreenshotCollector
+    | undefined;
 }) {
   return new params.PlaybackEngine(params.page, {
     baseUrl: params.baseUrl,
@@ -65,6 +68,7 @@ export function createPlaybackEngine(params: {
         }
       : {}),
     ...(params.changeDetection ? { changeDetection: params.changeDetection } : {}),
+    ...(params.screenshotCollector ? { screenshotCollector: params.screenshotCollector } : {}),
   });
 }
 

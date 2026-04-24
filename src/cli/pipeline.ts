@@ -259,7 +259,7 @@ function buildQualityGateInputs(params: {
   return { events, narrationSegments };
 }
 
-async function runPostRenderQualityGate(params: {
+export async function runPostRenderQualityGate(params: {
   outputPath: string;
   spec: DemoSpec;
   events?: import("../playback/types.js").ActionEvent[];
@@ -279,9 +279,10 @@ async function runPostRenderQualityGate(params: {
     chapterTitleScreenshots?: Map<number, Buffer>;
   };
 }): Promise<void> {
-  try {
-    const qualityMod = await import("../quality/runner.js");
+  const qualityMod = await import("../quality/runner.js");
+  let gate: Awaited<ReturnType<typeof qualityMod.runQualityGate>>;
 
+  try {
     const inputs =
       params.events && params.narrationSegments && params.startTimestamp !== undefined
         ? buildQualityGateInputs({
@@ -292,25 +293,32 @@ async function runPostRenderQualityGate(params: {
           })
         : undefined;
 
-    const gate = await qualityMod.runQualityGate({
+    gate = await qualityMod.runQualityGate({
       outputMp4Path: params.outputPath,
       spec: params.spec,
       events: inputs?.events,
       narrationSegments: inputs?.narrationSegments,
       ...(params.screenshotData ?? {}),
     });
-    for (const r of gate.results) {
-      if (r.status !== "pass") {
-        log.warn(`[quality] ${r.checkName}: ${r.message}`);
-      }
-    }
-    if (gate.hasFailures) {
-      const failCount = gate.results.filter((r) => r.status === "fail").length;
-      log.warn(`Quality gate: ${failCount} check(s) failed out of ${gate.results.length}`);
-    } else {
-      log.info(`Quality gate passed (${gate.results.length} checks, ${gate.durationMs}ms)`);
-    }
   } catch (err) {
-    log.warn(`Quality gate skipped: ${err instanceof Error ? err.message : String(err)}`);
+    throw new Error(
+      `Quality gate failed to run: ${err instanceof Error ? err.message : String(err)}`,
+      { cause: err },
+    );
   }
+
+  for (const r of gate.results) {
+    if (r.status !== "pass") {
+      log.warn(`[quality] ${r.checkName}: ${r.message}`);
+    }
+  }
+  if (gate.hasFailures) {
+    const failures = gate.results.filter((r) => r.status === "fail");
+    const failureSummary = failures.map((r) => `  - ${r.checkName}: ${r.message}`).join("\n");
+    throw new Error(
+      `Quality gate failed: ${String(failures.length)} check(s) failed out of ${String(gate.results.length)}\n${failureSummary}`,
+    );
+  }
+
+  log.info(`Quality gate passed (${gate.results.length} checks, ${gate.durationMs}ms)`);
 }
