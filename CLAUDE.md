@@ -38,7 +38,7 @@ Opens at `http://localhost:5555`
 ## Test Framework
 
 - **vitest** — run with `pnpm test`
-- 1020 tests across 92 files
+- 1032 tests across 94 files
 - Mock `../../src/playback/visuals.js` inline with `vi.mock()` factory (no hoisted variables)
 
 ## Key Conventions

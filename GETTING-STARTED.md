@@ -23,7 +23,7 @@ node dist/cli.js run examples/todo-app.demo.yaml --output ./output --no-headless
 For a raw capture without editing or narration:
 
 ```bash
-node dist/cli.js capture examples/hello-world.demo.yaml --output ./output/hello --no-edit --no-narration
+node dist/cli.js capture examples/hello-world.demo.yaml --output ./output/hello --no-narration
 ```
 
 Expected capture artifacts:
@@ -40,7 +40,7 @@ Expected capture artifacts:
 Create the smallest useful spec:
 
 ```bash
-node dist/cli.js init my-product.demo.yaml --url http://localhost:3000 --command "pnpm dev" --title "My Product Demo"
+node dist/cli.js init my-product.demo.yaml --url http://localhost:3000 --healthcheck http://localhost:3000/health --command "pnpm dev" --title "My Product Demo"
 ```
 
 That writes a valid starter spec similar to this:
@@ -52,20 +52,32 @@ meta:
 runner:
   command: "pnpm dev"
   url: "http://localhost:3000"
+  healthcheck: "http://localhost:3000/health"
   timeout: 30000
 
+narration:
+  enabled: true
+  provider: kokoro
+  sync:
+    mode: auto-sync
+    bufferMs: 500
+
 chapters:
-  - title: "Open the app"
+  - title: "First look"
     steps:
       - action: navigate
         url: "/"
-        narration: "Open the product dashboard."
-      - action: click
+        narration: "Open the product."
+      - action: assert
         target:
-          by: role
-          role: button
-          name: "Create"
-        narration: "Create a new item."
+          by: css
+          selector: body
+        visible: true
+        narration: "Confirm the app shell is visible before recording interactions."
+      - action: wait
+        timeout: 1000
+      - action: screenshot
+        name: first-screen
 ```
 
 Prefer structured targets such as `role`, `label`, `text`, and `testId` before raw CSS selectors. They make demos easier to read and less brittle when class names or DOM structure change.

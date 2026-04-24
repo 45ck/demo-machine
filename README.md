@@ -14,7 +14,7 @@
 [![npm](https://img.shields.io/npm/v/demo-machine)](https://www.npmjs.com/package/demo-machine)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Tests](https://img.shields.io/badge/Tests-1020%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-1032%20passing-brightgreen)](tests/)
 [![Playwright](https://img.shields.io/badge/Playwright-Browser%20Automation-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev)
 [![FFmpeg](https://img.shields.io/badge/FFmpeg-Video%20Rendering-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org)
 
@@ -185,6 +185,7 @@ Tools like Screen Studio and Arcade require manual recording sessions. Every tim
 git clone https://github.com/45ck/demo-machine.git
 cd demo-machine
 pnpm install
+pnpm exec playwright install chromium
 pnpm build
 ```
 
@@ -215,13 +216,19 @@ demo-machine run <spec.yaml>
 demo-machine validate <spec.yaml>
 
 # Create a starter spec for your app
-demo-machine init my-product.demo.yaml --url http://localhost:3000 --command "pnpm dev"
+demo-machine init my-product.demo.yaml --url http://localhost:3000 --healthcheck http://localhost:3000/health --command "pnpm dev"
 
 # Capture only (raw video, no post-processing)
 demo-machine capture <spec.yaml>
 
 # Re-render from an existing event log
 demo-machine edit <events.json>
+
+# Find a built-in example to use as an authoring reference
+demo-machine examples list --tag forms
+
+# Check local browser, FFmpeg, disk, and TTS dependencies
+demo-machine doctor
 ```
 
 ### Example Suite
@@ -245,6 +252,16 @@ pnpm examples:capture
 pnpm examples:capture -- --filter spa-router
 ```
 
+For authoring, use the built-in example catalog to find a close reference before writing a new spec:
+
+```bash
+demo-machine examples list
+demo-machine examples list --tag forms
+demo-machine examples list --signal selector-intent
+demo-machine examples list --search upload
+demo-machine examples show file-uploader
+```
+
 `capture` and `run` write these artifacts into `--output`:
 
 - `video.webm` (raw recording)
@@ -263,15 +280,28 @@ pnpm examples:capture -- --filter spa-router
 
 ### Options
 
-| Flag                    | Default    | Description                                    |
-| ----------------------- | ---------- | ---------------------------------------------- |
-| `-o, --output <dir>`    | `./output` | Output directory                               |
-| `--no-narration`        | —          | Skip TTS narration                             |
-| `--no-edit`             | —          | Raw capture only, skip rendering               |
-| `--no-headless`         | —          | Show the browser window                        |
-| `--renderer <name>`     | `ffmpeg`   | Video renderer                                 |
-| `--tts-provider <name>` | `kokoro`   | TTS: kokoro (local), openai, elevenlabs, piper |
-| `--verbose`             | —          | Debug logging                                  |
+| Flag                        | Default    | Description                                    |
+| --------------------------- | ---------- | ---------------------------------------------- | --- | --- | ------------------------------- |
+| `-o, --output <dir>`        | `./output` | Output directory                               |
+| `--no-narration`            | —          | Skip TTS narration                             |
+| `--no-edit`                 | —          | For `run`, raw capture only and skip rendering |
+| `--no-headless`             | —          | Show the browser window                        |
+| `--renderer <name>`         | `ffmpeg`   | Video renderer                                 |
+| `--tts-provider <name>`     | `kokoro`   | TTS: kokoro (local), openai, elevenlabs, piper |
+| `--tts-voice <id>`          | —          | Provider-specific voice id                     |
+| `--narration-sync <mode>`   | `manual`   | `manual`, `auto-sync`, or `warn-only`          |
+| `--narration-buffer <ms>`   | `500`      | Lead-in buffer for narration sync              |
+| `--resolution <WxH>`        | spec value | Override capture resolution                    |
+| `--change-detection <mode>` | spec value | `error`, `warn`, or `off`                      |
+| `--strict-geometry`         | —          | Fail on viewport geometry mismatch             |
+| `--from-chapter <title>`    | —          | Trim output to start from a chapter            |
+| `--from-step <index>`       | —          | Trim output to start from a step index         |
+| `--trim-start-ms <ms>`      | `0`        | Additional render trim offset                  |
+| `--select-approach <A       | B          | C                                              | D>` | `C` | Select dropdown visual strategy |
+| `--timeline`                | —          | Print narration timeline after rendering       |
+| `--verbose`                 | —          | Debug logging                                  |
+
+`init` also accepts `--healthcheck <url>` so demo-machine can wait for a stable app readiness endpoint before capture.
 
 ## Spec Format
 
@@ -457,7 +487,7 @@ src/
   utils/              # Logger, process helpers
   mcp-server.ts       # MCP server entry point (demo-machine-mcp binary)
   mcp/                # MCP tools, resources, and prompts
-tests/                # 1020 tests across 92 files
+tests/                # 1032 tests across 94 files
 examples/             # Example specs + demo apps
 ```
 

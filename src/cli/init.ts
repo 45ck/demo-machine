@@ -11,13 +11,17 @@ interface InitOptions {
   title?: string | undefined;
   url: string;
   command?: string | undefined;
+  healthcheck?: string | undefined;
   force?: boolean | undefined;
 }
 
 function buildStarterSpec(opts: InitOptions): DemoSpec {
-  const runner = opts.command
-    ? { command: opts.command, url: opts.url, timeout: 30000 }
-    : { url: opts.url, timeout: 30000 };
+  const runner = {
+    ...(opts.command ? { command: opts.command } : {}),
+    url: opts.url,
+    ...(opts.healthcheck ? { healthcheck: opts.healthcheck } : {}),
+    timeout: 30000,
+  };
 
   return validateSpec({
     meta: {
@@ -38,6 +42,12 @@ function buildStarterSpec(opts: InitOptions): DemoSpec {
             action: "navigate",
             url: "/",
             narration: "Open the product.",
+          },
+          {
+            action: "assert",
+            target: { by: "css", selector: "body" },
+            visible: true,
+            narration: "Confirm the app shell is visible before recording interactions.",
           },
           {
             action: "wait",
@@ -71,7 +81,7 @@ export async function initSpec(outputPath: string, opts: InitOptions): Promise<v
   await writeFile(resolved, specYaml, { encoding: "utf8", flag: opts.force ? "w" : "wx" });
 
   logger.info(`Created ${resolved}`);
-  logger.info(`Validate: node dist/cli.js validate ${outputPath}`);
-  logger.info(`Capture:  node dist/cli.js capture ${outputPath} --no-edit --no-narration`);
-  logger.info(`Render:   node dist/cli.js run ${outputPath}`);
+  logger.info(`Validate: demo-machine validate ${outputPath}`);
+  logger.info(`Capture:  demo-machine capture ${outputPath} --no-narration`);
+  logger.info(`Render:   demo-machine run ${outputPath} --no-headless`);
 }

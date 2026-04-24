@@ -10,6 +10,7 @@ import { captureFromSpec } from "./cli/capture.js";
 import { runFullPipeline, runEditPipeline } from "./cli/pipeline.js";
 import { runDoctor } from "./cli/doctor.js";
 import { initSpec } from "./cli/init.js";
+import { formatCliError } from "./cli/error-format.js";
 import { getPackageVersion } from "./version.js";
 
 const logger = createLogger("cli");
@@ -19,10 +20,11 @@ const program = new Command();
 program
   .name("demo-machine")
   .description("Demo as code — automate polished product demo videos from YAML specs")
+  .configureHelp({ showGlobalOptions: true })
   .version(getPackageVersion())
   .option("-o, --output <dir>", "Output directory", "./output")
   .option("--no-narration", "Skip narration")
-  .option("--no-edit", "Skip editing (raw capture only)")
+  .option("--no-edit", "For run: skip editing/rendering and keep raw capture only")
   .option("--renderer <name>", "Renderer: ffmpeg", "ffmpeg")
   .option("--tts-provider <name>", "TTS: kokoro (local) | openai | elevenlabs | piper", "kokoro")
   .option(
@@ -111,19 +113,26 @@ program
   .description("Create a starter demo spec for a local product or web app")
   .requiredOption("--url <url>", "App URL to open, e.g. http://localhost:3000")
   .option("--command <cmd>", "Command to start the app before capture")
+  .option("--healthcheck <url>", "Healthcheck URL to wait for before capture")
   .option("--title <title>", "Demo title", "Product Demo")
   .option("--force", "Overwrite the spec file if it already exists", false)
   .action(
     async (
       specPath: string,
-      cmdOpts: { url: string; command?: string; title?: string; force?: boolean },
+      cmdOpts: {
+        url: string;
+        command?: string;
+        healthcheck?: string;
+        title?: string;
+        force?: boolean;
+      },
     ) => {
       const opts = program.opts<GlobalOptions>();
       applyGlobalOptions(opts);
       try {
         await initSpec(specPath, cmdOpts);
       } catch (err) {
-        logger.error(err instanceof Error ? err.message : String(err));
+        logger.error(formatCliError(err, { verbose: opts.verbose }));
         process.exitCode = 1;
       }
     },
@@ -137,7 +146,6 @@ program
     applyGlobalOptions(opts);
     try {
       const spec = await loadSpec(specPath);
-      logger.info(`Spec valid: "${spec.meta.title}" (${String(spec.chapters.length)} chapters)`);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const { resolveNarrationSettings: resolveNarrSettings } = await import("./cli/narration.js");
@@ -159,8 +167,9 @@ program
         opts,
         settings,
       });
+      logger.info(`Spec valid: "${spec.meta.title}" (${String(spec.chapters.length)} chapters)`);
     } catch (err) {
-      logger.error(err instanceof Error ? (err.stack ?? err.message) : String(err));
+      logger.error(formatCliError(err, { verbose: opts.verbose }));
       process.exitCode = 1;
     }
   });
@@ -191,7 +200,7 @@ program
       const bundle = await captureFromSpec({ spec, specPath, opts, settings });
       logger.info(`Capture complete: ${bundle.videoPath}`);
     } catch (err) {
-      logger.error(err instanceof Error ? (err.stack ?? err.message) : String(err));
+      logger.error(formatCliError(err, { verbose: opts.verbose }));
       process.exitCode = 1;
     }
   });
@@ -211,7 +220,7 @@ program
       });
       await runFullPipeline({ spec, specPath, opts, settings });
     } catch (err) {
-      logger.error(err instanceof Error ? (err.stack ?? err.message) : String(err));
+      logger.error(formatCliError(err, { verbose: opts.verbose }));
       process.exitCode = 1;
     }
   });
@@ -240,7 +249,7 @@ program
         process.stdout.write(output);
       }
     } catch (err) {
-      logger.error(err instanceof Error ? (err.stack ?? err.message) : String(err));
+      logger.error(formatCliError(err, { verbose: opts.verbose }));
       process.exitCode = 1;
     }
   });
@@ -255,13 +264,15 @@ program
     try {
       await runEditPipeline(eventsPath, opts, cmdOpts.spec);
     } catch (err) {
-      logger.error(err instanceof Error ? (err.stack ?? err.message) : String(err));
+      logger.error(formatCliError(err, { verbose: opts.verbose }));
       process.exitCode = 1;
     }
   });
 
 async function registerSubcommands(): Promise<void> {
+  const { registerExamplesCommand } = await import("./cli/examples.js");
   const { registerVoicesCommand } = await import("./cli/voices.js");
+  registerExamplesCommand(program);
   registerVoicesCommand(program);
 }
 

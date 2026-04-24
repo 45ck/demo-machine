@@ -73,11 +73,12 @@ Run:
 
 ```bash
 pnpm quality:verify
+demo-machine examples list --tag forms
 pnpm examples:validate
 pnpm examples:capture
 ```
 
-`examples:capture` is the strongest raw-capture signal because it launches each demo app, drives the browser, records video, writes screenshot evidence when available, and writes Playwright `trace.zip`. Rendered quality evidence is produced by `demo-machine run` as `quality.json`.
+Use `demo-machine examples list` to find a nearby product pattern before writing a new spec. `examples:capture` is the strongest raw-capture signal because it launches each demo app, drives the browser, records video, writes screenshot evidence when available, and writes Playwright `trace.zip`. Rendered quality evidence is produced by `demo-machine run` as `quality.json`.
 
 ## How To Demo A New App (Playbook)
 
