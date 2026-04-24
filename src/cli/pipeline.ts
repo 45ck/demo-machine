@@ -5,8 +5,10 @@ import type { NarrationSettings } from "./narration.js";
 import { captureFromSpec } from "./capture.js";
 import { prepareNarration, writeSubtitlesFromTimed } from "./narration.js";
 import { displayTimelineAndSaveSegments } from "./timeline-display.js";
+import { runPostRenderQualityGate } from "./quality-gate.js";
 
 export { runEditPipeline } from "./edit-pipeline.js";
+export { runPostRenderQualityGate } from "./quality-gate.js";
 
 const log = createLogger("cli:pipeline");
 
@@ -182,6 +184,8 @@ async function runEditPhase(params: {
 
   await runPostRenderQualityGate({
     outputPath,
+    outputDir: params.opts.output,
+    verificationPath: params.capture.artifacts?.verificationPath,
     spec: params.spec,
     events: workingCapture.events,
     ...(narrationPrep.timedSegments ? { narrationSegments: narrationPrep.timedSegments } : {}),
@@ -219,106 +223,4 @@ export async function runFullPipeline(params: {
     opts: params.opts,
     settings: params.settings,
   });
-}
-
-/** Build narration-to-action index lookup by walking spec chapters. */
-function buildNarrationToActionMap(spec: DemoSpec): number[] {
-  const map: number[] = [];
-  let stepIdx = 0;
-  for (const chapter of spec.chapters ?? []) {
-    for (const step of chapter.steps ?? []) {
-      if (step.narration) map.push(stepIdx);
-      stepIdx++;
-    }
-  }
-  return map;
-}
-
-/** Prepare quality-gate inputs from capture events and narration segments. */
-function buildQualityGateInputs(params: {
-  spec: DemoSpec;
-  events: import("../playback/types.js").ActionEvent[];
-  narrationSegments: import("../narration/types.js").TimedNarrationSegment[];
-  startTimestamp: number;
-}): {
-  events: Array<{ action: string; timestamp: number; duration: number }>;
-  narrationSegments: Array<{ actionIndex: number; startMs: number; text: string }>;
-} {
-  const t0 = params.startTimestamp;
-  const events = params.events.map((e) => ({
-    action: e.action,
-    timestamp: e.timestamp - t0,
-    duration: e.duration,
-  }));
-  const narrationToAction = buildNarrationToActionMap(params.spec);
-  const narrationSegments = params.narrationSegments.map((seg, i) => ({
-    actionIndex: narrationToAction[i] ?? i,
-    startMs: seg.startMs,
-    text: seg.text,
-  }));
-  return { events, narrationSegments };
-}
-
-export async function runPostRenderQualityGate(params: {
-  outputPath: string;
-  spec: DemoSpec;
-  events?: import("../playback/types.js").ActionEvent[];
-  narrationSegments?: import("../narration/types.js").TimedNarrationSegment[];
-  startTimestamp?: number;
-  /** Phase 4 visual data from ScreenshotCollector. */
-  screenshotData?: {
-    stepScreenshots?: Map<number, Buffer>;
-    assertScreenshotPairs?: Array<{ stepIndex: number; before: Buffer; after: Buffer }>;
-    cursorPositions?: Array<{
-      stepIndex: number;
-      cursorX: number;
-      cursorY: number;
-      targetCenterX: number;
-      targetCenterY: number;
-    }>;
-    chapterTitleScreenshots?: Map<number, Buffer>;
-  };
-}): Promise<void> {
-  const qualityMod = await import("../quality/runner.js");
-  let gate: Awaited<ReturnType<typeof qualityMod.runQualityGate>>;
-
-  try {
-    const inputs =
-      params.events && params.narrationSegments && params.startTimestamp !== undefined
-        ? buildQualityGateInputs({
-            spec: params.spec,
-            events: params.events,
-            narrationSegments: params.narrationSegments,
-            startTimestamp: params.startTimestamp,
-          })
-        : undefined;
-
-    gate = await qualityMod.runQualityGate({
-      outputMp4Path: params.outputPath,
-      spec: params.spec,
-      events: inputs?.events,
-      narrationSegments: inputs?.narrationSegments,
-      ...(params.screenshotData ?? {}),
-    });
-  } catch (err) {
-    throw new Error(
-      `Quality gate failed to run: ${err instanceof Error ? err.message : String(err)}`,
-      { cause: err },
-    );
-  }
-
-  for (const r of gate.results) {
-    if (r.status !== "pass") {
-      log.warn(`[quality] ${r.checkName}: ${r.message}`);
-    }
-  }
-  if (gate.hasFailures) {
-    const failures = gate.results.filter((r) => r.status === "fail");
-    const failureSummary = failures.map((r) => `  - ${r.checkName}: ${r.message}`).join("\n");
-    throw new Error(
-      `Quality gate failed: ${String(failures.length)} check(s) failed out of ${String(gate.results.length)}\n${failureSummary}`,
-    );
-  }
-
-  log.info(`Quality gate passed (${gate.results.length} checks, ${gate.durationMs}ms)`);
 }

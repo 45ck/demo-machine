@@ -57,7 +57,7 @@ examples/             # Example specs + demo apps
    ```bash
    pnpm validate
    ```
-   This is the main local quality gate and runs lint, format check, spell check, typecheck, tests, knip, dependency checks, and the machine-readable quality inventory check.
+   This is the source quality gate and runs lint, format check, spell check, typecheck, tests, knip, dependency checks, and the machine-readable quality inventory check. Use `pnpm local-ready` before handoff or release.
 4. **Review the verification inventory** when you add or expand a feature:
    ```bash
    pnpm quality:verify
@@ -67,13 +67,15 @@ examples/             # Example specs + demo apps
 
 ## Quality Gates
 
-- `pnpm validate` is the local source of truth and should pass before pushing or publishing.
-- Validate the example suite definitions locally with:
+- `pnpm validate` is the local source validation gate.
+- `pnpm local-ready` is the local handoff/release gate. It runs `pnpm build`, `pnpm validate`, and example-spec validation.
+- Validate the example suite definitions directly with:
   ```bash
   pnpm examples:validate -- --no-build
   ```
-- `pnpm examples:capture` now validates the raw capture artifact contract as well:
-  `video.webm`, `events.json`, `metadata.json`, `environment.json`, `verification.json`, and `trace.zip`.
+- `pnpm examples:capture` validates the raw capture artifact contract:
+  `video.webm`, `events.json`, `metadata.json`, `environment.json`, `verification.json`, screenshot evidence when collected, and `trace.zip`.
+- If you touch rendering, screenshot capture, overlays, video quality checks, or gallery assets, run a rendered smoke and inspect `quality.json`.
 - If you touch parser, redaction, playback orchestration, or timing logic, consider running mutation testing before handing off the change:
   ```bash
   pnpm mutation
@@ -84,7 +86,7 @@ examples/             # Example specs + demo apps
 ## Code Style
 
 - TypeScript strict mode with `exactOptionalPropertyTypes`
-- ESLint + Prettier enforced via pre-commit hooks
+- Pre-commit runs lint-staged formatting/linting, TypeScript, and spelling checks; pre-push runs tests, coverage, knip, and dependency checks.
 - No unused imports/exports (enforced by knip)
 - Keep functions focused and files small
 

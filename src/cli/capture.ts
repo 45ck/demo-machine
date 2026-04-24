@@ -6,6 +6,7 @@ import type { GlobalOptions } from "./options.js";
 import type { NarrationPreSynthesisResult } from "../utils/narration-sync-types.js";
 import type { NarrationSettings } from "./narration.js";
 import type { ScreenshotCollectorResults } from "../playback/screenshot-collector.js";
+import { writeScreenshotArtifacts } from "../playback/screenshot-artifacts.js";
 import {
   handleCaptureFailure,
   writeCaptureEnvironmentArtifact,
@@ -32,6 +33,7 @@ interface CaptureArtifacts {
   metadataPath?: string | undefined;
   environmentPath: string;
   verificationPath: string;
+  screenshotManifestPath?: string | undefined;
 }
 
 export interface CaptureResult {
@@ -103,6 +105,7 @@ async function finalizeSuccessfulCapture(params: {
   events: ActionEvent[];
   startTimestamp: number;
   environmentPath: string;
+  screenshotData?: ScreenshotCollectorResults | undefined;
   narration?: CaptureResult["narration"];
 }): Promise<CaptureResult> {
   const bundle = await params.captureMod.finalizeCapture(
@@ -119,13 +122,24 @@ async function finalizeSuccessfulCapture(params: {
       },
     },
   );
+  const screenshotArtifacts = await writeScreenshotArtifacts({
+    outputDir: params.captureOpts.outputDir,
+    results: params.screenshotData,
+  });
+  const bundleWithScreenshotArtifacts = screenshotArtifacts
+    ? {
+        ...bundle,
+        screenshotManifestPath: screenshotArtifacts.manifestPath,
+        screenshots: screenshotArtifacts.screenshotPaths,
+      }
+    : bundle;
   const verificationPath = await writePassedVerificationArtifact({
     spec: params.spec,
     ...(params.specPath ? { specPath: params.specPath } : {}),
     outputDir: params.captureOpts.outputDir,
     eventCount: params.events.length,
     startTimestamp: params.startTimestamp,
-    bundle,
+    bundle: bundleWithScreenshotArtifacts,
     environmentPath: params.environmentPath,
   });
 
@@ -140,8 +154,10 @@ async function finalizeSuccessfulCapture(params: {
       metadataPath: bundle.metadataPath,
       environmentPath: params.environmentPath,
       verificationPath,
+      ...(screenshotArtifacts ? { screenshotManifestPath: screenshotArtifacts.manifestPath } : {}),
     },
     narration: params.narration,
+    screenshotData: params.screenshotData,
   };
 }
 
@@ -210,11 +226,11 @@ async function captureWithBrowser(params: CaptureWithBrowserParams): Promise<Cap
       events: result.events,
       startTimestamp: result.startTimestamp,
       environmentPath: session.environmentPath,
+      screenshotData,
       narration: params.settings.enabled
         ? { settings: params.settings, preSynth: narrationPrep.preSynth }
         : undefined,
     });
-    captureResult.screenshotData = screenshotData;
     await runPostflight({
       captureResult,
       ...params,

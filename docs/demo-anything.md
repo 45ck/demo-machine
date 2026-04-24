@@ -72,11 +72,12 @@ The `examples/` suite is the living acceptance test. It intentionally covers dif
 Run:
 
 ```bash
+pnpm quality:verify
 pnpm examples:validate
 pnpm examples:capture
 ```
 
-`examples:capture` is the strongest “works in reality” signal because it launches each demo app, drives the browser, records video, and writes Playwright `trace.zip`.
+`examples:capture` is the strongest raw-capture signal because it launches each demo app, drives the browser, records video, writes screenshot evidence when available, and writes Playwright `trace.zip`. Rendered quality evidence is produced by `demo-machine run` as `quality.json`.
 
 ## How To Demo A New App (Playbook)
 

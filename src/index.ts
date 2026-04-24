@@ -47,6 +47,11 @@ export type {
 } from "./playback/types.js";
 export { ScreenshotCollector } from "./playback/screenshot-collector.js";
 export type { ScreenshotCollectorResults } from "./playback/screenshot-collector.js";
+export { writeScreenshotArtifacts } from "./playback/screenshot-artifacts.js";
+export type {
+  ScreenshotArtifactManifest,
+  ScreenshotArtifactWriteResult,
+} from "./playback/screenshot-artifacts.js";
 
 // Change Detection
 export {

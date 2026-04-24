@@ -13,9 +13,7 @@ This repo currently releases from the local checkout. GitHub Actions workflows h
 
 ```bash
 pnpm install
-pnpm validate
-pnpm build
-pnpm examples:validate -- --no-build
+pnpm local-ready
 ```
 
 2. Bump the version:

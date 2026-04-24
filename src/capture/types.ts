@@ -23,5 +23,6 @@ export interface CaptureBundle {
   metadataPath?: string;
   environmentPath?: string;
   verificationPath?: string;
+  screenshotManifestPath?: string;
   screenshots: string[];
 }

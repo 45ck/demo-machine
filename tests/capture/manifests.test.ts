@@ -83,7 +83,11 @@ describe("capture manifests", () => {
       tracePath: "C:\\demo-machine\\output\\trace.zip",
       eventLogPath: "C:\\demo-machine\\output\\events.json",
       metadataPath: "C:\\demo-machine\\output\\metadata.json",
-      screenshots: [],
+      screenshotManifestPath: "C:\\demo-machine\\output\\screenshots\\manifest.json",
+      screenshots: [
+        "C:\\demo-machine\\output\\screenshots\\step-0000.png",
+        "C:\\demo-machine\\output\\screenshots\\assert-0001-before.png",
+      ],
     };
 
     const manifest = buildCaptureVerificationManifest({
@@ -101,6 +105,13 @@ describe("capture manifests", () => {
     expect(manifest.playback.actions).toEqual(["click", "dragAndDrop", "navigate"]);
     expect(manifest.playback.preSteps).toEqual(["setCookie", "setLocalStorage"]);
     expect(manifest.playback.targetStrategies).toEqual(["css", "role", "testId"]);
+    expect(manifest.artifacts.screenshotManifestPath).toBe(
+      "C:\\demo-machine\\output\\screenshots\\manifest.json",
+    );
+    expect(manifest.artifacts.screenshotPaths).toEqual([
+      "C:\\demo-machine\\output\\screenshots\\step-0000.png",
+      "C:\\demo-machine\\output\\screenshots\\assert-0001-before.png",
+    ]);
     expect(manifest.checks.requiredArtifactsPresent).toBe(true);
   });
 

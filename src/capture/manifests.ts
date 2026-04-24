@@ -64,6 +64,8 @@ interface CaptureVerificationManifestV1 {
     metadataPath?: string;
     environmentPath?: string;
     verificationPath?: string;
+    screenshotManifestPath?: string;
+    screenshotPaths?: string[];
     failureJsonPath?: string;
     failureScreenshotPath?: string;
     failureHtmlPath?: string;
@@ -215,18 +217,39 @@ type VerificationParams = {
 
 type ArtifactPaths = CaptureVerificationManifestV1["artifacts"];
 
-function buildArtifactPaths(params: VerificationParams): ArtifactPaths {
-  const fa = params.failureArtifacts;
+function buildBundleArtifactPaths(bundle: CaptureBundle | undefined): ArtifactPaths {
   return {
-    ...(params.bundle?.videoPath ? { videoPath: params.bundle.videoPath } : {}),
-    ...(params.bundle?.tracePath ? { tracePath: params.bundle.tracePath } : {}),
-    ...(params.bundle?.eventLogPath ? { eventLogPath: params.bundle.eventLogPath } : {}),
-    ...(params.bundle?.metadataPath ? { metadataPath: params.bundle.metadataPath } : {}),
+    ...(bundle?.videoPath ? { videoPath: bundle.videoPath } : {}),
+    ...(bundle?.tracePath ? { tracePath: bundle.tracePath } : {}),
+    ...(bundle?.eventLogPath ? { eventLogPath: bundle.eventLogPath } : {}),
+    ...(bundle?.metadataPath ? { metadataPath: bundle.metadataPath } : {}),
+    ...(bundle?.screenshotManifestPath
+      ? { screenshotManifestPath: bundle.screenshotManifestPath }
+      : {}),
+    ...(bundle?.screenshots && bundle.screenshots.length > 0
+      ? { screenshotPaths: bundle.screenshots }
+      : {}),
+  };
+}
+
+function buildFailureArtifactPaths(
+  failureArtifacts: VerificationParams["failureArtifacts"],
+): ArtifactPaths {
+  return {
+    ...(failureArtifacts?.jsonPath ? { failureJsonPath: failureArtifacts.jsonPath } : {}),
+    ...(failureArtifacts?.screenshotPath
+      ? { failureScreenshotPath: failureArtifacts.screenshotPath }
+      : {}),
+    ...(failureArtifacts?.htmlPath ? { failureHtmlPath: failureArtifacts.htmlPath } : {}),
+  };
+}
+
+function buildArtifactPaths(params: VerificationParams): ArtifactPaths {
+  return {
+    ...buildBundleArtifactPaths(params.bundle),
     ...(params.environmentPath ? { environmentPath: params.environmentPath } : {}),
     ...(params.verificationPath ? { verificationPath: params.verificationPath } : {}),
-    ...(fa?.jsonPath ? { failureJsonPath: fa.jsonPath } : {}),
-    ...(fa?.screenshotPath ? { failureScreenshotPath: fa.screenshotPath } : {}),
-    ...(fa?.htmlPath ? { failureHtmlPath: fa.htmlPath } : {}),
+    ...buildFailureArtifactPaths(params.failureArtifacts),
   };
 }
 

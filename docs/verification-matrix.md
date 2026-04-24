@@ -33,9 +33,11 @@ The current suite-to-tier mapping lives in `examples/manifest.json`.
 
 ## Current Enforcement
 
-- `pnpm validate` includes `pnpm quality:verify:strict`
-- Local release readiness should also run `pnpm examples:validate -- --no-build`
-- All known proof gaps have been closed; `quality:verify:strict` enforces zero gaps on every `pnpm validate` run
+- `pnpm validate` includes `pnpm quality:verify:strict`; no CI workflow is assumed.
+- `pnpm local-ready` is the local handoff/release gate and runs `pnpm build`, `pnpm validate`, and example-spec validation.
+- `demo-machine run` executes post-render quality checks after rendering. It writes `quality.json`; screenshot-backed visual checks use collected step screenshots, assert before/after pairs, cursor positions, and chapter title screenshots.
+- `pnpm examples:capture` verifies raw capture artifacts and `verification.json`.
+- All known inventory proof gaps have been closed; `quality:verify:strict` enforces zero gaps on every `pnpm validate` run. This is inventory coverage, not a claim that every rendered visual baseline is refreshed on every local validation run.
 
 ## Known Gaps
 

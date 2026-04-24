@@ -1,4 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type { DemoSpec } from "../../src/spec/types.js";
 import type { CheckResult } from "../../src/validation/types.js";
 
@@ -17,8 +20,15 @@ async function mockedRunner() {
 }
 
 describe("runPostRenderQualityGate", () => {
+  let tempDir: string;
+
   beforeEach(async () => {
+    tempDir = await mkdtemp(join(tmpdir(), "pipeline-quality-"));
     vi.clearAllMocks();
+  });
+
+  afterEach(async () => {
+    await rm(tempDir, { recursive: true, force: true });
   });
 
   it("resolves when the quality gate has warnings but no failures", async () => {
@@ -35,10 +45,33 @@ describe("runPostRenderQualityGate", () => {
       durationMs: 7,
     });
     const { runPostRenderQualityGate } = await import("../../src/cli/pipeline.js");
+    const verificationPath = join(tempDir, "verification.json");
+    await writeFile(
+      verificationPath,
+      JSON.stringify({ schemaVersion: 1, artifacts: {}, checks: {} }, null, 2),
+      "utf8",
+    );
 
     await expect(
-      runPostRenderQualityGate({ outputPath: "output.mp4", spec }),
+      runPostRenderQualityGate({
+        outputPath: "output.mp4",
+        outputDir: tempDir,
+        verificationPath,
+        spec,
+      }),
     ).resolves.toBeUndefined();
+
+    const quality = JSON.parse(await readFile(join(tempDir, "quality.json"), "utf8")) as {
+      summary: Record<string, number>;
+    };
+    expect(quality.summary["warn"]).toBe(1);
+    const verification = JSON.parse(await readFile(verificationPath, "utf8")) as {
+      artifacts: { qualityReportPath?: string };
+      checks: { postRenderQualityPassed?: boolean; postRenderQualityStatus?: string };
+    };
+    expect(verification.artifacts.qualityReportPath).toBe(join(tempDir, "quality.json"));
+    expect(verification.checks.postRenderQualityPassed).toBe(true);
+    expect(verification.checks.postRenderQualityStatus).toBe("warn");
   });
 
   it("rejects when any post-render quality check fails", async () => {
@@ -56,9 +89,13 @@ describe("runPostRenderQualityGate", () => {
     });
     const { runPostRenderQualityGate } = await import("../../src/cli/pipeline.js");
 
-    await expect(runPostRenderQualityGate({ outputPath: "output.mp4", spec })).rejects.toThrow(
-      "Quality gate failed: 1 check(s) failed out of 1",
-    );
+    await expect(
+      runPostRenderQualityGate({ outputPath: "output.mp4", outputDir: tempDir, spec }),
+    ).rejects.toThrow("Quality gate failed: 1 check(s) failed out of 1");
+    const quality = JSON.parse(await readFile(join(tempDir, "quality.json"), "utf8")) as {
+      hasFailures: boolean;
+    };
+    expect(quality.hasFailures).toBe(true);
   });
 
   it("rejects when the quality gate cannot run", async () => {
@@ -66,8 +103,14 @@ describe("runPostRenderQualityGate", () => {
     runQualityGate.mockRejectedValueOnce(new Error("ffprobe missing"));
     const { runPostRenderQualityGate } = await import("../../src/cli/pipeline.js");
 
-    await expect(runPostRenderQualityGate({ outputPath: "output.mp4", spec })).rejects.toThrow(
-      "Quality gate failed to run: ffprobe missing",
-    );
+    await expect(
+      runPostRenderQualityGate({ outputPath: "output.mp4", outputDir: tempDir, spec }),
+    ).rejects.toThrow("Quality gate failed to run: ffprobe missing");
+    const quality = JSON.parse(await readFile(join(tempDir, "quality.json"), "utf8")) as {
+      status: string;
+      error?: { message: string };
+    };
+    expect(quality.status).toBe("fail");
+    expect(quality.error?.message).toBe("ffprobe missing");
   });
 });

@@ -32,13 +32,13 @@ Opens at `http://localhost:5555`
 
 - **Never bypass hooks** — no `--no-verify`
 - Pre-commit: prettier, eslint, cspell
-- Pre-push: vitest, knip, dep-check
+- Pre-push: vitest, coverage, knip, dep-check
 - `src/editor/` must NOT import from `src/playback/` — use `src/capture/types.ts`
 
 ## Test Framework
 
-- **vitest** — run with `npm test`
-- 331 tests across 22 files
+- **vitest** — run with `pnpm test`
+- 1020 tests across 92 files
 - Mock `../../src/playback/visuals.js` inline with `vi.mock()` factory (no hoisted variables)
 
 ## Key Conventions

@@ -14,7 +14,7 @@
 [![npm](https://img.shields.io/npm/v/demo-machine)](https://www.npmjs.com/package/demo-machine)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Tests](https://img.shields.io/badge/Tests-1015%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-1020%20passing-brightgreen)](tests/)
 [![Playwright](https://img.shields.io/badge/Playwright-Browser%20Automation-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev)
 [![FFmpeg](https://img.shields.io/badge/FFmpeg-Video%20Rendering-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org)
 
@@ -252,7 +252,10 @@ pnpm examples:capture -- --filter spa-router
 - `metadata.json` (capture timing info used for accurate timelines)
 - `environment.json` (runtime/browser reproducibility manifest)
 - `verification.json` (machine-readable capture proof and artifact contract)
+- `screenshots/manifest.json` plus step/assert/chapter screenshots when visual evidence is collected
 - `trace.zip` (Playwright trace)
+
+`run` also writes `quality.json` after rendering. Warning-only quality results exit successfully but remain visible in the report; failed post-render checks write the report before the command exits non-zero.
 
 `edit` expects `video.webm` to be in the same directory as the `events.json` you pass. If `metadata.json` exists, it will be used automatically.
 
@@ -323,6 +326,7 @@ Every action supports an optional `narration` field for TTS and most support `de
 - `docs/verification-matrix.md` defines the layered V&V model, release tiers, and visual review rubric.
 - `docs/verification-inventory.json` is the machine-readable inventory of supported actions, target strategies, patterns, and quality signals.
 - `examples/manifest.json` maps example suites to release tiers and verification intent.
+- `demo-machine run` executes post-render quality checks after MP4 rendering. Screenshot-backed checks use collected step screenshots, assert before/after pairs, cursor positions, and chapter title screenshots.
 
 ### Targeting (Selector-Free)
 
@@ -453,7 +457,7 @@ src/
   utils/              # Logger, process helpers
   mcp-server.ts       # MCP server entry point (demo-machine-mcp binary)
   mcp/                # MCP tools, resources, and prompts
-tests/                # 1015 tests across 90 files
+tests/                # 1020 tests across 92 files
 examples/             # Example specs + demo apps
 ```
 
@@ -519,8 +523,8 @@ pnpm test           # Run the Vitest suite
 pnpm lint           # ESLint
 pnpm format         # Prettier check
 pnpm typecheck      # tsc --noEmit
-pnpm validate       # Run everything
-pnpm local-ready    # Local build, validation, and example-spec readiness
+pnpm validate       # Source quality gate: lint, format, spell, typecheck, tests, knip, dep-check, inventory
+pnpm local-ready    # Local build, validation, and example-spec validation
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions and development workflow.
