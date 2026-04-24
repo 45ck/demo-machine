@@ -2,6 +2,8 @@
 
 This guide gets you from a local checkout to a captured product demo.
 
+demo-machine turns a versioned spec into a browser capture, a rendered product video, and reviewable artifacts. Keep the spec with the product code, run it locally, and use the generated artifacts to review or repair the demo.
+
 ## Setup
 
 ```bash
@@ -117,3 +119,10 @@ pnpm local-ready
 ```
 
 The repository does not currently rely on GitHub Actions. Local validation is the quality gate.
+
+## Where To Go Next
+
+- Use `demo-machine examples list` to find a nearby pattern before authoring a new flow.
+- Read `docs/demo-anything.md` for the spec authoring playbook and acceptance matrix.
+- Read `docs/verification-matrix.md` to understand what each local quality gate proves.
+- Read `ROADMAP.md` for current project priorities and non-goals.

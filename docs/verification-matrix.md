@@ -7,6 +7,8 @@
 
 Use `pnpm quality:verify` to compare the two and print the current proof gaps.
 
+The project roadmap in `ROADMAP.md` explains how this matrix should evolve: every new action, target strategy, visual signal, or supported app pattern needs a matching inventory entry and example proof.
+
 ## Verification Layers
 
 - Schema and unit: parser defaults, validation, timing math, selector formatting, renderer argument construction

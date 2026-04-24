@@ -7,12 +7,15 @@
 - Full pre-capture validation registration before capture
 - Expanded action/target verification coverage and runtime guard parity
 - Local-first docs and `demo-machine init` starter spec generation
+- Run-safe default output directories, `output/latest.json`, explicit `--overwrite`, and clearer CLI/MCP run summaries
+- Project roadmap documenting current direction, near-term priorities, and non-goals
 
 ### Changed
 
 - GitHub Actions workflows were removed; local validation is now the documented quality gate
 - CLI and MCP server version reporting now follows `package.json`
 - Documentation was consolidated around current local authoring and release workflows
+- MCP documentation now reflects the current 5 tools, 4 resources, and 8 prompts
 
 ## 0.2.0 — 2026-03-11
 

@@ -22,7 +22,7 @@ Write a simple YAML file describing what to click, type, and navigate.<br>
 demo-machine launches your app, drives a real browser with human-like interactions,<br>
 records everything, and renders a production-ready MP4.
 
-[Quick Start](#quick-start) &bull; [Spec Format](#spec-format) &bull; [CLI Reference](#usage) &bull; [Contributing](CONTRIBUTING.md)
+[Quick Start](#quick-start) &bull; [Spec Format](#spec-format) &bull; [CLI Reference](#usage) &bull; [Roadmap](ROADMAP.md) &bull; [Contributing](CONTRIBUTING.md)
 
 </div>
 
@@ -156,19 +156,32 @@ Tools like Screen Studio and Arcade require manual recording sessions. Every tim
 - **Automation-friendly** — generate demo videos from scripts, hooks, or release tasks
 - **No manual work** — no clicking through your app, no editing in a video tool
 
+## What This Project Is
+
+demo-machine is a local-first demo automation system:
+
+- A **spec runner** that drives real browsers from versioned demo specs.
+- A **capture and render pipeline** that produces raw evidence plus polished MP4s.
+- A **verification surface** that records environment, artifacts, trace data, screenshots, and post-render quality results.
+- An **MCP integration** so AI assistants can help author, validate, run, review, and repair demos.
+
+It is not a replacement for product E2E tests or a cloud recording platform. The default workflow stays local: run the app, capture the browser, render the video, inspect the artifacts, and use `pnpm validate` / `pnpm local-ready` before handoff. The project direction is tracked in [ROADMAP.md](ROADMAP.md).
+
 ## Features
 
-| Feature                   | Description                                                                 |
-| ------------------------- | --------------------------------------------------------------------------- |
-| **Smooth cursor**         | Cubic-bezier eased movement with click pulse feedback                       |
-| **Natural typing**        | Character-by-character keystroke simulation                                 |
-| **Configurable pacing**   | Global + per-step delays for clicks, typing, navigation                     |
-| **Polished overlays**     | Intro/outro cards, chapter titles with fades and backgrounds                |
-| **Auto app lifecycle**    | Spawns your dev server, healthchecks, tears down after                      |
-| **Redaction**             | Blur sensitive selectors, scan for secret patterns                          |
-| **Narration**             | Local TTS via Kokoro, or cloud via OpenAI/ElevenLabs with VTT/SRT subtitles |
-| **Dead-time compression** | Long pauses automatically sped up                                           |
-| **Callout zoom**          | Click targets highlighted with zoom regions                                 |
+| Feature                    | Description                                                                  |
+| -------------------------- | ---------------------------------------------------------------------------- |
+| **Smooth cursor**          | Cubic-bezier eased movement with click pulse feedback                        |
+| **Natural typing**         | Character-by-character keystroke simulation                                  |
+| **Configurable pacing**    | Global + per-step delays for clicks, typing, navigation                      |
+| **Polished overlays**      | Intro/outro cards, chapter titles with fades and backgrounds                 |
+| **Auto app lifecycle**     | Spawns your dev server, healthchecks, tears down after                       |
+| **Redaction**              | Blur sensitive selectors, scan for secret patterns                           |
+| **Narration**              | Local TTS via Kokoro, or cloud via OpenAI/ElevenLabs with VTT/SRT subtitles  |
+| **Dead-time compression**  | Long pauses automatically sped up                                            |
+| **Callout zoom**           | Click targets highlighted with zoom regions                                  |
+| **Run-safe outputs**       | Unique default run directories, `latest.json`, and explicit overwrite guard  |
+| **Verification artifacts** | Environment, verification, trace, screenshots, and post-render quality proof |
 
 ## Quick Start
 
@@ -278,6 +291,8 @@ demo-machine examples show file-uploader
 `edit` expects `video.webm` to be in the same directory as the `events.json` you pass. If `metadata.json` exists, it will be used automatically.
 
 `pnpm quality:verify` compares the machine-readable verification inventory in `docs/verification-inventory.json` with the example suite manifest in `examples/manifest.json`, then reports supported actions, target strategies, or quality signals that still lack example proof.
+
+For direction and sequencing, see [ROADMAP.md](ROADMAP.md). Current priorities are authoring ergonomics, the review/repair loop, visual polish, and keeping verification proof aligned with new surface area.
 
 ### Options
 
@@ -514,26 +529,35 @@ Add the following to your `claude_desktop_config.json`:
 
 ### Tools
 
-| Tool            | Description                                                            |
-| --------------- | ---------------------------------------------------------------------- |
-| `validate-spec` | Parse & validate a `.demo.yaml`, return chapter/step counts or errors  |
-| `capture-spec`  | Run browser capture only (no render), returns event count + video path |
-| `run-pipeline`  | Full end-to-end pipeline: capture + render + optional narration        |
-| `format-spec`   | Reserialize a spec as YAML or JSON                                     |
-| `list-voices`   | List configured TTS voices                                             |
+| Tool            | Description                                                                    |
+| --------------- | ------------------------------------------------------------------------------ |
+| `validate-spec` | Parse and validate a demo spec, returning chapter/step counts or errors        |
+| `capture-spec`  | Run browser capture only, returning structured artifact paths and event counts |
+| `run-pipeline`  | Run capture, render, optional narration, and quality checks                    |
+| `format-spec`   | Reserialize a spec as YAML or JSON                                             |
+| `list-voices`   | List configured TTS voices                                                     |
 
 ### Resources
 
-| Resource         | URI                              | Description                |
-| ---------------- | -------------------------------- | -------------------------- |
-| `basic-template` | `demo-machine://templates/basic` | Starter YAML spec template |
+| Resource           | URI                               | Description                       |
+| ------------------ | --------------------------------- | --------------------------------- |
+| `basic-template`   | `demo-machine://templates/basic`  | Starter YAML spec template        |
+| `actions-docs`     | `demo-machine://docs/actions`     | Available step actions            |
+| `spec-format-docs` | `demo-machine://docs/spec-format` | Demo spec format reference        |
+| `ai-prompts-docs`  | `demo-machine://docs/ai-prompts`  | MCP prompt workflow documentation |
 
 ### Prompts
 
-| Prompt             | Description                                                  |
-| ------------------ | ------------------------------------------------------------ |
-| `create-demo-spec` | Generate a spec YAML given an app URL + description          |
-| `debug-demo`       | Embed a failing spec + error message, ask Claude to diagnose |
+| Prompt             | Description                                                     |
+| ------------------ | --------------------------------------------------------------- |
+| `create-demo-spec` | Generate a spec YAML given an app URL and description           |
+| `debug-demo`       | Diagnose a failing spec from an error message                   |
+| `narrate-spec`     | Add narration text to every step in a spec                      |
+| `heal-spec`        | Repair a broken spec from failure artifacts                     |
+| `demo-from-url`    | Generate a spec by inspecting a live app URL                    |
+| `translate-spec`   | Translate narration to another language                         |
+| `spec-from-test`   | Convert a Playwright or Cypress test into a demo spec           |
+| `review-demo`      | Review a completed demo run, defaulting to `output/latest.json` |
 
 ## Narration Providers
 

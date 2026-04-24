@@ -97,8 +97,10 @@ examples/             # Example specs + demo apps
 pnpm build
 
 # Run the included todo-app example
-node dist/cli.js run examples/todo-app.demo.yaml --output ./output --no-narration --no-headless
+node dist/cli.js run examples/todo-app.demo.yaml --no-narration --no-headless
 ```
+
+By default, the run writes to `output/<spec-slug>/<run-id>` and updates `output/latest.json`. Use `--output <dir> --overwrite` only when you intentionally want a fixed handoff path.
 
 ## Reporting Issues
 
