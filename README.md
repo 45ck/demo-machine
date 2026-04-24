@@ -8,191 +8,43 @@
   <img src="assets/banner.light.png" alt="demo-machine banner" width="100%" />
 </picture>
 
-**Demo as code** — turn YAML specs into polished product demo videos.
+**Demo as code**: turn versioned specs into repeatable browser captures and polished product demo videos.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm](https://img.shields.io/npm/v/demo-machine)](https://www.npmjs.com/package/demo-machine)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Tests](https://img.shields.io/badge/Tests-1044%20passing-brightgreen)](tests/)
 [![Playwright](https://img.shields.io/badge/Playwright-Browser%20Automation-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev)
 [![FFmpeg](https://img.shields.io/badge/FFmpeg-Video%20Rendering-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org)
 
-Write a simple YAML file describing what to click, type, and navigate.<br>
-demo-machine launches your app, drives a real browser with human-like interactions,<br>
-records everything, and renders a production-ready MP4.
-
-[Quick Start](#quick-start) &bull; [Spec Format](#spec-format) &bull; [CLI Reference](#usage) &bull; [Roadmap](ROADMAP.md) &bull; [Contributing](CONTRIBUTING.md)
+[Quick Start](#quick-start) &bull; [CLI](docs/cli-reference.md) &bull; [Spec](docs/spec-reference.md) &bull; [MCP](docs/mcp.md) &bull; [Roadmap](ROADMAP.md)
 
 </div>
 
 ---
 
+## What It Does
+
+demo-machine reads a `.demo.yaml` spec, launches your app, drives a real browser with Playwright, records the run, and renders a polished MP4.
+
+Use it when you want product demos that are:
+
+- Repeatable instead of manually re-recorded.
+- Version-controlled next to app code.
+- Reviewable through artifacts like traces, screenshots, manifests, and quality reports.
+- AI-assisted through the built-in MCP server.
+
+It is local-first. There is no required cloud service and no current CI dependency.
+
 ## Demo
 
-> A task manager app demo with voice narration — generated entirely from a [YAML spec](examples/todo-app.demo.yaml).
+This video was generated from [examples/todo-app.demo.yaml](examples/todo-app.demo.yaml):
 
 https://github.com/45ck/demo-machine/raw/master/examples/todo-app-demo.mp4
 
-Notice the **smooth cursor movement** to each target, **character-by-character typing**, **voice narration** that leads into each action, and **polished overlays** with fades. This is not a screen recording — it's generated from code.
-
-<details>
-<summary><b>View the YAML spec that produced this video</b></summary>
-
-```yaml
-meta:
-  title: "TaskFlow - Task Manager Demo"
-  resolution:
-    width: 1920
-    height: 1080
-
-runner:
-  command: "node examples/todo-app/serve.mjs"
-  url: "http://localhost:4567"
-  timeout: 10000
-
-chapters:
-  - title: "Welcome to TaskFlow"
-    steps:
-      - action: navigate
-        url: "http://localhost:4567"
-        narration: "Welcome to TaskFlow, a simple and elegant task manager."
-      - action: wait
-        timeout: 1000
-
-  - title: "Getting Started"
-    steps:
-      - action: click
-        selector: "#get-started"
-        narration: "Let's click Get Started to begin managing our tasks."
-      - action: wait
-        timeout: 800
-
-  - title: "Adding Tasks"
-    steps:
-      - action: click
-        selector: "#task-input"
-      - action: type
-        selector: "#task-input"
-        text: "Design new landing page"
-        narration: "We'll type in our first task — designing a new landing page."
-      - action: click
-        selector: "#add-btn"
-      - action: wait
-        timeout: 500
-      - action: type
-        selector: "#task-input"
-        text: "Review pull requests"
-        narration: "Next, let's add a task to review pull requests."
-      - action: click
-        selector: "#add-btn"
-      - action: wait
-        timeout: 500
-      - action: type
-        selector: "#task-input"
-        text: "Write unit tests"
-        narration: "And one more — writing unit tests."
-      - action: click
-        selector: "#add-btn"
-      - action: wait
-        timeout: 500
-
-  - title: "Completing a Task"
-    steps:
-      - action: click
-        selector: ".task-checkbox"
-        narration: "To mark a task as done, just click the checkbox."
-      - action: wait
-        timeout: 800
-
-  - title: "Filtering Tasks"
-    steps:
-      - action: click
-        selector: "[data-filter='completed']"
-        narration: "We can filter to see only completed tasks."
-      - action: wait
-        timeout: 800
-      - action: click
-        selector: "[data-filter='all']"
-        narration: "Or switch back to view all tasks at once."
-      - action: wait
-        timeout: 500
-```
-
-</details>
-
-## Demo Gallery (GIF Previews)
-
-These are **compressed GIF previews** generated from real rendered MP4s. For the full acceptance matrix, see `docs/demo-anything.md`.
-
-<div align="center">
-  <a href="examples/todo-app.demo.yaml"><img src="assets/demo-gallery/todo-app.gif" width="49%" alt="TaskFlow demo preview (GIF)" /></a>
-  <a href="examples/form-wizard.demo.yaml"><img src="assets/demo-gallery/form-wizard.gif" width="49%" alt="FlowForm demo preview (GIF)" /></a>
-  <a href="examples/auth-otp.demo.yaml"><img src="assets/demo-gallery/auth-otp.gif" width="49%" alt="AuthFlow OTP demo preview (GIF)" /></a>
-  <a href="examples/modals-popovers.demo.yaml"><img src="assets/demo-gallery/modals-popovers.gif" width="49%" alt="OverlayKit demo preview (GIF)" /></a>
-  <a href="examples/spa-router.demo.yaml"><img src="assets/demo-gallery/spa-router.gif" width="49%" alt="RouteLab SPA demo preview (GIF)" /></a>
-  <a href="examples/infinite-scroll.demo.yaml"><img src="assets/demo-gallery/infinite-scroll.gif" width="49%" alt="ScrollForge demo preview (GIF)" /></a>
-  <a href="examples/dashboard-table.demo.yaml"><img src="assets/demo-gallery/dashboard-table.gif" width="49%" alt="DashLite table demo preview (GIF)" /></a>
-  <a href="examples/controls-lab.demo.yaml"><img src="assets/demo-gallery/controls-lab.gif" width="49%" alt="ControlRoom inputs demo preview (GIF)" /></a>
-  <a href="examples/chart-tooltips.demo.yaml"><img src="assets/demo-gallery/chart-tooltips.gif" width="49%" alt="ChartLab tooltips demo preview (GIF)" /></a>
-  <a href="examples/virtual-table.demo.yaml"><img src="assets/demo-gallery/virtual-table.gif" width="49%" alt="GridV virtualized table demo preview (GIF)" /></a>
-  <a href="examples/selector-stress.demo.yaml"><img src="assets/demo-gallery/selector-stress.gif" width="49%" alt="SelectorGym demo preview (GIF)" /></a>
-  <a href="examples/drag-sort.demo.yaml"><img src="assets/demo-gallery/drag-sort.gif" width="49%" alt="DragSort reorder demo preview (GIF)" /></a>
-  <a href="examples/file-uploader.demo.yaml"><img src="assets/demo-gallery/file-uploader.gif" width="49%" alt="FileUploader preview demo (GIF)" /></a>
-  <a href="examples/async-skeleton.demo.yaml"><img src="assets/demo-gallery/async-skeleton.gif" width="49%" alt="AsyncSkeleton dashboard demo (GIF)" /></a>
-  <a href="examples/seeded-api.demo.yaml"><img src="assets/demo-gallery/seeded-api.gif" width="49%" alt="SeededAPI notes demo (GIF)" /></a>
-</div>
-
-To regenerate the gallery assets (GIFs + 5 screenshots per demo): `pnpm demo:gallery`.
-
-For the frame-by-frame review output, see `docs/demo-gallery.md`.
-
-## Why demo-machine?
-
-Tools like Screen Studio and Arcade require manual recording sessions. Every time your UI changes, you re-record. demo-machine takes a different approach:
-
-- **Reproducible** — same YAML, same video, every time
-- **Version-controlled** — specs live in your repo, reviewable in PRs
-- **Automation-friendly** — generate demo videos from scripts, hooks, or release tasks
-- **No manual work** — no clicking through your app, no editing in a video tool
-
-## What This Project Is
-
-demo-machine is a local-first demo automation system:
-
-- A **spec runner** that drives real browsers from versioned demo specs.
-- A **capture and render pipeline** that produces raw evidence plus polished MP4s.
-- A **verification surface** that records environment, artifacts, trace data, screenshots, and post-render quality results.
-- An **MCP integration** so AI assistants can help author, validate, run, review, and repair demos.
-
-It is not a replacement for product E2E tests or a cloud recording platform. The default workflow stays local: run the app, capture the browser, render the video, inspect the artifacts, and use `pnpm validate` / `pnpm local-ready` before handoff. The project direction is tracked in [ROADMAP.md](ROADMAP.md).
-
-## Features
-
-| Feature                    | Description                                                                  |
-| -------------------------- | ---------------------------------------------------------------------------- |
-| **Smooth cursor**          | Cubic-bezier eased movement with click pulse feedback                        |
-| **Natural typing**         | Character-by-character keystroke simulation                                  |
-| **Configurable pacing**    | Global + per-step delays for clicks, typing, navigation                      |
-| **Polished overlays**      | Intro/outro cards, chapter titles with fades and backgrounds                 |
-| **Auto app lifecycle**     | Spawns your dev server, healthchecks, tears down after                       |
-| **Redaction**              | Blur sensitive selectors, scan for secret patterns                           |
-| **Narration**              | Local TTS via Kokoro, or cloud via OpenAI/ElevenLabs with VTT/SRT subtitles  |
-| **Dead-time compression**  | Long pauses automatically sped up                                            |
-| **Callout zoom**           | Click targets highlighted with zoom regions                                  |
-| **Run-safe outputs**       | Unique default run directories, `latest.json`, and explicit overwrite guard  |
-| **Verification artifacts** | Environment, verification, trace, screenshots, and post-render quality proof |
+More rendered examples are in the [demo gallery](docs/demo-gallery.md).
 
 ## Quick Start
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org) >= 22
-- [pnpm](https://pnpm.io)
-- [FFmpeg](https://ffmpeg.org) on your PATH
-- Playwright browsers: `pnpm exec playwright install chromium`
-
-### Install
 
 ```bash
 git clone https://github.com/45ck/demo-machine.git
@@ -200,321 +52,104 @@ cd demo-machine
 pnpm install
 pnpm exec playwright install chromium
 pnpm build
+node dist/cli.js run examples/todo-app.demo.yaml --no-headless
 ```
 
-### Run the Example
+Requirements:
 
-```bash
-node dist/cli.js run examples/todo-app.demo.yaml \
-  --no-headless
+- Node.js >= 22
+- pnpm
+- FFmpeg on your `PATH`
+- Chromium installed through Playwright
+
+The rendered video is written to a safe per-run folder:
+
+```text
+output/todo-app/<run-id>/output.mp4
 ```
 
-This will:
+For a slower walkthrough, use [Getting Started](GETTING-STARTED.md). For every command and option, use the [CLI reference](docs/cli-reference.md).
 
-1. Start the included todo-app dev server
-2. Launch a browser with smooth cursor and natural typing
-3. Record the session via Playwright
-4. Render a polished MP4 with overlays to `./output/todo-app/<run-id>/output.mp4`
-
-## Usage
-
-### CLI Commands
+## Basic Commands
 
 ```bash
-# Full pipeline: capture + edit + render
+# Full pipeline: capture + render + quality checks
 demo-machine run <spec.yaml>
 
-# Validate a spec file without running
+# Validate before spending time on capture
 demo-machine validate <spec.yaml>
 
-# Create a starter spec for your app
-demo-machine init my-product.demo.yaml --url http://localhost:3000 --healthcheck http://localhost:3000/health --command "pnpm dev"
+# Create a starter spec
+demo-machine init my-product.demo.yaml --url http://localhost:3000 --command "pnpm dev"
 
-# Capture only (raw video, no post-processing)
+# Capture only
 demo-machine capture <spec.yaml>
 
-# Re-render from an existing event log
-demo-machine edit <events.json>
+# Re-render from a previous capture
+demo-machine edit <output-dir>/events.json
 
-# Find a built-in example to use as an authoring reference
-demo-machine examples list --tag forms
+# Find examples to copy from
+demo-machine examples list
+demo-machine examples show file-uploader
 
-# Check local browser, FFmpeg, disk, and TTS dependencies
+# Check local dependencies
 demo-machine doctor
 ```
 
-### Example Suite
+## How It Works
 
-The repo includes multiple example apps and `.demo.yaml` specs under `examples/`.
-
-```bash
-# Verify the example/feature inventory and report known proof gaps
-pnpm quality:verify
-
-# Run the local release-readiness gate
-pnpm local-ready
-
-# Validate all example specs
-pnpm examples:validate
-
-# Smoke-capture raw videos for all example specs (no narration, no post-processing)
-pnpm examples:capture
-
-# Filter to a subset (note the `--` for pnpm passthrough)
-pnpm examples:capture -- --filter spa-router
+```text
+spec file
+  -> validate
+  -> start app
+  -> drive browser
+  -> capture video + events + trace + screenshots
+  -> render MP4
+  -> write verification + quality artifacts
 ```
 
-For authoring, use the built-in example catalog to find a close reference before writing a new spec:
+Default runs write to `output/<spec-slug>/<run-id>` and update `output/latest.json`. If you pass `--output <dir>`, demo-machine uses that exact directory and refuses to overwrite known demo artifacts unless you also pass `--overwrite`.
 
-```bash
-demo-machine examples list
-demo-machine examples list --tag forms
-demo-machine examples list --signal selector-intent
-demo-machine examples list --search upload
-demo-machine examples show file-uploader
-```
+Key artifacts:
 
-`capture`, `run`, and `edit` use safe output directories by default. When `--output` is not supplied, each run writes to `./output/<spec-slug>/<run-id>` so repeat demos keep their own artifacts. Automatic runs also update `./output/latest.json` with the concrete output directory and primary artifacts. When `--output` is supplied, demo-machine uses that exact directory and refuses to write over known demo artifacts unless `--overwrite` is passed.
+- `output.mp4`: rendered demo video
+- `video.webm`: raw browser recording
+- `events.json`: captured action timeline
+- `verification.json`: capture proof and artifact contract
+- `environment.json`: runtime/browser context
+- `quality.json`: post-render checks
+- `trace.zip`: Playwright trace for debugging
 
-`capture` and `run` write these artifacts into the resolved output directory:
-
-- `video.webm` (raw recording)
-- `events.json` (event log)
-- `metadata.json` (capture timing info used for accurate timelines)
-- `environment.json` (runtime/browser reproducibility manifest)
-- `verification.json` (machine-readable capture proof and artifact contract)
-- `screenshots/manifest.json` plus step/assert/chapter screenshots when visual evidence is collected
-- `trace.zip` (Playwright trace)
-
-`run` also writes `output.mp4` and `quality.json` after rendering. Warning-only quality results exit successfully but remain visible in the report; failed post-render checks write the report before the command exits non-zero.
-
-`edit` expects `video.webm` to be in the same directory as the `events.json` you pass. If `metadata.json` exists, it will be used automatically.
-
-`pnpm quality:verify` compares the machine-readable verification inventory in `docs/verification-inventory.json` with the example suite manifest in `examples/manifest.json`, then reports supported actions, target strategies, or quality signals that still lack example proof.
-
-For direction and sequencing, see [ROADMAP.md](ROADMAP.md). Current priorities are authoring ergonomics, the review/repair loop, visual polish, and keeping verification proof aligned with new surface area.
-
-### Options
-
-| Flag                             | Default                | Description                                                     |
-| -------------------------------- | ---------------------- | --------------------------------------------------------------- |
-| `-o, --output <dir>`             | `./output/<slug>/<id>` | Output directory. Explicit paths are protected from collisions. |
-| `--overwrite`                    | —                      | Allow writing into an explicit output directory with artifacts. |
-| `--no-narration`                 | —                      | Skip TTS narration.                                             |
-| `--no-edit`                      | —                      | For `run`, raw capture only and skip rendering.                 |
-| `--no-headless`                  | —                      | Show the browser window.                                        |
-| `--renderer <name>`              | `ffmpeg`               | Video renderer.                                                 |
-| `--tts-provider <name>`          | `kokoro`               | TTS: kokoro (local), openai, elevenlabs, piper.                 |
-| `--tts-voice <id>`               | —                      | Provider-specific voice id.                                     |
-| `--narration-sync <mode>`        | `manual`               | `manual`, `auto-sync`, or `warn-only`.                          |
-| `--narration-buffer <ms>`        | `500`                  | Lead-in buffer for narration sync.                              |
-| `--resolution <WxH>`             | spec value             | Override capture resolution.                                    |
-| `--change-detection <mode>`      | spec value             | `error`, `warn`, or `off`.                                      |
-| `--strict-geometry`              | —                      | Fail on viewport geometry mismatch.                             |
-| `--from-chapter <title>`         | —                      | Trim output to start from a chapter.                            |
-| `--from-step <index>`            | —                      | Trim output to start from a step index.                         |
-| `--trim-start-ms <ms>`           | `0`                    | Additional render trim offset.                                  |
-| `--select-approach <A\|B\|C\|D>` | `C`                    | Select dropdown visual strategy.                                |
-| `--timeline`                     | —                      | Print narration timeline after rendering.                       |
-| `--verbose`                      | —                      | Debug logging.                                                  |
-
-`init` also accepts `--healthcheck <url>` so demo-machine can wait for a stable app readiness endpoint before capture.
-
-## Spec Format
-
-### Minimal Spec
+## Spec Example
 
 ```yaml
 meta:
-  title: "My Demo"
+  title: "My Product Demo"
 
 runner:
+  command: "pnpm dev"
   url: "http://localhost:3000"
+  healthcheck: "http://localhost:3000/health"
 
 chapters:
-  - title: "Getting Started"
+  - title: "First look"
     steps:
       - action: navigate
         url: "/"
       - action: click
-        selector: "#btn"
+        target:
+          by: role
+          role: button
+          name: "Get Started"
+      - action: screenshot
+        name: first-screen
 ```
 
-`navigate.url` can be absolute (`https://...`) or relative (`/`). Relative URLs are resolved against `runner.url`.
+Prefer structured targets such as `role`, `label`, `text`, and `testId` before raw CSS selectors. See the [spec reference](docs/spec-reference.md) for all fields, actions, targets, narration, and redaction.
 
-### Action Types
+## AI / MCP
 
-| Action                      | Required Fields                           | Description                                                                |
-| --------------------------- | ----------------------------------------- | -------------------------------------------------------------------------- |
-| `navigate`                  | `url`                                     | Go to a URL                                                                |
-| `click`                     | `selector` or `target`                    | Click an element                                                           |
-| `clickFirstVisible`         | `selector`                                | Click the first visible matching element                                   |
-| `check`                     | `selector` or `target`                    | Check a checkbox/toggle                                                    |
-| `uncheck`                   | `selector` or `target`                    | Uncheck a checkbox/toggle                                                  |
-| `type`                      | `selector` or `target`, `text`            | Type text character-by-character                                           |
-| `select`                    | `selector` or `target`, `option`          | Select an option in a `<select>`                                           |
-| `selectFirstNonPlaceholder` | `selector` or `target`                    | Select the first non-placeholder option in a `<select>`                    |
-| `upload`                    | `selector` or `target`, `file` or `files` | Upload files into an `<input type="file">`                                 |
-| `hover`                     | `selector` or `target`                    | Hover over an element                                                      |
-| `scroll`                    | —                                         | Scroll the page or a container (`selector` or `target`, `x`, `y` optional) |
-| `wait`                      | `timeout`                                 | Pause for milliseconds                                                     |
-| `press`                     | `key`                                     | Press a keyboard key                                                       |
-| `back`                      | —                                         | Go back in browser history                                                 |
-| `forward`                   | —                                         | Go forward in browser history                                              |
-| `assert`                    | `selector` or `target`                    | Assert visibility or text content                                          |
-| `screenshot`                | —                                         | Take a screenshot (`name` optional)                                        |
-| `dragAndDrop`               | `from`, `to`                              | Drag from one target to another                                            |
-
-Every action supports an optional `narration` field for TTS and most support `delay` to override the default post-action pause.
-
-## Verification
-
-- `docs/demo-anything.md` defines the acceptance mindset and pattern matrix.
-- `docs/verification-matrix.md` defines the layered V&V model, release tiers, and visual review rubric.
-- `docs/verification-inventory.json` is the machine-readable inventory of supported actions, target strategies, patterns, and quality signals.
-- `examples/manifest.json` maps example suites to release tiers and verification intent.
-- `demo-machine run` executes post-render quality checks after MP4 rendering. Screenshot-backed checks use collected step screenshots, assert before/after pairs, cursor positions, and chapter title screenshots.
-
-### Targeting (Selector-Free)
-
-For target-based actions such as `click`, `type`, `hover`, `scroll`, `assert`, `check`, `uncheck`, `select`, `selectFirstNonPlaceholder`, `upload`, and `dragAndDrop` endpoints, you can use a structured `target` instead of a raw CSS selector:
-
-```yaml
-- action: click
-  target:
-    by: role
-    role: button
-    name: "Next"
-```
-
-Supported strategies:
-
-- `css`: `{ by: css, selector: ".my-class" }`
-- `testId`: `{ by: testId, testId: "save-button" }` (uses `data-testid`)
-- `role`: `{ by: role, role: "button", name: "Save", exact: true }`
-- `text`: `{ by: text, text: "Settings", exact: true }`
-- `label`: `{ by: label, text: "Email", exact: true }`
-- `placeholder`: `{ by: placeholder, text: "Search", exact: true }`
-- `altText`: `{ by: altText, text: "Company logo", exact: true }`
-- `title`: `{ by: title, text: "Open menu", exact: true }`
-
-This makes specs more resilient across UI refactors (class name changes, DOM reshuffles) and aligns with accessibility.
-
-### Disambiguation (`nth`)
-
-When a selector/target matches multiple elements, you can pick the Nth match (0-based):
-
-```yaml
-- action: click
-  selector: "button"
-  nth: 1
-```
-
-### Pacing
-
-Control the feel of the demo globally. All fields are optional with sensible defaults:
-
-```yaml
-pacing:
-  cursorDurationMs: 600 # cursor travel time
-  typeDelayMs: 50 # ms between keystrokes
-  postClickDelayMs: 500 # pause after clicks
-  postTypeDelayMs: 300 # pause after typing
-  postNavigateDelayMs: 1000 # pause after navigation
-  settleDelayMs: 200 # micro-pause after every action
-```
-
-### Redaction
-
-Blur sensitive content and scan for secret patterns:
-
-```yaml
-redaction:
-  selectors:
-    - ".user-email"
-    - "[data-sensitive]"
-  secrets:
-    - "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z]{2,}\\b"
-```
-
-### Branding
-
-```yaml
-meta:
-  branding:
-    logo: "./assets/logo.png"
-    colors:
-      primary: "#3B82F6"
-      background: "#000000"
-```
-
-## Architecture
-
-```
-                    ┌──────────────┐
-                    │  YAML Spec   │
-                    └──────┬───────┘
-                           │
-                    ┌──────▼───────┐
-                    │ Spec Loader  │  Zod validation + defaults
-                    └──────┬───────┘
-                           │
-                    ┌──────▼───────┐
-                    │   Runner     │  Spawn dev server, healthcheck
-                    └──────┬───────┘
-                           │
-                    ┌──────▼───────┐
-                    │   Playback   │  Cursor animation, typing, pacing
-                    │   Engine     │  Playwright browser automation
-                    └──────┬───────┘
-                           │
-                    ┌──────▼───────┐
-                    │   Capture    │  Video recording + event log
-                    └──────┬───────┘
-                           │
-                    ┌──────▼───────┐
-                    │  Timeline    │  Intro/outro, chapters, callouts
-                    │  Builder     │  Dead-time compression
-                    └──────┬───────┘
-                           │
-                    ┌──────▼───────┐
-                    │   FFmpeg     │  Overlays, fades, final MP4
-                    │  Renderer    │
-                    └──────┬───────┘
-                           │
-                    ┌──────▼───────┐
-                    │  Narration   │  TTS + VTT/SRT subtitles
-                    │  (optional)  │
-                    └──────────────┘
-```
-
-### Project Structure
-
-```
-src/
-  cli.ts              # CLI entry point
-  index.ts            # Public API exports
-  spec/               # YAML parsing + Zod validation
-  runner/             # Dev server lifecycle
-  playback/           # Cursor, typing, pacing engine
-  capture/            # Playwright video recording
-  editor/             # Timeline + ffmpeg renderer
-  narration/          # TTS providers + subtitles
-  redaction/          # Blur + secret scanning
-  utils/              # Logger, process helpers
-  mcp-server.ts       # MCP server entry point (demo-machine-mcp binary)
-  mcp/                # MCP tools, resources, and prompts
-tests/                # 1044 tests across 96 files
-examples/             # Example specs + demo apps
-```
-
-## Claude Integration (MCP)
-
-Claude can orchestrate demo creation conversationally via the built-in MCP server.
-
-### Claude Desktop Setup
-
-Add the following to your `claude_desktop_config.json`:
+demo-machine includes an MCP server so AI assistants can help create, validate, run, review, and repair demos.
 
 ```json
 {
@@ -527,64 +162,37 @@ Add the following to your `claude_desktop_config.json`:
 }
 ```
 
-### Tools
+The MCP server exposes 5 tools, 4 resources, and 8 prompts. See the [MCP guide](docs/mcp.md) for the full list.
 
-| Tool            | Description                                                                    |
-| --------------- | ------------------------------------------------------------------------------ |
-| `validate-spec` | Parse and validate a demo spec, returning chapter/step counts or errors        |
-| `capture-spec`  | Run browser capture only, returning structured artifact paths and event counts |
-| `run-pipeline`  | Run capture, render, optional narration, and quality checks                    |
-| `format-spec`   | Reserialize a spec as YAML or JSON                                             |
-| `list-voices`   | List configured TTS voices                                                     |
-
-### Resources
-
-| Resource           | URI                               | Description                       |
-| ------------------ | --------------------------------- | --------------------------------- |
-| `basic-template`   | `demo-machine://templates/basic`  | Starter YAML spec template        |
-| `actions-docs`     | `demo-machine://docs/actions`     | Available step actions            |
-| `spec-format-docs` | `demo-machine://docs/spec-format` | Demo spec format reference        |
-| `ai-prompts-docs`  | `demo-machine://docs/ai-prompts`  | MCP prompt workflow documentation |
-
-### Prompts
-
-| Prompt             | Description                                                     |
-| ------------------ | --------------------------------------------------------------- |
-| `create-demo-spec` | Generate a spec YAML given an app URL and description           |
-| `debug-demo`       | Diagnose a failing spec from an error message                   |
-| `narrate-spec`     | Add narration text to every step in a spec                      |
-| `heal-spec`        | Repair a broken spec from failure artifacts                     |
-| `demo-from-url`    | Generate a spec by inspecting a live app URL                    |
-| `translate-spec`   | Translate narration to another language                         |
-| `spec-from-test`   | Convert a Playwright or Cypress test into a demo spec           |
-| `review-demo`      | Review a completed demo run, defaulting to `output/latest.json` |
-
-## Narration Providers
-
-| Provider     | Type  | Setup                                            |
-| ------------ | ----- | ------------------------------------------------ |
-| `kokoro`     | Local | No API key — provided by the `kokoro-js` package |
-| `piper`      | Local | No API key — install via `pip install piper-tts` |
-| `openai`     | Cloud | Set `OPENAI_API_KEY` env var                     |
-| `elevenlabs` | Cloud | Set `ELEVENLABS_API_KEY` env var                 |
-
-Pass `--tts-provider <name>` to `demo-machine run` to select a provider. To clone a voice for
-ElevenLabs narration, run `demo-machine voices clone`.
-
-## Development
+## Local Quality
 
 ```bash
-pnpm build          # Compile TypeScript
-pnpm test           # Run the Vitest suite
-pnpm lint           # ESLint
-pnpm format         # Prettier check
-pnpm typecheck      # tsc --noEmit
-pnpm validate       # Source quality gate: lint, format, spell, typecheck, tests, knip, dep-check, inventory
-pnpm local-ready    # Local build, validation, and example-spec validation
+pnpm validate
+pnpm local-ready
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions and development workflow.
+`pnpm validate` runs lint, formatting, spelling, typecheck, tests, dependency checks, and strict verification inventory checks. `pnpm local-ready` adds build and example validation. Local validation is the current quality gate.
+
+## Learn More
+
+Start here:
+
+- [Getting Started](GETTING-STARTED.md): first run, starter specs, validation flow.
+- [CLI Reference](docs/cli-reference.md): commands, options, and output behavior.
+- [Spec Reference](docs/spec-reference.md): fields, actions, targets, narration, and redaction.
+- [Demo Anything](docs/demo-anything.md): authoring principles, supported actions, and example matrix.
+- [MCP Integration](docs/mcp.md): AI assistant tools, resources, and prompts.
+- [Verification Matrix](docs/verification-matrix.md): what local checks prove and how coverage is tracked.
+- [Demo Gallery](docs/demo-gallery.md): rendered example previews.
+- [Roadmap](ROADMAP.md): project direction, priorities, and non-goals.
+
+Then go deeper:
+
+- [Glossary](docs/glossary.md): shared terms for artifacts and pipeline stages.
+- [Contributing](CONTRIBUTING.md): development workflow and quality gates.
+- [Releasing](RELEASING.md): local release process.
+- [Security](SECURITY.md): supported versions and vulnerability reporting.
 
 ## License
 
-[MIT](LICENSE) — use it however you want.
+[MIT](LICENSE)
