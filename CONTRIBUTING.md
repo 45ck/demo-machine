@@ -51,7 +51,7 @@ examples/             # Example specs + demo apps
 
 ## Development Workflow
 
-1. **Create a branch** for your change
+1. **Work from the checkout requested by the maintainer**. For this repository, local mainline work is currently preferred unless a maintainer asks for a branch.
 2. **Write tests first** — we maintain high coverage
 3. **Run the full validation suite** before submitting:
    ```bash
@@ -63,19 +63,18 @@ examples/             # Example specs + demo apps
    pnpm quality:verify
    ```
    This reports supported actions, target strategies, and quality signals that still lack example proof.
-5. **Submit a PR** with a clear description
+5. **Submit a PR or direct mainline commit** with a clear description, depending on the maintainer's requested flow.
 
 ## Quality Gates
 
-- Pull requests must pass the CI workflow, which currently runs `pnpm build` and `pnpm validate`.
-- CI also validates the example suite definitions with:
+- `pnpm validate` is the local source of truth and should pass before pushing or publishing.
+- Validate the example suite definitions locally with:
   ```bash
   pnpm examples:validate -- --no-build
   ```
 - `pnpm examples:capture` now validates the raw capture artifact contract as well:
   `video.webm`, `events.json`, `metadata.json`, `environment.json`, `verification.json`, and `trace.zip`.
-- GitHub CodeQL runs separately to catch security-oriented JavaScript/TypeScript issues that the local toolchain will not always surface.
-- If you touch parser, redaction, playback orchestration, or timing logic, consider running mutation testing before opening the PR:
+- If you touch parser, redaction, playback orchestration, or timing logic, consider running mutation testing before handing off the change:
   ```bash
   pnpm mutation
   ```

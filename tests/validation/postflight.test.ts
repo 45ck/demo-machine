@@ -1,9 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { postflight } from "../../src/validation/postflight.js";
 
-// Import post-capture check so it self-registers
-import "../../src/validation/checks/post-capture.js";
-
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";

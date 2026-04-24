@@ -81,7 +81,13 @@
     "selectedphoto",
     "selecteddoc",
     "topbar",
-    "autosync"
+    "autosync",
+    "autoplay",
+    "Colour",
+    "minmax",
+    "healthchecks",
+    "reserialize",
+    "Prereqs"
   ],
   "ignorePaths": ["node_modules", "dist", "pnpm-lock.yaml", "*.json"]
 }

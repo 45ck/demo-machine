@@ -23,7 +23,7 @@ export async function runPostflight(params: PostflightParams): Promise<void> {
   );
   const failures = results.filter((r) => r.status === "fail");
   if (failures.length > 0) {
-    const msgs = failures.map((f) => `  ✗ [${f.checkName}] ${f.message}`).join("\n");
-    console.warn(`Postflight warnings:\n${msgs}`);
+    const msgs = failures.map((f) => `  - [${f.checkName}] ${f.message}`).join("\n");
+    throw new Error(`Postflight verification failed:\n${msgs}`);
   }
 }

@@ -9,6 +9,8 @@ import { resolveNarrationSettings } from "./cli/narration.js";
 import { captureFromSpec } from "./cli/capture.js";
 import { runFullPipeline, runEditPipeline } from "./cli/pipeline.js";
 import { runDoctor } from "./cli/doctor.js";
+import { initSpec } from "./cli/init.js";
+import { getPackageVersion } from "./version.js";
 
 const logger = createLogger("cli");
 
@@ -17,7 +19,7 @@ const program = new Command();
 program
   .name("demo-machine")
   .description("Demo as code — automate polished product demo videos from YAML specs")
-  .version("0.1.0")
+  .version(getPackageVersion())
   .option("-o, --output <dir>", "Output directory", "./output")
   .option("--no-narration", "Skip narration")
   .option("--no-edit", "Skip editing (raw capture only)")
@@ -103,6 +105,29 @@ program
       throw new InvalidArgumentError("--resolution width and height must be positive.");
     return { width: w, height: h };
   });
+
+program
+  .command("init <spec>")
+  .description("Create a starter demo spec for a local product or web app")
+  .requiredOption("--url <url>", "App URL to open, e.g. http://localhost:3000")
+  .option("--command <cmd>", "Command to start the app before capture")
+  .option("--title <title>", "Demo title", "Product Demo")
+  .option("--force", "Overwrite the spec file if it already exists", false)
+  .action(
+    async (
+      specPath: string,
+      cmdOpts: { url: string; command?: string; title?: string; force?: boolean },
+    ) => {
+      const opts = program.opts<GlobalOptions>();
+      applyGlobalOptions(opts);
+      try {
+        await initSpec(specPath, cmdOpts);
+      } catch (err) {
+        logger.error(err instanceof Error ? err.message : String(err));
+        process.exitCode = 1;
+      }
+    },
+  );
 
 program
   .command("validate <spec>")

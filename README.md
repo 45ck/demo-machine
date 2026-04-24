@@ -11,11 +11,10 @@
 **Demo as code** — turn YAML specs into polished product demo videos.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![CI](https://github.com/45ck/demo-machine/actions/workflows/ci.yml/badge.svg)](https://github.com/45ck/demo-machine/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/demo-machine)](https://www.npmjs.com/package/demo-machine)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Tests](https://img.shields.io/badge/Tests-758%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-1010%20passing-brightgreen)](tests/)
 [![Playwright](https://img.shields.io/badge/Playwright-Browser%20Automation-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev)
 [![FFmpeg](https://img.shields.io/badge/FFmpeg-Video%20Rendering-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org)
 
@@ -154,7 +153,7 @@ Tools like Screen Studio and Arcade require manual recording sessions. Every tim
 
 - **Reproducible** — same YAML, same video, every time
 - **Version-controlled** — specs live in your repo, reviewable in PRs
-- **CI-friendly** — generate demo videos in your pipeline on every release
+- **Automation-friendly** — generate demo videos from scripts, hooks, or release tasks
 - **No manual work** — no clicking through your app, no editing in a video tool
 
 ## Features
@@ -215,6 +214,9 @@ demo-machine run <spec.yaml>
 # Validate a spec file without running
 demo-machine validate <spec.yaml>
 
+# Create a starter spec for your app
+demo-machine init my-product.demo.yaml --url http://localhost:3000 --command "pnpm dev"
+
 # Capture only (raw video, no post-processing)
 demo-machine capture <spec.yaml>
 
@@ -229,6 +231,9 @@ The repo includes multiple example apps and `.demo.yaml` specs under `examples/`
 ```bash
 # Verify the example/feature inventory and report known proof gaps
 pnpm quality:verify
+
+# Run the local release-readiness gate
+pnpm local-ready
 
 # Validate all example specs
 pnpm examples:validate
@@ -321,7 +326,7 @@ Every action supports an optional `narration` field for TTS and most support `de
 
 ### Targeting (Selector-Free)
 
-For `click`, `type`, `hover`, `scroll` (container scroll), and `assert`, you can use a structured `target` instead of a raw CSS selector:
+For target-based actions such as `click`, `type`, `hover`, `scroll`, `assert`, `check`, `uncheck`, `select`, `selectFirstNonPlaceholder`, `upload`, and `dragAndDrop` endpoints, you can use a structured `target` instead of a raw CSS selector:
 
 ```yaml
 - action: click
@@ -448,7 +453,7 @@ src/
   utils/              # Logger, process helpers
   mcp-server.ts       # MCP server entry point (demo-machine-mcp binary)
   mcp/                # MCP tools, resources, and prompts
-tests/                # 758 tests across 62 files
+tests/                # 1010 tests across 89 files
 examples/             # Example specs + demo apps
 ```
 
@@ -483,9 +488,9 @@ Add the following to your `claude_desktop_config.json`:
 
 ### Resources
 
-| Resource         | URI                      | Description                |
-| ---------------- | ------------------------ | -------------------------- |
-| `basic-template` | `demo://templates/basic` | Starter YAML spec template |
+| Resource         | URI                              | Description                |
+| ---------------- | -------------------------------- | -------------------------- |
+| `basic-template` | `demo-machine://templates/basic` | Starter YAML spec template |
 
 ### Prompts
 
@@ -498,23 +503,24 @@ Add the following to your `claude_desktop_config.json`:
 
 | Provider     | Type  | Setup                                            |
 | ------------ | ----- | ------------------------------------------------ |
-| `kokoro`     | Local | No API key — install via `pip install kokoro`    |
+| `kokoro`     | Local | No API key — provided by the `kokoro-js` package |
 | `piper`      | Local | No API key — install via `pip install piper-tts` |
 | `openai`     | Cloud | Set `OPENAI_API_KEY` env var                     |
 | `elevenlabs` | Cloud | Set `ELEVENLABS_API_KEY` env var                 |
 
 Pass `--tts-provider <name>` to `demo-machine run` to select a provider. To clone a voice for
-ElevenLabs narration, run `demo-machine narration clone`.
+ElevenLabs narration, run `demo-machine voices clone`.
 
 ## Development
 
 ```bash
 pnpm build          # Compile TypeScript
-pnpm test           # Run 758 tests
+pnpm test           # Run the Vitest suite
 pnpm lint           # ESLint
 pnpm format         # Prettier check
 pnpm typecheck      # tsc --noEmit
 pnpm validate       # Run everything
+pnpm local-ready    # Local build, validation, and example-spec readiness
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions and development workflow.

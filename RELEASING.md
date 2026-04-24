@@ -1,26 +1,37 @@
 # Releasing
 
-This repo publishes to npm via GitHub Actions (`.github/workflows/release.yml`).
+This repo currently releases from the local checkout. GitHub Actions workflows have been removed, so publishing is manual until a maintainer reintroduces a release pipeline.
 
 ## Prereqs
 
-- `NPM_TOKEN` secret set in the GitHub repo (npm automation token with publish access).
+- Logged in to npm locally with an account that can publish `demo-machine`.
+- Clean `master` checkout with local verification complete.
 
 ## Release Steps
 
-1. Bump the version:
+1. Verify locally:
+
+```bash
+pnpm install
+pnpm validate
+pnpm build
+pnpm examples:validate -- --no-build
+```
+
+2. Bump the version:
 
 ```bash
 pnpm version patch
 ```
 
-2. Push the commit and tag:
+3. Publish from the local checkout:
+
+```bash
+pnpm publish
+```
+
+4. Push the release commit and tag:
 
 ```bash
 git push --follow-tags
 ```
-
-3. Publish:
-
-- Preferred: create a GitHub Release for the tag (triggers publish).
-- Alternative: pushing a `vX.Y.Z` tag also triggers publish.

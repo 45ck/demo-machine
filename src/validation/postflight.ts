@@ -1,6 +1,7 @@
 import type { CheckResult, CheckContext } from "./types.js";
 import type { MonitorIssue } from "./monitor-types.js";
 import { runPhase } from "./registry.js";
+import "./checks/post-capture.js";
 
 interface PostflightContext extends CheckContext {
   events: unknown[];

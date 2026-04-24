@@ -34,9 +34,9 @@ The current suite-to-tier mapping lives in `examples/manifest.json`.
 ## Current Enforcement
 
 - `pnpm validate` includes `pnpm quality:verify:strict`
-- CI also runs `pnpm examples:validate -- --no-build`
+- Local release readiness should also run `pnpm examples:validate -- --no-build`
 - All known proof gaps have been closed; `quality:verify:strict` enforces zero gaps on every `pnpm validate` run
 
 ## Known Gaps
 
-None. All 18 actions, 3 preSteps, and 8 target strategies have example proof as of 0.2.0.
+None. All 18 actions, 3 preSteps, and 8 target strategies have example proof as of 0.3.0.

@@ -6,10 +6,11 @@ import { registerListVoicesTool } from "./tools/list-voices.js";
 import { registerFormatTool } from "./tools/format.js";
 import { registerResources } from "./resources.js";
 import { registerPrompts } from "./prompts.js";
+import { getPackageVersion } from "../version.js";
 
 export function createServer(): McpServer {
   const server = new McpServer(
-    { name: "demo-machine", version: "0.1.0" },
+    { name: "demo-machine", version: getPackageVersion() },
     {
       capabilities: {
         tools: {},

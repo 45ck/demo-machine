@@ -214,7 +214,7 @@ async function captureWithBrowser(params: CaptureWithBrowserParams): Promise<Cap
         : undefined,
     });
     captureResult.screenshotData = screenshotData;
-    void runPostflight({
+    await runPostflight({
       captureResult,
       ...params,
       events: result.events,
