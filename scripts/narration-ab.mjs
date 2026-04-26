@@ -21,7 +21,7 @@
  *
  * Usage:
  *   node scripts/narration-ab.mjs
- *   node scripts/narration-ab.mjs --spec examples/todo-app.demo.yaml
+ *   node scripts/narration-ab.mjs --spec examples/showcase/todo-app.demo.yaml
  *   node scripts/narration-ab.mjs --voices af_heart,af_bella,am_adam
  *   node scripts/narration-ab.mjs --use-existing
  *
@@ -77,7 +77,7 @@ function usage() {
       "  node scripts/narration-ab.mjs [--spec <path>] [--voices <list>]",
       "",
       "Options:",
-      "  --spec <path>       Spec file to use (default: examples/todo-app.demo.yaml)",
+      "  --spec <path>       Spec file to use (default: examples/showcase/todo-app.demo.yaml)",
       "  --voices <list>     Comma-separated voice IDs (default: af_heart,af_bella,am_adam)",
       "  --use-existing      Skip capture, use existing events.json from output/example-suite/",
       "  --provider <name>   TTS provider (default: kokoro)",
@@ -309,7 +309,7 @@ async function main() {
   }
 
   // Resolve spec
-  const defaultSpec = path.join(root, "examples", "todo-app.demo.yaml");
+  const defaultSpec = path.join(root, "examples", "showcase", "todo-app.demo.yaml");
   const specPath = opts.spec ? path.resolve(opts.spec) : defaultSpec;
 
   if (!(await exists(specPath))) {

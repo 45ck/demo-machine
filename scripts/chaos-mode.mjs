@@ -7,10 +7,10 @@
  * succeeds despite the mutation) means our error detection has a gap.
  *
  * Usage:
- *   node scripts/chaos-mode.mjs --spec examples/todo-app.demo.yaml
+ *   node scripts/chaos-mode.mjs --spec examples/showcase/todo-app.demo.yaml
  *   node scripts/chaos-mode.mjs --all
  *   node scripts/chaos-mode.mjs --all --mutations bad-selector,bad-url
- *   node scripts/chaos-mode.mjs --spec examples/todo-app.demo.yaml --timeout 45000
+ *   node scripts/chaos-mode.mjs --spec examples/showcase/todo-app.demo.yaml --timeout 45000
  *   node scripts/chaos-mode.mjs --help
  *
  * Exit codes:
@@ -139,7 +139,7 @@ function clone(obj) {
   return JSON.parse(JSON.stringify(obj));
 }
 
-/** Derive a slug from a spec path, e.g. "examples/todo-app.demo.yaml" -> "todo-app". */
+/** Derive a slug from a spec path, e.g. "examples/showcase/todo-app.demo.yaml" -> "todo-app". */
 function slugFromPath(specPath) {
   return path
     .basename(specPath)

@@ -22,6 +22,20 @@ function relativeSpecPath(specPath) {
 
 const STANDALONE_SPECS = new Set(["examples/meta-demo.demo.yaml"]);
 
+async function discoverSpecs(dir, root, out = []) {
+  const entries = await readdir(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      await discoverSpecs(fullPath, root, out);
+      continue;
+    }
+    if (!entry.isFile() || !/\.demo\.ya?ml$/i.test(entry.name)) continue;
+    out.push(relativeSpecPath(path.relative(root, fullPath)));
+  }
+  return out;
+}
+
 function collectStepTargetStrategies(step, targetStrategies) {
   if (typeof step?.selector === "string" && step.selector.trim().length > 0) {
     targetStrategies.add("css");
@@ -106,7 +120,7 @@ async function main() {
     }
     slugs.add(suite.slug);
 
-    if (!["pr", "nightly"].includes(suite.releaseTier)) {
+    if (!["pr", "nightly", "proof"].includes(suite.releaseTier)) {
       errors.push(`Suite "${suite.slug}" has invalid releaseTier "${suite.releaseTier}"`);
     }
     if (!["gallery", "none"].includes(suite.visualBaseline)) {
@@ -143,12 +157,8 @@ async function main() {
     }
   }
 
-  const exampleFiles = await readdir(examplesDir, { withFileTypes: true });
   const actualSpecs = uniq(
-    exampleFiles
-      .filter((entry) => entry.isFile() && /\.demo\.ya?ml$/i.test(entry.name))
-      .map((entry) => relativeSpecPath(path.posix.join("examples", entry.name)))
-      .filter((spec) => !STANDALONE_SPECS.has(spec)),
+    (await discoverSpecs(examplesDir, root)).filter((spec) => !STANDALONE_SPECS.has(spec)),
   );
 
   for (const spec of actualSpecs) {

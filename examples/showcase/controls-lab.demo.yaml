@@ -40,7 +40,7 @@ chapters:
         target:
           by: label
           text: "Upload logo"
-        file: "./controls-lab/assets/sample.txt"
+        file: "../controls-lab/assets/sample.txt"
         narration: "Upload a logo file using the accessible label."
       - action: assert
         target:

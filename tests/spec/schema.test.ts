@@ -47,13 +47,23 @@ function fullSpec() {
       voice: "af_heart",
       sync: { mode: "auto-sync", bufferMs: 500 },
     },
+    presentation: {
+      narrationFocus: {
+        enabled: true,
+        cursor: true,
+        highlight: true,
+        zoom: true,
+        scale: 1.15,
+        durationMs: 1200,
+      },
+    },
     chapters: [
       {
         title: "Chapter One",
         narration: "Intro narration.",
         steps: [
           { action: "navigate", url: "/", narration: "Go home" },
-          { action: "click", selector: "#btn", narration: "Click it" },
+          { action: "click", selector: "#btn", narration: "Click it", focus: { scale: 1.2 } },
           {
             action: "type",
             selector: "#input",
@@ -205,6 +215,44 @@ describe("demoSpecSchema", () => {
       const result = demoSpecSchema.parse(spec);
       const step = result.chapters[0]!.steps[0]!;
       expect(step.action).toBe("screenshot");
+    });
+
+    it("defaults narration focus presentation on", () => {
+      const spec = minimalSpec();
+      const result = demoSpecSchema.parse(spec);
+      expect(result.presentation.narrationFocus).toEqual({
+        enabled: true,
+        cursor: true,
+        highlight: true,
+        zoom: true,
+        scale: 1.35,
+        durationMs: 2600,
+        transitionMs: 700,
+      });
+    });
+
+    it("accepts per-step narration focus overrides", () => {
+      const spec = minimalSpec();
+      spec.chapters[0]!.steps = [
+        {
+          action: "click" as const,
+          selector: "#btn",
+          narration: "Click the button",
+          focus: { zoom: false, highlight: true },
+        },
+      ];
+      const result = demoSpecSchema.parse(spec);
+      expect(result.chapters[0]!.steps[0]).toMatchObject({
+        focus: {
+          enabled: true,
+          cursor: true,
+          highlight: true,
+          zoom: false,
+          scale: 1.35,
+          durationMs: 2600,
+          transitionMs: 700,
+        },
+      });
     });
   });
 

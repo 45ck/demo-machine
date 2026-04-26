@@ -13,8 +13,10 @@ This repo currently releases from the local checkout. GitHub Actions workflows h
 
 ```bash
 pnpm install
-pnpm local-ready
+pnpm release-ready
 ```
+
+Use `pnpm release-ready:fast` when you need the non-rendering release gates only. It still checks external tool availability, gallery consistency, build/validate, example validation, and package dry-run readiness.
 
 2. Bump the version:
 

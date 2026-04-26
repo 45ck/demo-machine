@@ -2,7 +2,10 @@ import { describe, expect, it, afterEach, beforeEach } from "vitest";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { writeScreenshotArtifacts } from "../../src/playback/screenshot-artifacts.js";
+import {
+  validateScreenshotArtifactManifestConsistency,
+  writeScreenshotArtifacts,
+} from "../../src/playback/screenshot-artifacts.js";
 import type { ScreenshotCollectorResults } from "../../src/playback/screenshot-collector.js";
 
 describe("writeScreenshotArtifacts", () => {
@@ -75,5 +78,37 @@ describe("writeScreenshotArtifacts", () => {
     });
     expect(manifest.stepScreenshots.map((entry) => entry.stepIndex)).toEqual([0, 2]);
     expect(manifest.cursorPositions).toHaveLength(1);
+    expect(
+      validateScreenshotArtifactManifestConsistency({
+        manifest: artifact!.manifest,
+        screenshotPaths: artifact!.screenshotPaths,
+      }),
+    ).toEqual([]);
+  });
+
+  it("reports manifest count and screenshot path inconsistencies", async () => {
+    const artifact = await writeScreenshotArtifacts({
+      outputDir: tempDir,
+      results: {
+        stepScreenshots: new Map([[0, Buffer.from("step zero")]]),
+        assertScreenshotPairs: [],
+        cursorPositions: [],
+        chapterTitleScreenshots: new Map(),
+      },
+    });
+
+    expect(artifact).toBeDefined();
+    const issues = validateScreenshotArtifactManifestConsistency({
+      manifest: {
+        ...artifact!.manifest,
+        counts: { ...artifact!.manifest.counts, stepScreenshots: 2 },
+      },
+      screenshotPaths: [...artifact!.screenshotPaths, join(tempDir, "screenshots", "extra.png")],
+    });
+
+    expect(issues).toEqual([
+      "stepScreenshots count mismatch: counts.stepScreenshots=2, entries=1",
+      `screenshotPaths entry missing from manifest: ${join(tempDir, "screenshots", "extra.png")}`,
+    ]);
   });
 });

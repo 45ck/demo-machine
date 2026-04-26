@@ -38,9 +38,9 @@ It is local-first. There is no required cloud service and no current CI dependen
 
 ## Demo
 
-This video was generated from [examples/todo-app.demo.yaml](examples/todo-app.demo.yaml):
+This video was generated from [examples/showcase/todo-app.demo.yaml](examples/showcase/todo-app.demo.yaml):
 
-https://github.com/45ck/demo-machine/raw/master/examples/todo-app-demo.mp4
+![TaskFlow demo](assets/demo-gallery/todo-app.gif)
 
 More rendered examples are in the [demo gallery](docs/demo-gallery.md).
 
@@ -52,7 +52,7 @@ cd demo-machine
 pnpm install
 pnpm exec playwright install chromium
 pnpm build
-node dist/cli.js run examples/todo-app.demo.yaml --no-headless
+node dist/cli.js run examples/showcase/todo-app.demo.yaml --no-headless
 ```
 
 Requirements:
@@ -90,11 +90,22 @@ demo-machine edit <output-dir>/events.json
 
 # Find examples to copy from
 demo-machine examples list
-demo-machine examples show file-uploader
+demo-machine examples show controls-lab
 
 # Check local dependencies
 demo-machine doctor
 ```
+
+## Examples
+
+Example specs are organized by purpose:
+
+- `examples/showcase/`: polished demos used by the docs and gallery.
+- `examples/proof/actions/`: small action-level playback proofs.
+- `examples/proof/variants/`: redaction and narration-sync coverage variants.
+- `examples/assurance/long-demo/`: a longer realistic QA flow for full-video assurance.
+
+`examples/manifest.json` is the source of truth for discovery and suite tooling. `demo-machine examples list` reads that manifest and, by default, shows showcase and assurance specs. Use `--type proof` for action fixtures, `--type all` for every manifest entry, and filters such as `--tag`, `--signal`, `--tier`, or `--search` to narrow the table. `demo-machine examples show <slug>` prints the canonical spec path, variants, quality signals, and runnable `run` and `validate` commands.
 
 ## How It Works
 
@@ -169,9 +180,17 @@ The MCP server exposes 5 tools, 4 resources, and 8 prompts. See the [MCP guide](
 ```bash
 pnpm validate
 pnpm local-ready
+pnpm release-ready:fast
+pnpm release-ready
+pnpm examples:validate -- --no-build
+pnpm examples:smoke:pr -- --limit 2
+pnpm video:assure -- --filter assurance-long-demo
+pnpm qa:meta-prompt
 ```
 
-`pnpm validate` runs lint, formatting, spelling, typecheck, tests, dependency checks, and strict verification inventory checks. `pnpm local-ready` adds build and example validation. Local validation is the current quality gate.
+`pnpm validate` runs lint, formatting, spelling, typecheck, tests, dependency checks, and strict verification inventory checks. `pnpm local-ready` adds build and example validation. `pnpm release-ready:fast` adds release gates without rendering smoke videos, while `pnpm release-ready` runs the heavier PR-tier capture/render smoke and video assurance. `pnpm examples:validate` validates manifest-backed specs, and `pnpm video:assure` scans rendered MP4 outputs for blank frames, frozen spans, and large visual jumps after rendered example outputs exist.
+
+`pnpm qa:meta-prompt` creates a fresh complex fixture project plus a Demo Machine Codex skill and prompt. Use `pnpm qa:meta-prompt:run` when you want Codex CLI to create narrated demos, cover the action/component matrix, run Demo Machine, self-evaluate, and produce a human review page at `output/meta-prompt-qa/review.html`.
 
 ## Learn More
 
@@ -181,6 +200,7 @@ Start here:
 - [CLI Reference](docs/cli-reference.md): commands, options, and output behavior.
 - [Spec Reference](docs/spec-reference.md): fields, actions, targets, narration, and redaction.
 - [Demo Anything](docs/demo-anything.md): authoring principles, supported actions, and example matrix.
+- [Examples Assurance Layout](docs/examples-assurance-plan.md): organized examples layout, suite validation, video assurance, and long-demo QA.
 - [MCP Integration](docs/mcp.md): AI assistant tools, resources, and prompts.
 - [Verification Matrix](docs/verification-matrix.md): what local checks prove and how coverage is tracked.
 - [Demo Gallery](docs/demo-gallery.md): rendered example previews.

@@ -6,41 +6,54 @@ import process from "node:process";
 import crypto from "node:crypto";
 
 const SHOWCASE = [
-  { slug: "todo-app", spec: "examples/todo-app.demo.yaml", title: "TaskFlow (Tasks)" },
-  { slug: "form-wizard", spec: "examples/form-wizard.demo.yaml", title: "FlowForm (Wizard)" },
-  { slug: "auth-otp", spec: "examples/auth-otp.demo.yaml", title: "AuthFlow (OTP)" },
-  { slug: "modals-popovers", spec: "examples/modals-popovers.demo.yaml", title: "OverlayKit" },
-  { slug: "spa-router", spec: "examples/spa-router.demo.yaml", title: "RouteLab (SPA)" },
-  { slug: "infinite-scroll", spec: "examples/infinite-scroll.demo.yaml", title: "ScrollForge" },
+  { slug: "todo-app", spec: "examples/showcase/todo-app.demo.yaml", title: "TaskFlow (Tasks)" },
+  {
+    slug: "form-wizard",
+    spec: "examples/showcase/form-wizard.demo.yaml",
+    title: "FlowForm (Wizard)",
+  },
+  { slug: "auth-otp", spec: "examples/showcase/auth-otp.demo.yaml", title: "AuthFlow (OTP)" },
+  {
+    slug: "modals-popovers",
+    spec: "examples/showcase/modals-popovers.demo.yaml",
+    title: "OverlayKit",
+  },
+  { slug: "spa-router", spec: "examples/showcase/spa-router.demo.yaml", title: "RouteLab (SPA)" },
   {
     slug: "dashboard-table",
-    spec: "examples/dashboard-table.demo.yaml",
+    spec: "examples/showcase/dashboard-table.demo.yaml",
     title: "DashLite (Table)",
   },
-  { slug: "controls-lab", spec: "examples/controls-lab.demo.yaml", title: "ControlRoom (Inputs)" },
+  {
+    slug: "controls-lab",
+    spec: "examples/showcase/controls-lab.demo.yaml",
+    title: "ControlRoom (Inputs)",
+  },
   {
     slug: "chart-tooltips",
-    spec: "examples/chart-tooltips.demo.yaml",
+    spec: "examples/showcase/chart-tooltips.demo.yaml",
     title: "ChartLab (Tooltips)",
   },
-  { slug: "virtual-table", spec: "examples/virtual-table.demo.yaml", title: "GridV (Virtualized)" },
+  {
+    slug: "virtual-table",
+    spec: "examples/showcase/virtual-table.demo.yaml",
+    title: "GridV (Virtualized)",
+  },
   {
     slug: "selector-stress",
-    spec: "examples/selector-stress.demo.yaml",
+    spec: "examples/showcase/selector-stress.demo.yaml",
     title: "SelectorGym (nth)",
-  },
-  { slug: "drag-sort", spec: "examples/drag-sort.demo.yaml", title: "DragSort (Reorder)" },
-  {
-    slug: "file-uploader",
-    spec: "examples/file-uploader.demo.yaml",
-    title: "FileUploader (Preview)",
   },
   {
     slug: "async-skeleton",
-    spec: "examples/async-skeleton.demo.yaml",
+    spec: "examples/showcase/async-skeleton.demo.yaml",
     title: "AsyncSkeleton (Dashboard)",
   },
-  { slug: "seeded-api", spec: "examples/seeded-api.demo.yaml", title: "SeededAPI (Notes)" },
+  {
+    slug: "seeded-api",
+    spec: "examples/showcase/seeded-api.demo.yaml",
+    title: "SeededAPI (Notes)",
+  },
 ];
 
 function parseArgs(argv) {
@@ -51,7 +64,7 @@ function parseArgs(argv) {
     filter: null,
     regen: false,
     headed: false,
-    updateTodoMp4: true,
+    updateTodoMp4: false,
   };
 
   for (let i = 0; i < argv.length; i++) {
@@ -81,8 +94,8 @@ function parseArgs(argv) {
       opts.headed = true;
       continue;
     }
-    if (a === "--no-update-todo-mp4") {
-      opts.updateTodoMp4 = false;
+    if (a === "--update-todo-mp4") {
+      opts.updateTodoMp4 = true;
       continue;
     }
     if (a === "-h" || a === "--help") return { ...opts, help: true };
@@ -99,7 +112,7 @@ function usage() {
       "Generates GIF previews + 5 screenshots per showcase demo and updates docs.",
       "",
       "Usage:",
-      "  node scripts/demo-gallery.mjs [--out <dir>] [--tmp <dir>] [--filter <substring>] [--limit <n>] [--regen] [--headed] [--no-update-todo-mp4]",
+      "  node scripts/demo-gallery.mjs [--out <dir>] [--tmp <dir>] [--filter <substring>] [--limit <n>] [--regen] [--headed] [--update-todo-mp4]",
       "",
       "Notes:",
       "  - Requires ffmpeg + ffprobe on PATH.",
@@ -387,7 +400,7 @@ async function main() {
     });
   }
 
-  // Update the canonical README demo mp4 so it stays in sync with current visuals.
+  // Optional legacy README MP4 export. The README now uses gallery assets by default.
   if (opts.updateTodoMp4) {
     const todo = results.find((r) => r.slug === "todo-app");
     if (todo) {
@@ -399,7 +412,7 @@ async function main() {
       const args = [
         "dist/cli.js",
         "run",
-        path.resolve(root, "examples/todo-app.demo.yaml"),
+        path.resolve(root, "examples/showcase/todo-app.demo.yaml"),
         "--output",
         tmpOut,
         "--overwrite",

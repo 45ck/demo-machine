@@ -20,39 +20,46 @@ export class FfmpegRenderer implements VideoRenderer {
   private buildArgs(timeline: Timeline, options: RenderOptions): string[] {
     const args: string[] = ["-y"];
 
-    if (options.trimStartMs !== undefined && options.trimStartMs > 0) {
-      args.push("-ss", msToSec(options.trimStartMs));
-    }
-
+    this.addTrimStart(args, options);
     args.push("-i", options.videoPath);
-
-    if (options.audioPath) {
-      if (options.trimStartMs !== undefined && options.trimStartMs > 0) {
-        args.push("-ss", msToSec(options.trimStartMs));
-      }
-      args.push("-i", options.audioPath);
-    }
-
-    const filterGraph = this.buildFilterGraph(timeline, options);
-    if (filterGraph) {
-      args.push("-filter_complex", filterGraph);
-      args.push("-map", "[vout]");
-    }
-
-    if (options.audioPath) {
-      args.push("-map", "1:a");
-      if (!options.extendToMs) {
-        args.push("-shortest");
-      }
-    }
-
-    if (options.extendToMs) {
-      args.push("-t", msToSec(options.extendToMs));
-    }
+    this.addAudioInput(args, options);
+    this.addFilterGraph(args, timeline, options);
+    this.addAudioMapping(args, options);
+    this.addDuration(args, timeline, options);
 
     args.push("-c:v", "libx264", "-preset", "fast", "-crf", "23");
     args.push(options.outputPath);
     return args;
+  }
+
+  private addTrimStart(args: string[], options: RenderOptions): void {
+    if (options.trimStartMs !== undefined && options.trimStartMs > 0) {
+      args.push("-ss", msToSec(options.trimStartMs));
+    }
+  }
+
+  private addAudioInput(args: string[], options: RenderOptions): void {
+    if (!options.audioPath) return;
+    this.addTrimStart(args, options);
+    args.push("-i", options.audioPath);
+  }
+
+  private addFilterGraph(args: string[], timeline: Timeline, options: RenderOptions): void {
+    const filterGraph = this.buildFilterGraph(timeline, options);
+    if (!filterGraph) return;
+    args.push("-filter_complex", filterGraph);
+    args.push("-map", "[vout]");
+  }
+
+  private addAudioMapping(args: string[], options: RenderOptions): void {
+    if (!options.audioPath) return;
+    args.push("-map", "1:a");
+    if (!options.extendToMs) args.push("-shortest");
+  }
+
+  private addDuration(args: string[], timeline: Timeline, options: RenderOptions): void {
+    const renderDurationMs = options.extendToMs ?? timeline.totalDurationMs;
+    if (renderDurationMs > 0) args.push("-t", msToSec(renderDurationMs));
   }
 
   private buildFilterGraph(timeline: Timeline, options: RenderOptions): string | undefined {
@@ -101,10 +108,10 @@ export class FfmpegRenderer implements VideoRenderer {
     const end = msToSec(segment.endMs);
 
     const isIntroOutro = segment.type === "intro" || segment.type === "outro";
-    const fontSize = isIntroOutro ? 64 : 42;
-    const boxColor = isIntroOutro ? "black@0.7" : "black@0.5";
-    const boxPadding = isIntroOutro ? 30 : 20;
-    const yPos = isIntroOutro ? "(h-text_h)/2" : "h*0.75";
+    const fontSize = isIntroOutro ? 52 : 36;
+    const boxColor = isIntroOutro ? "black@0.7" : "black@0.45";
+    const boxPadding = isIntroOutro ? 24 : 14;
+    const yPos = isIntroOutro ? "(h-text_h)/2" : "96";
 
     const fadeIn = 0.3;
     const fadeOut = 0.3;

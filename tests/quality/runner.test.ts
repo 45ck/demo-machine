@@ -198,6 +198,122 @@ describe("runQualityGate", () => {
     );
   });
 
+  it("invokes rendered-video integrity checks with skipped data when samples are absent", async () => {
+    const { runQualityGate } = await import("../../src/quality/runner.js");
+
+    const result = await runQualityGate({
+      outputMp4Path: "/out/output.mp4",
+      spec: { meta: { resolution: { width: 1920, height: 1080 } } },
+      probeVideoFn: async () => validProbe,
+      statFileFn: async () => 5_000_000,
+    });
+
+    const extraction = result.results.find(
+      (r) => r.checkName === "rendered-video:sample-extraction",
+    );
+    const blank = result.results.find((r) => r.checkName === "rendered-video:blank-frame-ratio");
+    const frozen = result.results.find(
+      (r) => r.checkName === "rendered-video:frozen-adjacent-ratio",
+    );
+    const duration = result.results.find(
+      (r) => r.checkName === "rendered-video:duration-event-mismatch",
+    );
+
+    expect(extraction?.status).toBe("pass");
+    expect(extraction?.message).toMatch(/skipped/i);
+    expect(blank?.status).toBe("pass");
+    expect(blank?.message).toMatch(/skipped/i);
+    expect(frozen?.status).toBe("pass");
+    expect(frozen?.message).toMatch(/skipped/i);
+    expect(duration?.status).toBe("pass");
+    expect(duration?.message).toMatch(/skipped/i);
+  });
+
+  it("reports rendered-video sample, extraction, and duration failures in gate results", async () => {
+    const { runQualityGate } = await import("../../src/quality/runner.js");
+
+    const result = await runQualityGate({
+      outputMp4Path: "/out/output.mp4",
+      spec: { meta: { resolution: { width: 1920, height: 1080 } } },
+      probeVideoFn: async () => validProbe,
+      statFileFn: async () => 5_000_000,
+      events: [{ action: "click", timestamp: 0, duration: 1000 }],
+      renderedVideoFrameSamples: [
+        { timestampMs: 0, blank: true },
+        { timestampMs: 1000, blank: true, frozenWithPrevious: true },
+        { timestampMs: 2000, blank: true, frozenWithPrevious: true },
+      ],
+      renderedVideoSampleExtraction: {
+        requestedSampleCount: 3,
+        extractedSampleCount: 0,
+        status: "failed",
+        errors: ["sample extraction failed"],
+      },
+      renderedVideoIntegrityThresholds: {
+        blankRatio: 0.2,
+        frozenAdjacentRatio: 0.35,
+        durationAbsoluteToleranceMs: 500,
+        durationRelativeTolerance: 0.1,
+      },
+    });
+
+    expect(result.hasFailures).toBe(true);
+    expect(
+      result.results.find((r) => r.checkName === "rendered-video:sample-extraction")?.status,
+    ).toBe("fail");
+    expect(
+      result.results.find((r) => r.checkName === "rendered-video:blank-frame-ratio")?.status,
+    ).toBe("fail");
+    expect(
+      result.results.find((r) => r.checkName === "rendered-video:frozen-adjacent-ratio")?.status,
+    ).toBe("fail");
+    expect(
+      result.results.find((r) => r.checkName === "rendered-video:duration-event-mismatch")?.status,
+    ).toBe("fail");
+  });
+
+  it("extracts rendered-video samples when requested and explicit samples are absent", async () => {
+    const samplerFn = vi.fn(async () => ({
+      samples: [
+        { timestampMs: 250, blank: false, lumaMean: 40, lumaStdDev: 8 },
+        {
+          timestampMs: 1000,
+          blank: false,
+          lumaMean: 45,
+          lumaStdDev: 10,
+          differenceFromPrevious: 0.4,
+        },
+      ],
+      extraction: {
+        requestedSampleCount: 2,
+        extractedSampleCount: 2,
+        status: "success" as const,
+      },
+    }));
+    const { runQualityGate } = await import("../../src/quality/runner.js");
+
+    const result = await runQualityGate({
+      outputMp4Path: "/out/output.mp4",
+      spec: { meta: { resolution: { width: 1920, height: 1080 } } },
+      probeVideoFn: async () => validProbe,
+      statFileFn: async () => 5_000_000,
+      extractRenderedVideoSamples: true,
+      renderedVideoSamplerFn: samplerFn,
+    });
+
+    expect(samplerFn).toHaveBeenCalledWith({
+      outputMp4Path: "/out/output.mp4",
+      videoDurationMs: 10_000,
+      events: undefined,
+    });
+    expect(
+      result.results.find((r) => r.checkName === "rendered-video:sample-extraction")?.status,
+    ).toBe("pass");
+    expect(
+      result.results.find((r) => r.checkName === "rendered-video:blank-frame-ratio")?.message,
+    ).toBe("OK");
+  });
+
   it("catches throwing check and continues running remaining checks (safeRun)", async () => {
     // We can trigger an internal check error by passing crafted data that causes
     // a check to throw. Use a mock that makes the narration ordering check throw

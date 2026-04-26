@@ -67,6 +67,7 @@ export function createPlaybackEngine(params: {
           },
         }
       : {}),
+    presentation: params.spec.presentation,
     ...(params.changeDetection ? { changeDetection: params.changeDetection } : {}),
     ...(params.screenshotCollector ? { screenshotCollector: params.screenshotCollector } : {}),
   });

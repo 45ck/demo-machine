@@ -55,9 +55,8 @@ describe("FfmpegRendererAdapter", () => {
     });
 
     expect(result.outFile).toBe("/output/output.mp4");
-    // events: navigate@1000 dur=500, click@2000 dur=300
-    // totalDurationMs = (2000 + 300) - 1000 = 1300
-    expect(result.durationMs).toBe(1300);
+    // events span 1300ms, and buildTimeline appends the 2000ms outro segment.
+    expect(result.durationMs).toBe(3300);
   });
 
   it("passes audioPath to inner renderer when audio file exists", async () => {
@@ -137,7 +136,7 @@ describe("FfmpegRendererAdapter", () => {
     ];
 
     // Verify timeline argument
-    expect(timeline.totalDurationMs).toBe(1300);
+    expect(timeline.totalDurationMs).toBe(3300);
     expect(timeline.segments.length).toBeGreaterThan(0);
 
     // Verify options argument

@@ -22,6 +22,9 @@ vi.mock("../../src/playback/visuals.js", () => ({
   showKeyBadge: vi.fn().mockResolvedValue(undefined),
   showFilePickerOverlay: vi.fn().mockResolvedValue(undefined),
   showSelectOverlay: vi.fn().mockResolvedValue(undefined),
+  showNarrationFocus: vi.fn().mockImplementation(async (_page, box: BoundingBox) => box),
+  showNarrationClick: vi.fn().mockResolvedValue(undefined),
+  clearNarrationFocus: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("../../src/playback/handlers/select-approaches.js", () => ({
@@ -190,6 +193,12 @@ describe("actionHandlers", () => {
     vi.mocked(visuals.showKeyBadge).mockClear();
     vi.mocked(visuals.showFilePickerOverlay).mockClear();
     vi.mocked(visuals.showSelectOverlay).mockClear();
+    vi.mocked(visuals.showNarrationFocus).mockClear();
+    vi.mocked(visuals.showNarrationFocus).mockImplementation(async (_page, box) => box);
+    vi.mocked(visuals.showNarrationClick).mockClear();
+    vi.mocked(visuals.showNarrationClick).mockResolvedValue(undefined);
+    vi.mocked(visuals.clearNarrationFocus).mockClear();
+    vi.mocked(visuals.clearNarrationFocus).mockResolvedValue(undefined);
     vi.mocked(guards.checkHitTest).mockClear();
     vi.mocked(guards.checkPointerEvents).mockClear();
     vi.mocked(guards.checkTypedText).mockClear();
@@ -216,6 +225,9 @@ describe("actionHandlers", () => {
     const step = { action: "click" as const, selector: "#btn" };
     await actionHandlers["click"]!(ctx, step, events, 0);
     expect(ctx.moveCursorTo).toHaveBeenCalled();
+    expect(visuals.flashSpotlight).toHaveBeenCalled();
+    expect(visuals.pulseFocus).toHaveBeenCalled();
+    expect(visuals.spawnRipple).toHaveBeenCalled();
     expect(ctx.page.locator).toHaveBeenCalledWith("#btn");
     const loc = (ctx.page.locator as unknown as ReturnType<typeof vi.fn>).mock.results[0]!.value;
     expect(loc.click).toHaveBeenCalled();
@@ -223,6 +235,21 @@ describe("actionHandlers", () => {
     expect(events[0]!.action).toBe("click");
     expect(events[0]!.selector).toBe("#btn");
     expect(events[0]!.boundingBox).toBeDefined();
+  });
+
+  it("suppresses duplicate click visuals when narration focus already presented the action", async () => {
+    ctx.shouldShowActionVisuals = vi.fn().mockReturnValue(false);
+    const step = { action: "click" as const, selector: "#btn" };
+
+    await actionHandlers["click"]!(ctx, step, events, 0);
+
+    expect(ctx.moveCursorTo).toHaveBeenCalled();
+    expect(visuals.flashSpotlight).not.toHaveBeenCalled();
+    expect(visuals.pulseFocus).not.toHaveBeenCalled();
+    expect(visuals.spawnRipple).not.toHaveBeenCalled();
+    const loc = (ctx.page.locator as unknown as ReturnType<typeof vi.fn>).mock.results[0]!.value;
+    expect(loc.click).toHaveBeenCalledTimes(1);
+    expect(events).toHaveLength(1);
   });
 
   it("handles clickFirstVisible action", async () => {
@@ -596,6 +623,12 @@ describe("PlaybackEngine", () => {
   beforeEach(() => {
     page = createMockPage();
     vi.mocked(detectOverlayLeaks).mockClear();
+    vi.mocked(visuals.showNarrationFocus).mockClear();
+    vi.mocked(visuals.showNarrationFocus).mockImplementation(async (_page, box) => box);
+    vi.mocked(visuals.showNarrationClick).mockClear();
+    vi.mocked(visuals.showNarrationClick).mockResolvedValue(undefined);
+    vi.mocked(visuals.clearNarrationFocus).mockClear();
+    vi.mocked(visuals.clearNarrationFocus).mockResolvedValue(undefined);
   });
 
   it("executes chapters in order and returns result", async () => {
@@ -727,6 +760,103 @@ describe("PlaybackEngine", () => {
     expect(result.events[0]!.narration).toBe("Go to homepage");
   });
 
+  it("previews narrated target steps during auto-sync lead-in", async () => {
+    const chapters: Chapter[] = [
+      {
+        title: "Narrated",
+        steps: [
+          { action: "navigate", url: "https://example.com" },
+          { action: "click", selector: "#btn", narration: "Click the primary button" },
+        ],
+      },
+    ];
+
+    const engine = new PlaybackEngine(page, {
+      baseUrl: "https://example.com",
+      pacing: TEST_PACING,
+      narration: {
+        mode: "auto-sync",
+        bufferMs: 100,
+        timing: new Map([[1, { text: "Click the primary button", durationMs: 900 }]]),
+      },
+      presentation: {
+        narrationFocus: {
+          enabled: true,
+          cursor: true,
+          highlight: true,
+          zoom: true,
+          scale: 1.12,
+          durationMs: 1200,
+          transitionMs: 700,
+        },
+      },
+    });
+
+    await engine.execute(chapters);
+
+    expect(visuals.showNarrationFocus).toHaveBeenCalledWith(
+      page,
+      { x: 0, y: 0, width: 100, height: 50 },
+      expect.objectContaining({ highlight: true, zoom: true }),
+    );
+    expect(page.waitForTimeout).toHaveBeenCalledWith(1000);
+    expect(visuals.clearNarrationFocus).toHaveBeenCalled();
+  });
+
+  it("previews narrated target steps in manual narration mode", async () => {
+    const order: string[] = [];
+    vi.mocked(visuals.flashSpotlight).mockClear();
+    vi.mocked(visuals.pulseFocus).mockClear();
+    vi.mocked(visuals.spawnRipple).mockClear();
+    const loc = {
+      ...createMockLocator(),
+      click: vi.fn().mockImplementation(async () => {
+        order.push("click");
+      }),
+    };
+    page.locator = vi.fn().mockReturnValue(loc);
+    vi.mocked(visuals.clearNarrationFocus).mockImplementation(async () => {
+      order.push("clear");
+    });
+
+    const chapters: Chapter[] = [
+      {
+        title: "Narrated",
+        steps: [{ action: "click", selector: "#btn", narration: "Click the primary button" }],
+      },
+    ];
+
+    const engine = new PlaybackEngine(page, {
+      baseUrl: "https://example.com",
+      pacing: TEST_PACING,
+      presentation: {
+        narrationFocus: {
+          enabled: true,
+          cursor: true,
+          highlight: true,
+          zoom: true,
+          scale: 1.12,
+          durationMs: 900,
+          transitionMs: 700,
+        },
+      },
+    });
+
+    await engine.execute(chapters);
+
+    expect(visuals.showNarrationFocus).toHaveBeenCalled();
+    expect(page.waitForTimeout).toHaveBeenCalledWith(900);
+    expect(page.waitForTimeout).toHaveBeenCalledWith(700);
+    expect(visuals.showNarrationClick).toHaveBeenCalled();
+    expect(visuals.clearNarrationFocus).toHaveBeenCalled();
+    expect(visuals.flashSpotlight).not.toHaveBeenCalled();
+    expect(visuals.pulseFocus).not.toHaveBeenCalled();
+    expect(visuals.spawnRipple).not.toHaveBeenCalled();
+    expect(order[0]).toBe("clear");
+    expect(order).toContain("click");
+    expect(order.indexOf("clear")).toBeLessThan(order.indexOf("click"));
+  });
+
   it("applies settle delay after each step when pacing is set", async () => {
     const chapters: Chapter[] = [
       {
@@ -797,6 +927,27 @@ describe("PlaybackEngine", () => {
       { stepIndex: 1, cursorX: 50, cursorY: 25, targetCenterX: 50, targetCenterY: 25 },
     ]);
     expect(page.screenshot).toHaveBeenCalledTimes(5);
+  });
+
+  it("captures a chapter boundary after a leading navigate step", async () => {
+    const chapters: Chapter[] = [
+      {
+        title: "Loaded",
+        steps: [{ action: "navigate", url: "https://example.com" }],
+      },
+    ];
+    vi.mocked(page.screenshot).mockImplementation(async () =>
+      Buffer.from(String(vi.mocked(page.goto).mock.calls.length)),
+    );
+    const collector = new ScreenshotCollector();
+
+    const engine = new PlaybackEngine(page, {
+      baseUrl: "https://example.com",
+      screenshotCollector: collector,
+    });
+    await engine.execute(chapters);
+
+    expect(collector.getResults().chapterTitleScreenshots.get(0)?.toString()).toBe("1");
   });
 
   it("does not call onStepComplete when not provided", async () => {

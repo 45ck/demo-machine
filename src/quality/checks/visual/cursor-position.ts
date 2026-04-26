@@ -3,9 +3,22 @@ import type { CheckResult } from "../../../validation/types.js";
 import type { QualityCheckContext } from "../../types.js";
 
 const CHECK_NAME = "visual:cursor-position";
+const CLICK_ACTIONS = new Set(["click", "clickFirstVisible"]);
 
 /** Maximum allowed distance (px) between cursor and target center. */
 const TOLERANCE_PX = 5;
+
+function expectedCursorSampleCount(ctx: QualityCheckContext): number | null {
+  const chapters = ctx.spec.chapters;
+  if (!chapters) return null;
+  let count = 0;
+  for (const chapter of chapters) {
+    for (const step of chapter.steps ?? []) {
+      if (step.action && CLICK_ACTIONS.has(step.action)) count++;
+    }
+  }
+  return count;
+}
 
 /**
  * Verify cursor overlay position is within tolerance of the target element's
@@ -14,10 +27,27 @@ const TOLERANCE_PX = 5;
 export function checkCursorPosition(ctx: QualityCheckContext): CheckResult[] {
   const positions = ctx.cursorPositions;
   if (!positions || positions.length === 0) {
+    if (expectedCursorSampleCount(ctx) === 0) {
+      return [
+        {
+          ...postRenderPass(CHECK_NAME),
+          message: "No click cursor positions expected (skipped)",
+        },
+      ];
+    }
     return [postRenderWarn(CHECK_NAME, "No cursor position data provided (skipped)")];
   }
 
   const results: CheckResult[] = [];
+  const expectedCount = expectedCursorSampleCount(ctx);
+  if (expectedCount !== null && positions.length < expectedCount) {
+    results.push(
+      postRenderWarn(
+        CHECK_NAME,
+        `Recorded ${String(positions.length)}/${String(expectedCount)} expected cursor position sample(s)`,
+      ),
+    );
+  }
 
   for (const pos of positions) {
     const dx = pos.cursorX - pos.targetCenterX;

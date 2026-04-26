@@ -35,7 +35,7 @@ function validSpecObject() {
 
 describe("loadSpec", () => {
   it("reads and validates a YAML file", async () => {
-    const spec = await loadSpec(join(EXAMPLES_DIR, "hello-world.demo.yaml"));
+    const spec = await loadSpec(join(EXAMPLES_DIR, "showcase", "hello-world.demo.yaml"));
     expect(spec.meta.title).toBe("Hello World Demo");
     expect(spec.meta.resolution).toEqual({ width: 1920, height: 1080 });
     expect(spec.runner.url).toBe("http://localhost:4574");
@@ -44,7 +44,7 @@ describe("loadSpec", () => {
   });
 
   it("applies default values from schema", async () => {
-    const spec = await loadSpec(join(EXAMPLES_DIR, "hello-world.demo.yaml"));
+    const spec = await loadSpec(join(EXAMPLES_DIR, "showcase", "hello-world.demo.yaml"));
     // timeout is explicitly 30000 in the file, but this confirms parsing works
     expect(spec.runner.timeout).toBe(30000);
     expect(spec.meta.resolution.width).toBe(1920);
@@ -73,11 +73,11 @@ describe("loadSpec", () => {
   });
 
   it("returns correct structure from hello-world example", async () => {
-    const spec = await loadSpec(join(EXAMPLES_DIR, "hello-world.demo.yaml"));
+    const spec = await loadSpec(join(EXAMPLES_DIR, "showcase", "hello-world.demo.yaml"));
 
     // Meta
     expect(spec.meta.branding).toBeDefined();
-    expect(spec.meta.branding!.logo).toBe("./hello-world/assets/logo.svg");
+    expect(spec.meta.branding!.logo).toBe("../hello-world/assets/logo.svg");
     expect(spec.meta.branding!.colors!.primary).toBe("#3B82F6");
 
     // Runner

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { readFile, readdir } from "node:fs/promises";
-import { resolve, dirname } from "node:path";
+import { resolve, dirname, relative, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -26,11 +26,24 @@ async function loadManifest(): Promise<Manifest> {
 const STANDALONE_SPECS = new Set(["examples/meta-demo.demo.yaml"]);
 
 async function discoverSpecFiles(): Promise<string[]> {
-  const entries = await readdir(resolve(projectRoot, "examples"));
-  return entries
-    .filter((f) => f.endsWith(".demo.yaml"))
-    .map((f) => `examples/${f}`)
-    .filter((p) => !STANDALONE_SPECS.has(p));
+  const examplesRoot = resolve(projectRoot, "examples");
+  const specs: string[] = [];
+
+  async function visit(dir: string): Promise<void> {
+    const entries = await readdir(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        await visit(fullPath);
+        continue;
+      }
+      if (!entry.isFile() || !entry.name.endsWith(".demo.yaml")) continue;
+      specs.push(relative(projectRoot, fullPath).replace(/\\/g, "/"));
+    }
+  }
+
+  await visit(examplesRoot);
+  return specs.filter((p) => !STANDALONE_SPECS.has(p)).sort((a, b) => a.localeCompare(b));
 }
 
 describe("bulk spec validation", () => {

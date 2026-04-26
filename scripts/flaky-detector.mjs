@@ -7,7 +7,7 @@
  * timing variance as flaky behavior.
  *
  * Usage:
- *   node scripts/flaky-detector.mjs --spec examples/todo-app.demo.yaml --runs 3
+ *   node scripts/flaky-detector.mjs --spec examples/showcase/todo-app.demo.yaml --runs 3
  *   node scripts/flaky-detector.mjs --tier pr --runs 5
  *   node scripts/flaky-detector.mjs --help
  *

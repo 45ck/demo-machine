@@ -34,10 +34,12 @@ export const handleClick: ActionHandler = async (ctx, step, events, stepIndex) =
   }
 
   await ctx.moveCursorTo(box);
-  await flashSpotlight(ctx.page, box);
-  await pulseFocus(ctx.page, box);
-  await ctx.page.evaluate(getClickPulseScript());
-  await spawnRipple(ctx.page, box);
+  if (ctx.shouldShowActionVisuals?.(stepIndex, step) ?? true) {
+    await flashSpotlight(ctx.page, box);
+    await pulseFocus(ctx.page, box);
+    await ctx.page.evaluate(getClickPulseScript());
+    await spawnRipple(ctx.page, box);
+  }
   await locator.click({ timeout: timeoutMs });
 
   events.push(
@@ -75,10 +77,12 @@ export const handleClickFirstVisible: ActionHandler = async (ctx, step, events, 
   }
 
   await ctx.moveCursorTo(box);
-  await flashSpotlight(ctx.page, box);
-  await pulseFocus(ctx.page, box);
-  await ctx.page.evaluate(getClickPulseScript());
-  await spawnRipple(ctx.page, box);
+  if (ctx.shouldShowActionVisuals?.(stepIndex, step) ?? true) {
+    await flashSpotlight(ctx.page, box);
+    await pulseFocus(ctx.page, box);
+    await ctx.page.evaluate(getClickPulseScript());
+    await spawnRipple(ctx.page, box);
+  }
   await locator.click({ timeout: timeoutMs });
 
   events.push(

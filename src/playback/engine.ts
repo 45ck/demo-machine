@@ -13,6 +13,11 @@ import { detectOverlayLeaks } from "./overlay-leak-detector.js";
 import { checkAriaRoleConsistency } from "./a11y-guards.js";
 import { wrapWithScreenshotCapture } from "./capture-hooks.js";
 import type { ScreenshotCollector } from "./screenshot-collector.js";
+import {
+  prepareNarrationFocus,
+  pulseNarrationFocusAction,
+  resetNarrationFocus,
+} from "./narration-focus.js";
 
 const logger = createLogger("playback");
 
@@ -36,6 +41,16 @@ const NO_PACING: Pacing = {
   postTypeDelayMs: 0,
   postNavigateDelayMs: 0,
   settleDelayMs: 0,
+};
+
+const DEFAULT_NARRATION_FOCUS = {
+  enabled: true,
+  cursor: true,
+  highlight: true,
+  zoom: true,
+  scale: 1.35,
+  durationMs: 2600,
+  transitionMs: 700,
 };
 
 async function executeStep(
@@ -171,6 +186,17 @@ async function onStepCompleteMaybe(params: {
   await params.onStepComplete(params.events[params.events.length - 1]!);
 }
 
+async function captureChapterBoundaryMaybe(params: {
+  screenshotCollector?: ScreenshotCollector | undefined;
+  chapterIndex: number;
+  page: PlaywrightPage;
+  captured: boolean;
+}): Promise<boolean> {
+  if (params.captured) return true;
+  await params.screenshotCollector?.captureChapterTitle(params.chapterIndex, params.page);
+  return true;
+}
+
 function attachEvidence(
   events: ActionEvent[],
   signals: import("./change-detection/types.js").DetectorSignal[],
@@ -179,7 +205,7 @@ function attachEvidence(
   if (last && signals.length > 0) last.evidence = { changeDetection: signals };
 }
 
-async function runChapters(params: {
+interface RunChaptersParams {
   chapters: Chapter[];
   ctx: PlaybackContext;
   page: PlaywrightPage;
@@ -191,66 +217,152 @@ async function runChapters(params: {
   events: ActionEvent[];
   startTimestamp: number;
   screenshotCollector?: ScreenshotCollector | undefined;
+  beforeStep?: ((stepIndex: number, step: Chapter["steps"][number]) => Promise<void>) | undefined;
+  afterStep?: (() => Promise<void>) | undefined;
+}
+
+async function maybeCaptureBeforeStep(params: {
+  run: RunChaptersParams;
+  chapterIndex: number;
+  step: Chapter["steps"][number];
+  captured: boolean;
+}): Promise<boolean> {
+  if (params.step.action === "navigate") return params.captured;
+  return captureChapterBoundaryMaybe({
+    screenshotCollector: params.run.screenshotCollector,
+    chapterIndex: params.chapterIndex,
+    page: params.run.page,
+    captured: params.captured,
+  });
+}
+
+async function maybeCaptureAfterStep(params: {
+  run: RunChaptersParams;
+  chapterIndex: number;
+  step: Chapter["steps"][number];
+  captured: boolean;
+}): Promise<boolean> {
+  if (params.step.action !== "navigate") return params.captured;
+  return captureChapterBoundaryMaybe({
+    screenshotCollector: params.run.screenshotCollector,
+    chapterIndex: params.chapterIndex,
+    page: params.run.page,
+    captured: params.captured,
+  });
+}
+
+async function auditAfterStep(params: {
+  run: RunChaptersParams;
+  step: Chapter["steps"][number];
+  stepIndex: number;
+  chapterTitle: string;
+  shouldCheck: boolean;
 }): Promise<void> {
+  if (params.shouldCheck && params.run.changeDetection) {
+    const signals = await params.run.changeDetection.after({
+      page: params.run.page,
+      step: params.step,
+      stepIndex: params.stepIndex,
+      chapterTitle: params.chapterTitle,
+    });
+    attachEvidence(params.run.events, signals);
+  }
+
+  if (INTERACTIVE_ACTIONS.has(params.step.action)) {
+    await checkAriaRoleConsistency(params.run.page);
+  }
+}
+
+async function runChapter(params: {
+  run: RunChaptersParams;
+  chapter: Chapter;
+  chapterIndex: number;
+  startStepIndex: number;
+}): Promise<number> {
+  let stepIndex = params.startStepIndex;
+  let capturedChapterBoundary = false;
+  for (const step of params.chapter.steps) {
+    capturedChapterBoundary = await maybeCaptureBeforeStep({
+      run: params.run,
+      chapterIndex: params.chapterIndex,
+      step,
+      captured: capturedChapterBoundary,
+    });
+    const selector = selectorForError(step);
+    const shouldCheck = params.run.changeDetection?.shouldCheck(step) ?? false;
+
+    if (shouldCheck && params.run.changeDetection) {
+      await params.run.changeDetection.before(params.run.page, step);
+    }
+
+    await params.run.beforeStep?.(stepIndex, step);
+    try {
+      await executeStepOrRaise({
+        ctx: params.run.ctx,
+        step,
+        events: params.run.events,
+        redactionSelectors: params.run.redactionSelectors,
+        secretPatterns: params.run.secretPatterns,
+        stepIndex,
+        chapterTitle: params.chapter.title,
+        selector,
+        startTimestamp: params.run.startTimestamp,
+        screenshotCollector: params.run.screenshotCollector,
+      });
+    } finally {
+      await params.run.afterStep?.();
+    }
+
+    capturedChapterBoundary = await maybeCaptureAfterStep({
+      run: params.run,
+      chapterIndex: params.chapterIndex,
+      step,
+      captured: capturedChapterBoundary,
+    });
+
+    await onStepCompleteMaybe({
+      onStepComplete: params.run.onStepComplete,
+      events: params.run.events,
+    });
+    await settleOrRaise({
+      page: params.run.page,
+      settleDelayMs: params.run.settleDelayMs,
+      stepIndex,
+      chapterTitle: params.chapter.title,
+      step,
+      selector,
+      events: params.run.events,
+      startTimestamp: params.run.startTimestamp,
+    });
+    await auditAfterStep({
+      run: params.run,
+      step,
+      stepIndex,
+      chapterTitle: params.chapter.title,
+      shouldCheck,
+    });
+    stepIndex++;
+  }
+  await captureChapterBoundaryMaybe({
+    screenshotCollector: params.run.screenshotCollector,
+    chapterIndex: params.chapterIndex,
+    page: params.run.page,
+    captured: capturedChapterBoundary,
+  });
+  return stepIndex;
+}
+
+async function runChapters(params: RunChaptersParams): Promise<void> {
   let stepIndex = 0;
   for (let chapterIndex = 0; chapterIndex < params.chapters.length; chapterIndex++) {
     const chapter = params.chapters[chapterIndex]!;
     logger.info(`Starting chapter: ${chapter.title}`);
-    await params.screenshotCollector?.captureChapterTitle(chapterIndex, params.page);
-    for (const step of chapter.steps) {
-      const selector = selectorForError(step);
-      const shouldCheck = params.changeDetection?.shouldCheck(step) ?? false;
-
-      // Pre-action: capture state for change detection.
-      if (shouldCheck && params.changeDetection) {
-        await params.changeDetection.before(params.page, step);
-      }
-
-      await executeStepOrRaise({
-        ctx: params.ctx,
-        step,
-        events: params.events,
-        redactionSelectors: params.redactionSelectors,
-        secretPatterns: params.secretPatterns,
-        stepIndex,
-        chapterTitle: chapter.title,
-        selector,
-        startTimestamp: params.startTimestamp,
-        screenshotCollector: params.screenshotCollector,
-      });
-
-      // User callback errors should propagate as-is (caller-owned failure mode).
-      await onStepCompleteMaybe({ onStepComplete: params.onStepComplete, events: params.events });
-
-      await settleOrRaise({
-        page: params.page,
-        settleDelayMs: params.settleDelayMs,
-        stepIndex,
-        chapterTitle: chapter.title,
-        step,
-        selector,
-        events: params.events,
-        startTimestamp: params.startTimestamp,
-      });
-
-      // Post-action + settle: evaluate change detection signals.
-      if (shouldCheck && params.changeDetection) {
-        const signals = await params.changeDetection.after({
-          page: params.page,
-          step,
-          stepIndex,
-          chapterTitle: chapter.title,
-        });
-        attachEvidence(params.events, signals);
-      }
-
-      // Post-action ARIA role consistency audit — runs after interactive steps.
-      if (INTERACTIVE_ACTIONS.has(step.action)) {
-        await checkAriaRoleConsistency(params.page);
-      }
-
-      stepIndex++;
-    }
+    stepIndex = await runChapter({
+      run: params,
+      chapter,
+      chapterIndex,
+      startStepIndex: stepIndex,
+    });
   }
 }
 
@@ -275,8 +387,20 @@ export class PlaybackEngine {
     if (!box) return;
     const pacing = this.options.pacing ?? NO_PACING;
     if (pacing.cursorDurationMs === 0) return;
-    const targetX = box.x + box.width / 2;
-    const targetY = box.y + box.height / 2;
+    const rawTargetX = box.x + box.width / 2;
+    const rawTargetY = box.y + box.height / 2;
+    const activeTransform = (await this.page.evaluate((() => {
+      const w = window as typeof window & {
+        __dmNarrationFocusTransform?: { tx: number; ty: number; scale: number };
+      };
+      return w.__dmNarrationFocusTransform ?? null;
+    }) as (...args: unknown[]) => unknown)) as { tx: number; ty: number; scale: number } | null;
+    const targetX = activeTransform
+      ? activeTransform.tx + rawTargetX * activeTransform.scale
+      : rawTargetX;
+    const targetY = activeTransform
+      ? activeTransform.ty + rawTargetY * activeTransform.scale
+      : rawTargetY;
     await this.page.evaluate(
       ((p: { fromX: number; fromY: number; toX: number; toY: number; durationMs: number }) => {
         let cursor = document.getElementById("dm-cursor");
@@ -326,6 +450,37 @@ export class PlaybackEngine {
     this.cursorPosition = { x: targetX, y: targetY };
   }
 
+  private async prepareStepPresentation(
+    stepIndex: number,
+    step: Chapter["steps"][number],
+    narrationWaiter: ReturnType<typeof createNarrationWaiter>,
+    stepsWithPresentedActionVisual: Set<number>,
+  ): Promise<void> {
+    const leadInMs = narrationWaiter.leadInMs(stepIndex);
+    const focus = this.options.presentation?.narrationFocus ?? DEFAULT_NARRATION_FOCUS;
+    const preparedFocus = await prepareNarrationFocus({
+      page: this.page,
+      step,
+      focus,
+      moveCursorTo: (box) => this.moveCursorTo(box),
+    });
+    if (preparedFocus && leadInMs <= 0 && preparedFocus.focus.durationMs > 0) {
+      await this.page.waitForTimeout(preparedFocus.focus.durationMs);
+    }
+    await narrationWaiter.waitBeforeStep(stepIndex);
+    if (preparedFocus) {
+      await pulseNarrationFocusAction(this.page, preparedFocus);
+      if (preparedFocus.canShowActionPulse) {
+        stepsWithPresentedActionVisual.add(stepIndex);
+      }
+      await this.page.waitForTimeout(360);
+      await resetNarrationFocus(this.page);
+      if (preparedFocus.focus.transitionMs > 0) {
+        await this.page.waitForTimeout(preparedFocus.focus.transitionMs);
+      }
+    }
+  }
+
   async execute(chapters: Chapter[]): Promise<PlaybackResult> {
     const events: ActionEvent[] = [];
     const startTimestamp = Date.now();
@@ -340,8 +495,6 @@ export class PlaybackEngine {
 
     await this.reinjectOverlays();
 
-    await narrationWaiter.maybeWaitBeforeFirstStep();
-
     // Initialize change detection if configured.
     let changeDetection: ChangeDetectionOrchestrator | undefined;
     if (this.options.changeDetection && this.options.changeDetection.mode !== "off") {
@@ -349,6 +502,7 @@ export class PlaybackEngine {
       await changeDetection.setup(this.page);
     }
 
+    const stepsWithPresentedActionVisual = new Set<number>();
     const ctx: PlaybackContext = {
       page: this.page,
       baseUrl: this.options.baseUrl,
@@ -358,6 +512,7 @@ export class PlaybackEngine {
       moveCursorTo: (box) => this.moveCursorTo(box),
       reinjectCursor: () => this.reinjectOverlays(),
       waitAfterStep: (stepIndex, step) => narrationWaiter.waitAfterStep(stepIndex, step),
+      shouldShowActionVisuals: (stepIndex) => !stepsWithPresentedActionVisual.has(stepIndex),
     };
 
     await runChapters({
@@ -372,6 +527,16 @@ export class PlaybackEngine {
       events,
       startTimestamp,
       screenshotCollector: this.options.screenshotCollector,
+      beforeStep: (stepIndex, step) =>
+        this.prepareStepPresentation(
+          stepIndex,
+          step,
+          narrationWaiter,
+          stepsWithPresentedActionVisual,
+        ),
+      afterStep: async () => {
+        await resetNarrationFocus(this.page);
+      },
     });
 
     await hideCursor(this.page);

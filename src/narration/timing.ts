@@ -33,19 +33,8 @@ export function adjustTiming(segmentFiles: TimedSegment[], leadInBufferMs = 0): 
     }
   }
 
-  // Safety cap: never push a segment past its own action timestamp.
-  // When actions are very close together, overlap prevention can push narration AFTER the action
-  // it describes. Accepting overlap is less wrong than narrating a step that already happened.
-  for (let i = 0; i < segmentFiles.length; i++) {
-    const seg = segmentFiles[i]!;
-    const actionMs = actionTimestamps[i]!;
-    if (seg.startMs > actionMs) {
-      logger.debug(
-        `Segment ${i + 1}: capped startMs from ${seg.startMs}ms to action timestamp ${actionMs}ms`,
-      );
-      seg.startMs = actionMs;
-    }
-  }
+  // Non-overlap is mandatory for the final audio mix. If actions happen too close together,
+  // the renderer extends the video so later narration can finish cleanly instead of stacking.
 }
 
 export function computeNarrationDuration(segments: TimedSegment[]): number {

@@ -1,0 +1,197 @@
+meta:
+  title: "AssuranceOps - Long Realistic Flow"
+  resolution:
+    width: 1920
+    height: 1080
+
+runner:
+  command: "node examples/assurance/long-demo/serve.mjs"
+  url: "http://localhost:4596"
+  timeout: 10000
+
+presentation:
+  narrationFocus:
+    enabled: true
+    cursor: true
+    highlight: true
+    zoom: true
+    scale: 1.35
+    durationMs: 3000
+    transitionMs: 800
+
+chapters:
+  - title: "Queue Overview"
+    steps:
+      - action: navigate
+        url: "http://localhost:4596"
+        narration: "AssuranceOps opens to a deterministic evidence review queue with live metrics, filters, and control health."
+      - action: assert
+        selector: "[data-testid='page-title']"
+        text: "Review Queue"
+      - action: assert
+        selector: "[data-testid='metric-coverage']"
+        text: "94%"
+      - action: wait
+        timeout: 450
+      - action: screenshot
+        name: "assurance-overview"
+      - action: wait
+        timeout: 3700
+
+  - title: "Navigation and Popover"
+    steps:
+      - action: click
+        selector: "[data-testid='nav-evidence']"
+        narration: "The left navigation changes workspace context without leaving the local app."
+      - action: assert
+        selector: "[data-testid='page-title']"
+        text: "Evidence Library"
+      - action: click
+        selector: "[data-testid='nav-review']"
+      - action: assert
+        selector: "[data-testid='page-title']"
+        text: "Review Queue"
+      - action: wait
+        timeout: 700
+      - action: click
+        selector: "[data-testid='help-button']"
+        narration: "A reviewer checklist opens as a small popover."
+        focus:
+          selector: "[data-testid='help-button']"
+          scale: 1.45
+      - action: assert
+        selector: "[data-testid='help-popover']"
+        visible: true
+      - action: screenshot
+        name: "reviewer-popover"
+      - action: click
+        selector: "[data-testid='help-button']"
+      - action: assert
+        selector: "[data-testid='help-popover']"
+        visible: false
+
+  - title: "Filter the Evidence Queue"
+    steps:
+      - action: click
+        selector: "[data-testid='search-input']"
+      - action: type
+        selector: "[data-testid='search-input']"
+        text: "vendor"
+        narration: "Search narrows the queue to the vendor packet."
+      - action: assert
+        selector: "[data-testid='result-count']"
+        text: "1"
+      - action: assert
+        selector: "[data-testid='queue-body']"
+        text: "Payroll vendor DPA"
+      - action: press
+        key: "Control+A"
+      - action: press
+        key: "Backspace"
+      - action: select
+        selector: "[data-testid='status-select']"
+        option:
+          value: "escalated"
+        narration: "Selecting escalated packets triggers a deterministic async refresh."
+        focus:
+          selector: "[data-testid='status-select']"
+          scale: 1.5
+      - action: assert
+        selector: "[data-testid='table-loading']"
+        visible: true
+        timeoutMs: 1000
+      - action: wait
+        timeout: 1200
+      - action: assert
+        selector: "[data-testid='table-loading']"
+        visible: false
+        timeoutMs: 2000
+      - action: assert
+        selector: "[data-testid='result-count']"
+        text: "2"
+      - action: screenshot
+        name: "escalated-filter"
+
+  - title: "Inspect Table and Chart"
+    steps:
+      - action: click
+        selector: "[data-id='VND-4']"
+        narration: "Selecting a row updates the detail panel beside the chart."
+      - action: assert
+        selector: "[data-testid='packet-detail']"
+        text: "Payroll vendor DPA"
+      - action: assert
+        selector: "[data-testid='chart-panel']"
+        text: "Vendor"
+      - action: select
+        selector: "[data-testid='reviewer-select']"
+        option:
+          value: "lena"
+        narration: "Reviewer filtering keeps the visible packet set stable and local."
+        focus:
+          selector: "[data-testid='reviewer-select']"
+          scale: 1.45
+      - action: assert
+        selector: "[data-testid='result-count']"
+        text: "2"
+      - action: screenshot
+        name: "packet-detail-chart"
+
+  - title: "Approval Modal"
+    steps:
+      - action: click
+        selector: "[data-testid='open-approval']"
+        narration: "The approval action opens a modal form with owner, decision, and rationale fields."
+      - action: assert
+        selector: "[data-testid='approval-modal']"
+        visible: true
+      - action: click
+        selector: "[data-testid='approval-owner']"
+      - action: press
+        key: "Control+A"
+      - action: type
+        selector: "[data-testid='approval-owner']"
+        text: "Mira Patel"
+        clear: true
+      - action: assert
+        selector: "[data-testid='approval-owner']"
+        value: "Mira Patel"
+      - action: select
+        selector: "[data-testid='decision-select']"
+        option:
+          value: "approve"
+      - action: click
+        selector: "[data-testid='approval-note']"
+      - action: type
+        selector: "[data-testid='approval-note']"
+        text: "Reviewed mapped evidence, exception notes, and owner response for the April control window."
+        narration: "The reviewer records a traceable approval rationale."
+        focus:
+          highlight: true
+          zoom: false
+      - action: assert
+        selector: "[data-testid='approval-note']"
+        value: "Reviewed mapped evidence, exception notes, and owner response for the April control window."
+      - action: screenshot
+        name: "approval-modal-filled"
+      - action: click
+        selector: "[data-testid='submit-approval']"
+      - action: assert
+        selector: "[data-testid='toast']"
+        visible: true
+      - action: screenshot
+        name: "approval-toast"
+
+  - title: "Scroll Audit Trail"
+    steps:
+      - action: scroll
+        y: 1100
+        narration: "The final chapter scrolls through the audit trail for deeper evidence history."
+      - action: assert
+        selector: "[data-testid='final-audit-card']"
+        visible: true
+      - action: assert
+        selector: "[data-testid='final-audit-card']"
+        text: "Export ready"
+      - action: screenshot
+        name: "audit-trail-scrolled"

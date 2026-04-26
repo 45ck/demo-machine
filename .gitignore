@@ -7,7 +7,6 @@ coverage/
 .stryker-tmp/
 reports/
 *.mp4
-!examples/*.mp4
 *.webm
 *.wav
 *.mp3
@@ -17,3 +16,9 @@ test-output/
 # Dolt database files (added by bd init)
 .dolt/
 *.db
+
+# Local Beads/Dolt state
+.beads/.local_version
+.beads/dolt-server.lock
+.beads/interactions.jsonl
+.beads/dolt/

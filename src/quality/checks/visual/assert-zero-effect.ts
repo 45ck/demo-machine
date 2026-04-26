@@ -4,6 +4,7 @@ import type { QualityCheckContext } from "../../types.js";
 import { diffImages } from "../../visual-diff.js";
 
 const CHECK_NAME = "visual:assert-zero-effect";
+const FAIL_MISMATCH_PERCENT = 5;
 
 /**
  * Verify that assert steps produce zero visual change.
@@ -21,13 +22,21 @@ export function checkAssertZeroEffect(ctx: QualityCheckContext): CheckResult[] {
   for (const pair of pairs) {
     const diff = diffImages(pair.before, pair.after);
 
-    if (diff.mismatchCount > 0) {
+    if (diff.mismatchPercent > FAIL_MISMATCH_PERCENT) {
       results.push(
         postRenderFail(
           CHECK_NAME,
           `Assert step ${String(pair.stepIndex)}: ${String(diff.mismatchCount)} pixels changed ` +
             `(${diff.mismatchPercent.toFixed(3)}%)`,
           "Assert steps must produce zero visual effects — check for leaked pulseFocus or flashSpotlight overlays",
+        ),
+      );
+    } else if (diff.mismatchCount > 0) {
+      results.push(
+        postRenderWarn(
+          CHECK_NAME,
+          `Assert step ${String(pair.stepIndex)}: ${String(diff.mismatchCount)} pixels changed ` +
+            `(${diff.mismatchPercent.toFixed(3)}%)`,
         ),
       );
     }

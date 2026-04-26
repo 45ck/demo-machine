@@ -21,7 +21,7 @@
  *   output/cross-browser/report.json        — comparison report
  */
 import { spawn } from "node:child_process";
-import { readFile, readdir, mkdir, writeFile, access } from "node:fs/promises";
+import { readFile, mkdir, writeFile, access } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -112,10 +112,10 @@ async function exists(p) {
 }
 
 async function resolveSpecPath(slug) {
-  const examplesDir = path.join(root, "examples");
-  const candidates = [`${slug}.demo.yaml`, `${slug}.demo.yml`];
-  for (const name of candidates) {
-    const p = path.join(examplesDir, name);
+  const manifest = JSON.parse(await readFile(path.join(root, "examples", "manifest.json"), "utf8"));
+  for (const suite of manifest.suites ?? []) {
+    if (suite.slug !== slug) continue;
+    const p = path.resolve(root, suite.canonicalSpec);
     if (await exists(p)) return p;
   }
   return null;

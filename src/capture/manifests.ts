@@ -1,3 +1,5 @@
+/* eslint-disable max-lines */
+import { existsSync, statSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import process from "node:process";
 import type { DemoSpec } from "../spec/types.js";
@@ -72,7 +74,9 @@ interface CaptureVerificationManifestV1 {
   };
   checks: {
     requiredArtifactsPresent: boolean;
+    missingRequiredArtifacts?: string[];
     failureArtifactsPresent?: boolean;
+    missingFailureArtifacts?: string[];
   };
   failure?: {
     name: string;
@@ -257,21 +261,56 @@ function buildChecks(
   status: "passed" | "failed",
   artifacts: ArtifactPaths,
 ): CaptureVerificationManifestV1["checks"] {
-  const requiredArtifactsPresent =
-    typeof artifacts.tracePath === "string" &&
-    typeof artifacts.eventLogPath === "string" &&
-    typeof artifacts.metadataPath === "string" &&
-    typeof artifacts.environmentPath === "string" &&
-    (status === "failed" || typeof artifacts.videoPath === "string");
+  const requiredArtifactKeys: Array<keyof ArtifactPaths> = [
+    "tracePath",
+    "eventLogPath",
+    "metadataPath",
+    "environmentPath",
+    ...(status === "passed" ? (["videoPath"] as const) : []),
+  ];
+  const missingRequiredArtifacts = findMissingArtifacts(requiredArtifactKeys, artifacts);
+  const requiredArtifactsPresent = missingRequiredArtifacts.length === 0;
 
-  if (status !== "failed") return { requiredArtifactsPresent };
+  if (status !== "failed") {
+    return {
+      requiredArtifactsPresent,
+      ...(missingRequiredArtifacts.length > 0 ? { missingRequiredArtifacts } : {}),
+    };
+  }
 
-  const failureArtifactsPresent =
-    typeof artifacts.failureJsonPath === "string" &&
-    typeof artifacts.failureScreenshotPath === "string" &&
-    typeof artifacts.failureHtmlPath === "string";
+  const failureArtifactKeys: Array<keyof ArtifactPaths> = [
+    "failureJsonPath",
+    "failureScreenshotPath",
+    "failureHtmlPath",
+  ];
+  const missingFailureArtifacts = findMissingArtifacts(failureArtifactKeys, artifacts);
+  const failureArtifactsPresent = missingFailureArtifacts.length === 0;
 
-  return { requiredArtifactsPresent, failureArtifactsPresent };
+  return {
+    requiredArtifactsPresent,
+    ...(missingRequiredArtifacts.length > 0 ? { missingRequiredArtifacts } : {}),
+    failureArtifactsPresent,
+    ...(missingFailureArtifacts.length > 0 ? { missingFailureArtifacts } : {}),
+  };
+}
+
+function artifactExists(filePath: string | undefined): boolean {
+  if (!filePath) return false;
+  try {
+    return existsSync(filePath) && statSync(filePath).isFile();
+  } catch {
+    return false;
+  }
+}
+
+function findMissingArtifacts(
+  artifactKeys: Array<keyof ArtifactPaths>,
+  artifacts: ArtifactPaths,
+): string[] {
+  return artifactKeys.filter((key) => {
+    const artifactPath = artifacts[key];
+    return typeof artifactPath !== "string" || !artifactExists(artifactPath);
+  });
 }
 
 export function buildCaptureVerificationManifest(

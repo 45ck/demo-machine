@@ -48,7 +48,7 @@ const MUTATIONS = {
 
 function parseArgs(argv) {
   const opts = {
-    spec: "examples/todo-app.demo.yaml",
+    spec: "examples/showcase/todo-app.demo.yaml",
     mutation: "bad-selector",
     skipCapture: false,
     help: false,
@@ -79,7 +79,7 @@ function usage() {
       "  node scripts/healing-demo.mjs [options]",
       "",
       "Options:",
-      "  --spec <path>        Spec to break and heal (default: examples/todo-app.demo.yaml)",
+      "  --spec <path>        Spec to break and heal (default: examples/showcase/todo-app.demo.yaml)",
       "  --mutation <name>    Mutation to apply (default: bad-selector)",
       "                       Available: bad-selector, bad-action-target, bad-filter-selector",
       "  --skip-capture       Skip capture steps; generate video from existing artifacts",

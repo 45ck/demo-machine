@@ -1,4 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   buildCaptureEnvironmentManifest,
   buildCaptureVerificationManifest,
@@ -40,6 +43,22 @@ function makeSpec(): DemoSpec {
 }
 
 describe("capture manifests", () => {
+  let tempDir: string;
+
+  beforeEach(async () => {
+    tempDir = await mkdtemp(join(tmpdir(), "capture-manifests-"));
+  });
+
+  afterEach(async () => {
+    await rm(tempDir, { recursive: true, force: true });
+  });
+
+  async function writeArtifact(name: string, contents = name): Promise<string> {
+    const filePath = join(tempDir, name);
+    await writeFile(filePath, contents, "utf-8");
+    return filePath;
+  }
+
   it("builds an environment manifest with runtime and browser details", () => {
     const spec = makeSpec();
     const manifest = buildCaptureEnvironmentManifest({
@@ -76,19 +95,21 @@ describe("capture manifests", () => {
     expect(manifest.pipeline.narrationEnabled).toBe(false);
   });
 
-  it("builds a passed verification manifest with collected proof details", () => {
+  it("builds a passed verification manifest with collected proof details", async () => {
     const spec = makeSpec();
     const bundle: CaptureBundle = {
-      videoPath: "C:\\demo-machine\\output\\video.webm",
-      tracePath: "C:\\demo-machine\\output\\trace.zip",
-      eventLogPath: "C:\\demo-machine\\output\\events.json",
-      metadataPath: "C:\\demo-machine\\output\\metadata.json",
-      screenshotManifestPath: "C:\\demo-machine\\output\\screenshots\\manifest.json",
+      videoPath: await writeArtifact("video.webm"),
+      tracePath: await writeArtifact("trace.zip"),
+      eventLogPath: await writeArtifact("events.json", "[]"),
+      metadataPath: await writeArtifact("metadata.json", "{}"),
+      screenshotManifestPath: await writeArtifact("screenshot-manifest.json", "{}"),
       screenshots: [
-        "C:\\demo-machine\\output\\screenshots\\step-0000.png",
-        "C:\\demo-machine\\output\\screenshots\\assert-0001-before.png",
+        await writeArtifact("step-0000.png"),
+        await writeArtifact("assert-0001-before.png"),
       ],
     };
+    const environmentPath = await writeArtifact("environment.json", "{}");
+    const verificationPath = join(tempDir, "verification.json");
 
     const manifest = buildCaptureVerificationManifest({
       status: "passed",
@@ -97,22 +118,18 @@ describe("capture manifests", () => {
       eventCount: 3,
       startTimestamp: 1234567890,
       bundle,
-      environmentPath: "C:\\demo-machine\\output\\environment.json",
-      verificationPath: "C:\\demo-machine\\output\\verification.json",
+      environmentPath,
+      verificationPath,
     });
 
     expect(manifest.status).toBe("passed");
     expect(manifest.playback.actions).toEqual(["click", "dragAndDrop", "navigate"]);
     expect(manifest.playback.preSteps).toEqual(["setCookie", "setLocalStorage"]);
     expect(manifest.playback.targetStrategies).toEqual(["css", "role", "testId"]);
-    expect(manifest.artifacts.screenshotManifestPath).toBe(
-      "C:\\demo-machine\\output\\screenshots\\manifest.json",
-    );
-    expect(manifest.artifacts.screenshotPaths).toEqual([
-      "C:\\demo-machine\\output\\screenshots\\step-0000.png",
-      "C:\\demo-machine\\output\\screenshots\\assert-0001-before.png",
-    ]);
+    expect(manifest.artifacts.screenshotManifestPath).toBe(bundle.screenshotManifestPath);
+    expect(manifest.artifacts.screenshotPaths).toEqual(bundle.screenshots);
     expect(manifest.checks.requiredArtifactsPresent).toBe(true);
+    expect(manifest.checks.missingRequiredArtifacts).toBeUndefined();
   });
 
   it("marks failed verification manifests when required failure artifacts are missing", () => {
@@ -132,7 +149,38 @@ describe("capture manifests", () => {
     });
 
     expect(manifest.checks.requiredArtifactsPresent).toBe(false);
+    expect(manifest.checks.missingRequiredArtifacts).toEqual([
+      "tracePath",
+      "eventLogPath",
+      "metadataPath",
+      "environmentPath",
+    ]);
     expect(manifest.checks.failureArtifactsPresent).toBe(false);
+    expect(manifest.checks.missingFailureArtifacts).toEqual([
+      "failureJsonPath",
+      "failureScreenshotPath",
+      "failureHtmlPath",
+    ]);
     expect(manifest.failure?.action).toBe("click");
+  });
+
+  it("marks returned artifact paths missing when files are absent on disk", async () => {
+    const environmentPath = await writeArtifact("environment.json", "{}");
+    const manifest = buildCaptureVerificationManifest({
+      status: "passed",
+      spec: makeSpec(),
+      eventCount: 1,
+      bundle: {
+        videoPath: join(tempDir, "missing-video.webm"),
+        tracePath: await writeArtifact("trace.zip"),
+        eventLogPath: await writeArtifact("events.json", "[]"),
+        metadataPath: await writeArtifact("metadata.json", "{}"),
+        screenshots: [],
+      },
+      environmentPath,
+    });
+
+    expect(manifest.checks.requiredArtifactsPresent).toBe(false);
+    expect(manifest.checks.missingRequiredArtifacts).toEqual(["videoPath"]);
   });
 });

@@ -8,6 +8,7 @@ const log = createLogger("cli:examples");
 
 export interface ExampleSuite {
   slug: string;
+  suiteType?: ExampleSuiteType | undefined;
   canonicalSpec: string;
   variantSpecs: string[];
   releaseTier: string;
@@ -22,12 +23,18 @@ interface ExamplesManifest {
 }
 
 interface ExampleFilters {
+  type?: ExampleTypeFilter | undefined;
   tag?: string | undefined;
   signal?: string | undefined;
   tier?: string | undefined;
   search?: string | undefined;
   limit?: number | undefined;
 }
+
+type ExampleSuiteType = "showcase" | "assurance" | "proof";
+type ExampleTypeFilter = ExampleSuiteType | "all";
+
+const DEFAULT_EXAMPLE_TYPES = new Set(["showcase", "assurance"]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -49,6 +56,20 @@ function readStringArray(value: Record<string, unknown>, key: string, context: s
   return raw;
 }
 
+function readSuiteType(
+  value: Record<string, unknown>,
+  context: string,
+): ExampleSuiteType | undefined {
+  const raw = value["suiteType"];
+  if (raw === undefined) return undefined;
+  if (raw === "showcase" || raw === "assurance" || raw === "proof") {
+    return raw;
+  }
+  throw new Error(
+    `Invalid examples manifest: ${context}.suiteType must be one of: showcase, assurance, proof`,
+  );
+}
+
 function parseExampleSuite(value: unknown, index: number): ExampleSuite {
   const context = `suites[${String(index)}]`;
   if (!isRecord(value)) {
@@ -56,6 +77,7 @@ function parseExampleSuite(value: unknown, index: number): ExampleSuite {
   }
   return {
     slug: readString(value, "slug", context),
+    suiteType: readSuiteType(value, context),
     canonicalSpec: readString(value, "canonicalSpec", context),
     variantSpecs: readStringArray(value, "variantSpecs", context),
     releaseTier: readString(value, "releaseTier", context),
@@ -108,6 +130,7 @@ function matchesSearch(suite: ExampleSuite, search: string): boolean {
     suite.slug,
     suite.canonicalSpec,
     suite.releaseTier,
+    suite.suiteType ?? "",
     suite.visualBaseline,
     ...suite.patternTags,
     ...suite.qualitySignals,
@@ -117,6 +140,11 @@ function matchesSearch(suite: ExampleSuite, search: string): boolean {
 
 export function filterExamples(suites: ExampleSuite[], filters: ExampleFilters): ExampleSuite[] {
   let result = suites;
+  if (filters.type === undefined) {
+    result = result.filter((suite) => DEFAULT_EXAMPLE_TYPES.has(suite.suiteType ?? "showcase"));
+  } else if (filters.type !== "all") {
+    result = result.filter((suite) => (suite.suiteType ?? "showcase") === filters.type);
+  }
   if (filters.tag) {
     result = result.filter((suite) => includesIgnoreCase(suite.patternTags, filters.tag!));
   }
@@ -158,20 +186,23 @@ export function formatExamplesList(suites: ExampleSuite[]): string {
     slug: suite.slug,
     spec: suite.canonicalSpec,
     tier: suite.releaseTier,
+    type: suite.suiteType ?? "showcase",
     tags: suite.patternTags.join(","),
     signals: suite.qualitySignals.join(","),
   }));
   const widths = {
     slug: Math.max("slug".length, ...rows.map((row) => row.slug.length)),
+    type: Math.max("type".length, ...rows.map((row) => row.type.length)),
     tier: Math.max("tier".length, ...rows.map((row) => row.tier.length)),
     tags: Math.max("tags".length, ...rows.map((row) => row.tags.length)),
+    signals: Math.max("signals".length, ...rows.map((row) => row.signals.length)),
   };
   const lines = [
-    `${pad("slug", widths.slug)}  ${pad("tier", widths.tier)}  ${pad("tags", widths.tags)}  spec`,
-    `${"-".repeat(widths.slug)}  ${"-".repeat(widths.tier)}  ${"-".repeat(widths.tags)}  ----`,
+    `${pad("slug", widths.slug)}  ${pad("type", widths.type)}  ${pad("tier", widths.tier)}  ${pad("tags", widths.tags)}  ${pad("signals", widths.signals)}  spec`,
+    `${"-".repeat(widths.slug)}  ${"-".repeat(widths.type)}  ${"-".repeat(widths.tier)}  ${"-".repeat(widths.tags)}  ${"-".repeat(widths.signals)}  ----`,
     ...rows.map(
       (row) =>
-        `${pad(row.slug, widths.slug)}  ${pad(row.tier, widths.tier)}  ${pad(row.tags, widths.tags)}  ${row.spec}`,
+        `${pad(row.slug, widths.slug)}  ${pad(row.type, widths.type)}  ${pad(row.tier, widths.tier)}  ${pad(row.tags, widths.tags)}  ${pad(row.signals, widths.signals)}  ${row.spec}`,
     ),
   ];
   return lines.join("\n");
@@ -182,6 +213,7 @@ export function formatExampleDetails(suite: ExampleSuite): string {
     suite.slug,
     "",
     `Spec: ${suite.canonicalSpec}`,
+    `Type: ${suite.suiteType ?? "showcase"}`,
     `Tier: ${suite.releaseTier}`,
     `Visual baseline: ${suite.visualBaseline}`,
     `Tags: ${suite.patternTags.join(", ")}`,
@@ -211,6 +243,13 @@ function parseLimit(raw: string): number {
   return limit;
 }
 
+function parseExampleType(raw: string): ExampleTypeFilter {
+  if (raw === "showcase" || raw === "assurance" || raw === "proof" || raw === "all") {
+    return raw;
+  }
+  throw new InvalidArgumentError("--type must be one of: showcase, assurance, proof, all.");
+}
+
 export function registerExamplesCommand(program: Command): void {
   const examples = program
     .command("examples")
@@ -222,9 +261,14 @@ export function registerExamplesCommand(program: Command): void {
   examples
     .command("list")
     .description("List example demo specs from examples/manifest.json")
+    .option(
+      "--type <showcase|assurance|proof|all>",
+      "Filter by example type; defaults to human-facing showcase and assurance examples",
+      parseExampleType,
+    )
     .option("--tag <tag>", "Filter by pattern tag, e.g. forms, auth, drag-drop")
     .option("--signal <signal>", "Filter by quality signal, e.g. selector-intent")
-    .option("--tier <tier>", "Filter by release tier: pr | nightly")
+    .option("--tier <tier>", "Filter by release tier: pr | nightly | proof")
     .option("--search <text>", "Search slug, spec path, tags, and quality signals")
     .option("--limit <n>", "Limit the number of rows", parseLimit)
     .addHelpText(
@@ -233,6 +277,7 @@ export function registerExamplesCommand(program: Command): void {
         "",
         "Examples:",
         "  demo-machine examples list --tag forms",
+        "  demo-machine examples list --type proof",
         "  demo-machine examples list --signal selector-intent",
         "  demo-machine examples list --search upload",
       ].join("\n"),

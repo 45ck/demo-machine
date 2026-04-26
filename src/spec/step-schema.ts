@@ -31,6 +31,21 @@ const valueFromSchema = z.object({
   path: nonBlankString.optional(),
 });
 
+export const narrationFocusSchema = z.object({
+  enabled: z.boolean().optional().default(true),
+  cursor: z.boolean().optional().default(true),
+  highlight: z.boolean().optional().default(true),
+  zoom: z.boolean().optional().default(true),
+  selector: nonBlankString.optional(),
+  target: targetSchema.optional(),
+  nth: z.number().int().nonnegative().optional(),
+  scale: z.number().min(1).max(2.2).optional().default(1.35),
+  durationMs: z.number().int().min(0).max(15000).optional().default(2600),
+  transitionMs: z.number().int().min(0).max(3000).optional().default(700),
+});
+
+const stepFocusSchema = narrationFocusSchema;
+
 const preHttpRequestStepSchema = z.object({
   action: z.literal("httpRequest"),
   method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).optional().default("GET"),
@@ -85,6 +100,7 @@ const navigateStepSchema = z.object({
   waitUntil: z.enum(["load", "domcontentloaded", "networkidle"]).optional(),
   timeoutMs: z.number().int().positive().optional(),
   narration: z.string().optional(),
+  focus: stepFocusSchema.optional(),
 });
 
 const clickStepSchema = z.object({
@@ -96,6 +112,7 @@ const clickStepSchema = z.object({
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
   expectVisualChange: z.boolean().optional(),
+  focus: stepFocusSchema.optional(),
 });
 
 const clickFirstVisibleStepSchema = z.object({
@@ -106,6 +123,7 @@ const clickFirstVisibleStepSchema = z.object({
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
   expectVisualChange: z.boolean().optional(),
+  focus: stepFocusSchema.optional(),
 });
 
 const typeStepSchema = z.object({
@@ -119,6 +137,7 @@ const typeStepSchema = z.object({
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
   expectVisualChange: z.boolean().optional(),
+  focus: stepFocusSchema.optional(),
 });
 
 const hoverStepSchema = z.object({
@@ -130,6 +149,7 @@ const hoverStepSchema = z.object({
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
   expectVisualChange: z.boolean().optional(),
+  focus: stepFocusSchema.optional(),
 });
 
 const scrollStepSchema = z.object({
@@ -144,12 +164,14 @@ const scrollStepSchema = z.object({
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
   expectVisualChange: z.boolean().optional(),
+  focus: stepFocusSchema.optional(),
 });
 
 const waitStepSchema = z.object({
   action: z.literal("wait"),
   timeout: z.number().int().positive(),
   narration: z.string().optional(),
+  focus: stepFocusSchema.optional(),
 });
 
 const assertStepSchema = z.object({
@@ -165,6 +187,7 @@ const assertStepSchema = z.object({
   enabled: z.boolean().optional(),
   timeoutMs: z.number().int().positive().optional(),
   narration: z.string().optional(),
+  focus: stepFocusSchema.optional(),
 });
 
 const checkStepSchema = z.object({
@@ -176,6 +199,7 @@ const checkStepSchema = z.object({
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
   expectVisualChange: z.boolean().optional(),
+  focus: stepFocusSchema.optional(),
 });
 
 const uncheckStepSchema = z.object({
@@ -187,6 +211,7 @@ const uncheckStepSchema = z.object({
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
   expectVisualChange: z.boolean().optional(),
+  focus: stepFocusSchema.optional(),
 });
 
 const selectOptionSchema = z.union([
@@ -205,6 +230,7 @@ const selectStepSchema = z.object({
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
   expectVisualChange: z.boolean().optional(),
+  focus: stepFocusSchema.optional(),
 });
 
 const selectFirstNonPlaceholderStepSchema = z.object({
@@ -216,6 +242,7 @@ const selectFirstNonPlaceholderStepSchema = z.object({
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
   expectVisualChange: z.boolean().optional(),
+  focus: stepFocusSchema.optional(),
 });
 
 const uploadStepSchema = z.object({
@@ -229,6 +256,7 @@ const uploadStepSchema = z.object({
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
   expectVisualChange: z.boolean().optional(),
+  focus: stepFocusSchema.optional(),
 });
 
 const dragEndpointSchema = z.object({
@@ -245,12 +273,14 @@ const dragAndDropStepSchema = z.object({
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
   expectVisualChange: z.boolean().optional(),
+  focus: stepFocusSchema.optional(),
 });
 
 const screenshotStepSchema = z.object({
   action: z.literal("screenshot"),
   name: nonBlankString.optional(),
   narration: z.string().optional(),
+  focus: stepFocusSchema.optional(),
 });
 
 const pressStepSchema = z.object({
@@ -258,12 +288,14 @@ const pressStepSchema = z.object({
   key: nonBlankString,
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
+  focus: stepFocusSchema.optional(),
 });
 
 const navTimingFields = {
   timeoutMs: z.number().int().positive().optional(),
   delay: z.number().int().positive().optional(),
   narration: z.string().optional(),
+  focus: stepFocusSchema.optional(),
 };
 const backStepSchema = z.object({ action: z.literal("back"), ...navTimingFields });
 const forwardStepSchema = z.object({ action: z.literal("forward"), ...navTimingFields });

@@ -34,6 +34,16 @@ export interface Pacing {
   settleDelayMs: number;
 }
 
+export interface NarrationFocusConfig {
+  enabled: boolean;
+  cursor: boolean;
+  highlight: boolean;
+  zoom: boolean;
+  scale: number;
+  durationMs: number;
+  transitionMs: number;
+}
+
 export interface PlaybackOptions {
   baseUrl: string;
   outputDir?: string | undefined;
@@ -49,6 +59,11 @@ export interface PlaybackOptions {
         mode: import("../utils/narration-sync-types.js").NarrationSyncMode;
         bufferMs: number;
         timing: import("../utils/narration-sync-types.js").NarrationTimingMap;
+      }
+    | undefined;
+  presentation?:
+    | {
+        narrationFocus: NarrationFocusConfig;
       }
     | undefined;
   changeDetection?: import("./change-detection/config.js").ChangeDetectionConfig | undefined;

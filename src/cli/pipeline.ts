@@ -197,6 +197,7 @@ async function runEditPhase(params: {
     ...(narrationPrep.timedSegments ? { narrationSegments: narrationPrep.timedSegments } : {}),
     startTimestamp: workingCapture.startTimestamp,
     ...(screenshotData ? { screenshotData } : {}),
+    extractRenderedVideoSamples: true,
   });
 
   log.info(`Output: ${outputPath}`);

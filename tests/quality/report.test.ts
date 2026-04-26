@@ -69,4 +69,53 @@ describe("quality report", () => {
     expect(parsed.summary["fail"]).toBe(1);
     expect(parsed.results).toHaveLength(3);
   });
+
+  it("preserves rendered-video integrity results in quality.json", async () => {
+    const renderedGate: QualityGateResult = {
+      durationMs: 20,
+      hasFailures: true,
+      results: [
+        {
+          phase: "post-render",
+          checkName: "rendered-video:sample-extraction",
+          status: "fail",
+          message: "Frame sample extraction reported failed status",
+        },
+        {
+          phase: "post-render",
+          checkName: "rendered-video:blank-frame-ratio",
+          status: "fail",
+          message: "Blank frame ratio 100.0% exceeds 20.0%",
+        },
+        {
+          phase: "post-render",
+          checkName: "rendered-video:frozen-adjacent-ratio",
+          status: "fail",
+          message: "Frozen adjacent sample ratio 100.0% exceeds 35.0%",
+        },
+        {
+          phase: "post-render",
+          checkName: "rendered-video:duration-event-mismatch",
+          status: "fail",
+          message: "Rendered duration differs from event span",
+        },
+      ],
+    };
+
+    const reportPath = await writeQualityGateReport({
+      outputDir: tempDir,
+      outputPath: "output.mp4",
+      gate: renderedGate,
+    });
+
+    const parsed = JSON.parse(await readFile(reportPath, "utf8")) as {
+      results: Array<{ checkName: string; status: string; message: string }>;
+    };
+    expect(parsed.results.map((result) => result.checkName)).toEqual([
+      "rendered-video:sample-extraction",
+      "rendered-video:blank-frame-ratio",
+      "rendered-video:frozen-adjacent-ratio",
+      "rendered-video:duration-event-mismatch",
+    ]);
+  });
 });

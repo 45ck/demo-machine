@@ -72,11 +72,15 @@ describe("buildTimeline", () => {
     expect(intro!.endMs - intro!.startMs).toBe(2000);
   });
 
-  it("outro segment is at the end of the video", () => {
+  it("outro segment starts after the last captured event and ends at the timeline end", () => {
     const events = makeEvents(2);
     const timeline = buildTimeline(events, makeSpec());
     const outro = timeline.segments.find((s) => s.type === "outro");
+    const first = events[0]!;
+    const last = events[events.length - 1]!;
+    const eventSpanMs = last.timestamp + last.duration - first.timestamp;
     expect(outro).toBeDefined();
+    expect(outro!.startMs).toBe(eventSpanMs);
     expect(outro!.endMs).toBe(timeline.totalDurationMs);
   });
 
@@ -145,11 +149,11 @@ describe("buildTimeline", () => {
     expect(compressed).toHaveLength(0);
   });
 
-  it("totalDurationMs matches event span", () => {
+  it("totalDurationMs includes the event span plus outro", () => {
     const events = makeEvents(2);
     const first = events[0]!;
     const last = events[events.length - 1]!;
-    const expectedDuration = last.timestamp + last.duration - first.timestamp;
+    const expectedDuration = last.timestamp + last.duration - first.timestamp + 2000;
     const timeline = buildTimeline(events, makeSpec());
     expect(timeline.totalDurationMs).toBe(expectedDuration);
   });
@@ -250,7 +254,7 @@ describe("extendTimelineForNarration", () => {
     expect(timeline.segments).toEqual(originalSegments);
   });
 
-  it("repositions outro startMs to newTotal - 2000", () => {
+  it("repositions extended outro startMs to newTotal - 2000", () => {
     const events = makeEvents(2);
     const timeline = buildTimeline(events, makeSpec());
     const newDuration = timeline.totalDurationMs + 5000;

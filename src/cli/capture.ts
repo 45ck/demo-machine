@@ -212,11 +212,11 @@ async function captureWithBrowser(params: CaptureWithBrowserParams): Promise<Cap
     screenshotCollector,
   });
 
-  const monitors = attachMonitors(session.page, { runnerUrl: session.baseUrl });
+  const monitors = await attachMonitors(session.page, { runnerUrl: session.baseUrl });
 
   try {
     const result = await engine.execute(params.spec.chapters);
-    const monitorIssues = collectIssues(monitors);
+    const monitorIssues = await collectIssues(monitors);
     const screenshotData = collectorMod.collectResults(screenshotCollector);
 
     const captureResult = await finalizeSuccessfulCapture({
@@ -242,7 +242,7 @@ async function captureWithBrowser(params: CaptureWithBrowserParams): Promise<Cap
     });
     return captureResult;
   } catch (err) {
-    collectIssues(monitors);
+    await collectIssues(monitors);
     return await handleCaptureFailure({
       captureMod: params.captureMod,
       recording: session.recording,

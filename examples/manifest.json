@@ -3,16 +3,17 @@
   "suites": [
     {
       "slug": "hello-world",
-      "canonicalSpec": "examples/hello-world.demo.yaml",
+      "canonicalSpec": "examples/showcase/hello-world.demo.yaml",
       "variantSpecs": [],
       "releaseTier": "pr",
       "visualBaseline": "none",
       "patternTags": ["smoke"],
-      "qualitySignals": ["artifact-capture", "deterministic-data"]
+      "qualitySignals": ["artifact-capture", "deterministic-data"],
+      "suiteType": "showcase"
     },
     {
       "slug": "todo-app",
-      "canonicalSpec": "examples/todo-app.demo.yaml",
+      "canonicalSpec": "examples/showcase/todo-app.demo.yaml",
       "variantSpecs": [],
       "releaseTier": "pr",
       "visualBaseline": "gallery",
@@ -22,14 +23,15 @@
         "gallery-reviewed",
         "subtitle-timing",
         "cursor-overlays"
-      ]
+      ],
+      "suiteType": "showcase"
     },
     {
       "slug": "form-wizard",
-      "canonicalSpec": "examples/form-wizard.demo.yaml",
+      "canonicalSpec": "examples/showcase/form-wizard.demo.yaml",
       "variantSpecs": [
-        "examples/form-wizard-autosync.demo.yaml",
-        "examples/form-wizard-redaction.demo.yaml"
+        "examples/proof/variants/form-wizard-autosync.demo.yaml",
+        "examples/proof/variants/form-wizard-redaction.demo.yaml"
       ],
       "releaseTier": "nightly",
       "visualBaseline": "gallery",
@@ -43,11 +45,12 @@
         "cursor-overlays",
         "deterministic-data",
         "accessibility-targeting"
-      ]
+      ],
+      "suiteType": "showcase"
     },
     {
       "slug": "auth-otp",
-      "canonicalSpec": "examples/auth-otp.demo.yaml",
+      "canonicalSpec": "examples/showcase/auth-otp.demo.yaml",
       "variantSpecs": [],
       "releaseTier": "nightly",
       "visualBaseline": "gallery",
@@ -58,14 +61,15 @@
         "cursor-overlays",
         "selector-intent",
         "accessibility-targeting"
-      ]
+      ],
+      "suiteType": "showcase"
     },
     {
       "slug": "modals-popovers",
-      "canonicalSpec": "examples/modals-popovers.demo.yaml",
+      "canonicalSpec": "examples/showcase/modals-popovers.demo.yaml",
       "variantSpecs": [
-        "examples/modals-popovers-autosync.demo.yaml",
-        "examples/modals-popovers-redaction.demo.yaml"
+        "examples/proof/variants/modals-popovers-autosync.demo.yaml",
+        "examples/proof/variants/modals-popovers-redaction.demo.yaml"
       ],
       "releaseTier": "nightly",
       "visualBaseline": "gallery",
@@ -76,14 +80,15 @@
         "narration-sync",
         "redaction",
         "cursor-overlays"
-      ]
+      ],
+      "suiteType": "showcase"
     },
     {
       "slug": "spa-router",
-      "canonicalSpec": "examples/spa-router.demo.yaml",
+      "canonicalSpec": "examples/showcase/spa-router.demo.yaml",
       "variantSpecs": [
-        "examples/spa-router-autosync.demo.yaml",
-        "examples/spa-router-redaction.demo.yaml"
+        "examples/proof/variants/spa-router-autosync.demo.yaml",
+        "examples/proof/variants/spa-router-redaction.demo.yaml"
       ],
       "releaseTier": "pr",
       "visualBaseline": "gallery",
@@ -94,32 +99,15 @@
         "narration-sync",
         "redaction",
         "cursor-overlays"
-      ]
-    },
-    {
-      "slug": "infinite-scroll",
-      "canonicalSpec": "examples/infinite-scroll.demo.yaml",
-      "variantSpecs": [
-        "examples/infinite-scroll-autosync.demo.yaml",
-        "examples/infinite-scroll-redaction.demo.yaml"
       ],
-      "releaseTier": "nightly",
-      "visualBaseline": "gallery",
-      "patternTags": ["async-loading", "redaction"],
-      "qualitySignals": [
-        "artifact-capture",
-        "gallery-reviewed",
-        "narration-sync",
-        "redaction",
-        "cursor-overlays"
-      ]
+      "suiteType": "showcase"
     },
     {
       "slug": "dashboard-table",
-      "canonicalSpec": "examples/dashboard-table.demo.yaml",
+      "canonicalSpec": "examples/showcase/dashboard-table.demo.yaml",
       "variantSpecs": [
-        "examples/dashboard-table-autosync.demo.yaml",
-        "examples/dashboard-table-redaction.demo.yaml"
+        "examples/proof/variants/dashboard-table-autosync.demo.yaml",
+        "examples/proof/variants/dashboard-table-redaction.demo.yaml"
       ],
       "releaseTier": "nightly",
       "visualBaseline": "gallery",
@@ -130,11 +118,12 @@
         "narration-sync",
         "redaction",
         "cursor-overlays"
-      ]
+      ],
+      "suiteType": "showcase"
     },
     {
       "slug": "chart-tooltips",
-      "canonicalSpec": "examples/chart-tooltips.demo.yaml",
+      "canonicalSpec": "examples/showcase/chart-tooltips.demo.yaml",
       "variantSpecs": [],
       "releaseTier": "nightly",
       "visualBaseline": "gallery",
@@ -144,21 +133,23 @@
         "gallery-reviewed",
         "cursor-overlays",
         "selector-intent"
-      ]
+      ],
+      "suiteType": "showcase"
     },
     {
       "slug": "virtual-table",
-      "canonicalSpec": "examples/virtual-table.demo.yaml",
+      "canonicalSpec": "examples/showcase/virtual-table.demo.yaml",
       "variantSpecs": [],
       "releaseTier": "nightly",
       "visualBaseline": "gallery",
       "patternTags": ["tables", "virtualization"],
-      "qualitySignals": ["artifact-capture", "gallery-reviewed", "selector-intent"]
+      "qualitySignals": ["artifact-capture", "gallery-reviewed", "selector-intent"],
+      "suiteType": "showcase"
     },
     {
       "slug": "controls-lab",
-      "canonicalSpec": "examples/controls-lab.demo.yaml",
-      "variantSpecs": ["examples/controls-lab-autosync.demo.yaml"],
+      "canonicalSpec": "examples/showcase/controls-lab.demo.yaml",
+      "variantSpecs": ["examples/proof/variants/controls-lab-autosync.demo.yaml"],
       "releaseTier": "pr",
       "visualBaseline": "gallery",
       "patternTags": ["forms", "file-upload", "drag-drop"],
@@ -169,11 +160,12 @@
         "selector-intent",
         "accessibility-targeting",
         "cursor-overlays"
-      ]
+      ],
+      "suiteType": "showcase"
     },
     {
       "slug": "selector-stress",
-      "canonicalSpec": "examples/selector-stress.demo.yaml",
+      "canonicalSpec": "examples/showcase/selector-stress.demo.yaml",
       "variantSpecs": [],
       "releaseTier": "nightly",
       "visualBaseline": "gallery",
@@ -183,40 +175,12 @@
         "gallery-reviewed",
         "selector-intent",
         "accessibility-targeting"
-      ]
-    },
-    {
-      "slug": "drag-sort",
-      "canonicalSpec": "examples/drag-sort.demo.yaml",
-      "variantSpecs": [],
-      "releaseTier": "nightly",
-      "visualBaseline": "gallery",
-      "patternTags": ["drag-drop"],
-      "qualitySignals": [
-        "artifact-capture",
-        "gallery-reviewed",
-        "cursor-overlays",
-        "selector-intent"
-      ]
-    },
-    {
-      "slug": "file-uploader",
-      "canonicalSpec": "examples/file-uploader.demo.yaml",
-      "variantSpecs": [],
-      "releaseTier": "nightly",
-      "visualBaseline": "gallery",
-      "patternTags": ["file-upload", "forms"],
-      "qualitySignals": [
-        "artifact-capture",
-        "gallery-reviewed",
-        "selector-intent",
-        "accessibility-targeting",
-        "cursor-overlays"
-      ]
+      ],
+      "suiteType": "showcase"
     },
     {
       "slug": "async-skeleton",
-      "canonicalSpec": "examples/async-skeleton.demo.yaml",
+      "canonicalSpec": "examples/showcase/async-skeleton.demo.yaml",
       "variantSpecs": [],
       "releaseTier": "nightly",
       "visualBaseline": "gallery",
@@ -226,11 +190,12 @@
         "gallery-reviewed",
         "selector-intent",
         "cursor-overlays"
-      ]
+      ],
+      "suiteType": "showcase"
     },
     {
       "slug": "seeded-api",
-      "canonicalSpec": "examples/seeded-api.demo.yaml",
+      "canonicalSpec": "examples/showcase/seeded-api.demo.yaml",
       "variantSpecs": [],
       "releaseTier": "pr",
       "visualBaseline": "gallery",
@@ -241,6 +206,123 @@
         "deterministic-data",
         "selector-intent",
         "accessibility-targeting"
+      ],
+      "suiteType": "showcase"
+    },
+    {
+      "slug": "proof-assert",
+      "suiteType": "proof",
+      "canonicalSpec": "examples/proof/actions/proof-assert.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "proof",
+      "visualBaseline": "none",
+      "patternTags": ["smoke"],
+      "qualitySignals": ["artifact-capture", "selector-intent"]
+    },
+    {
+      "slug": "proof-click",
+      "suiteType": "proof",
+      "canonicalSpec": "examples/proof/actions/proof-click.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "proof",
+      "visualBaseline": "none",
+      "patternTags": ["smoke"],
+      "qualitySignals": ["artifact-capture", "selector-intent"]
+    },
+    {
+      "slug": "proof-drag",
+      "suiteType": "proof",
+      "canonicalSpec": "examples/proof/actions/proof-drag.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "proof",
+      "visualBaseline": "none",
+      "patternTags": ["drag-drop"],
+      "qualitySignals": ["artifact-capture", "selector-intent", "cursor-overlays"]
+    },
+    {
+      "slug": "proof-hover",
+      "suiteType": "proof",
+      "canonicalSpec": "examples/proof/actions/proof-hover.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "proof",
+      "visualBaseline": "none",
+      "patternTags": ["charts"],
+      "qualitySignals": ["artifact-capture", "selector-intent", "cursor-overlays"]
+    },
+    {
+      "slug": "proof-navigate",
+      "suiteType": "proof",
+      "canonicalSpec": "examples/proof/actions/proof-navigate.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "proof",
+      "visualBaseline": "none",
+      "patternTags": ["spa-routing"],
+      "qualitySignals": ["artifact-capture"]
+    },
+    {
+      "slug": "proof-scroll",
+      "suiteType": "proof",
+      "canonicalSpec": "examples/proof/actions/proof-scroll.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "proof",
+      "visualBaseline": "none",
+      "patternTags": ["async-loading"],
+      "qualitySignals": ["artifact-capture", "cursor-overlays"]
+    },
+    {
+      "slug": "proof-select",
+      "suiteType": "proof",
+      "canonicalSpec": "examples/proof/actions/proof-select.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "proof",
+      "visualBaseline": "none",
+      "patternTags": ["forms"],
+      "qualitySignals": ["artifact-capture", "selector-intent", "accessibility-targeting"]
+    },
+    {
+      "slug": "proof-toggle",
+      "suiteType": "proof",
+      "canonicalSpec": "examples/proof/actions/proof-toggle.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "proof",
+      "visualBaseline": "none",
+      "patternTags": ["forms"],
+      "qualitySignals": ["artifact-capture", "selector-intent", "accessibility-targeting"]
+    },
+    {
+      "slug": "proof-type",
+      "suiteType": "proof",
+      "canonicalSpec": "examples/proof/actions/proof-type.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "proof",
+      "visualBaseline": "none",
+      "patternTags": ["forms"],
+      "qualitySignals": ["artifact-capture", "selector-intent", "accessibility-targeting"]
+    },
+    {
+      "slug": "proof-wait",
+      "suiteType": "proof",
+      "canonicalSpec": "examples/proof/actions/proof-wait.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "proof",
+      "visualBaseline": "none",
+      "patternTags": ["async-loading"],
+      "qualitySignals": ["artifact-capture"]
+    },
+    {
+      "slug": "assurance-long-demo",
+      "suiteType": "assurance",
+      "canonicalSpec": "examples/assurance/long-demo/long-demo.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "nightly",
+      "visualBaseline": "none",
+      "patternTags": ["forms", "tables", "charts", "overlays", "async-loading"],
+      "qualitySignals": [
+        "artifact-capture",
+        "deterministic-data",
+        "narration-sync",
+        "selector-intent",
+        "cursor-overlays"
       ]
     }
   ]

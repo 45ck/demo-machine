@@ -87,8 +87,8 @@ chapters:
       - action: click
         selector: ".filter-bar button[data-filter='new']"
         narration: >-
-          Clicking New shows only the newest demos — async-skeleton,
-          drag-sort, file-uploader, and seeded-api.
+          Clicking New shows only the newest demos, including
+          async-skeleton, controls-lab, and seeded-api.
 
       - action: wait
         timeout: 1200

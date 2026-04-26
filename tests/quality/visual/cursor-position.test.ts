@@ -24,6 +24,39 @@ describe("checkCursorPosition", () => {
     expect(results[0]!.status).toBe("warn");
   });
 
+  it("passes skipped when the spec has no click actions to sample", () => {
+    const results = checkCursorPosition(
+      baseCtx({
+        spec: {
+          meta: { resolution: { width: 1920, height: 1080 } },
+          chapters: [{ steps: [{ action: "navigate" }, { action: "assert" }] }],
+        },
+        cursorPositions: [],
+      }),
+    );
+
+    expect(results).toHaveLength(1);
+    expect(results[0]!.status).toBe("pass");
+    expect(results[0]!.message).toContain("skipped");
+  });
+
+  it("warns when fewer cursor samples are recorded than click actions", () => {
+    const results = checkCursorPosition(
+      baseCtx({
+        spec: {
+          meta: { resolution: { width: 1920, height: 1080 } },
+          chapters: [{ steps: [{ action: "click" }, { action: "clickFirstVisible" }] }],
+        },
+        cursorPositions: [
+          { stepIndex: 0, cursorX: 100, cursorY: 200, targetCenterX: 100, targetCenterY: 200 },
+        ],
+      }),
+    );
+
+    expect(results.some((result) => result.status === "warn")).toBe(true);
+    expect(results[0]!.message).toContain("1/2");
+  });
+
   it("passes when cursor is exactly at target center", () => {
     const positions = [
       { stepIndex: 0, cursorX: 100, cursorY: 200, targetCenterX: 100, targetCenterY: 200 },
@@ -63,6 +96,18 @@ describe("checkCursorPosition", () => {
     expect(fail!.message).toContain("10.0px");
     expect(fail!.message).toContain("(110,200)");
     expect(fail!.message).toContain("(100,200)");
+  });
+
+  it("fails when cursor is diagonally off target beyond tolerance", () => {
+    const positions = [
+      { stepIndex: 4, cursorX: 106, cursorY: 208, targetCenterX: 100, targetCenterY: 200 },
+    ];
+
+    const results = checkCursorPosition(baseCtx({ cursorPositions: positions }));
+
+    const fail = results.find((r) => r.status === "fail");
+    expect(fail).toBeDefined();
+    expect(fail!.message).toContain("10.0px");
   });
 
   it("passes all positions when all within tolerance", () => {

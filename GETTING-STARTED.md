@@ -18,14 +18,27 @@ Install FFmpeg and make sure it is on your `PATH` before running the full render
 
 ## Run A Known Demo
 
+Example specs are organized by purpose. Most user-facing demos live in `examples/showcase/`, proof fixtures live in `examples/proof/actions/` and `examples/proof/variants/`, and the long QA flow lives in `examples/assurance/long-demo/`.
+
+Use the manifest-backed browser before choosing a spec:
+
 ```bash
-node dist/cli.js run examples/todo-app.demo.yaml --no-headless
+node dist/cli.js examples list
+node dist/cli.js examples list --tag forms
+node dist/cli.js examples list --type proof
+node dist/cli.js examples show controls-lab
+```
+
+By default, `examples list` shows showcase and assurance entries. Use `--type all` to include every manifest entry or `--type proof` when you need the small action-level specs. `examples show <slug>` prints the canonical spec path, variants, quality signals, and ready-to-run `run` and `validate` commands.
+
+```bash
+node dist/cli.js run examples/showcase/todo-app.demo.yaml --no-headless
 ```
 
 For a raw capture without editing or narration:
 
 ```bash
-node dist/cli.js capture examples/hello-world.demo.yaml --no-narration
+node dist/cli.js capture examples/showcase/hello-world.demo.yaml --no-narration
 ```
 
 By default each run writes to `./output/<spec-slug>/<run-id>` so repeat demos do not overwrite each other, and `./output/latest.json` points to the most recent automatic run. Supplying `--output <dir>` uses that exact directory; if it already contains demo artifacts, pass `--overwrite` only after confirming the old artifacts can be replaced.
@@ -93,7 +106,7 @@ node dist/cli.js validate path/to/demo.yaml
 pnpm examples:validate -- --no-build
 ```
 
-`validate` loads the spec, applies schema defaults, and runs the pre-capture checks. Use it before spending time on video capture.
+`validate` loads the spec, applies schema defaults, and runs the pre-capture checks. Use it before spending time on video capture. `pnpm examples:validate` reads `examples/manifest.json` and validates the canonical specs plus listed variants, so it follows the organized examples layout instead of scanning old root-level specs.
 
 ## Make Narration Easier
 
@@ -119,6 +132,17 @@ pnpm local-ready
 ```
 
 The repository does not currently rely on GitHub Actions. Local validation is the quality gate.
+
+For examples and video QA, use the manifest-backed suite:
+
+```bash
+pnpm examples:validate -- --no-build
+pnpm examples:capture -- --filter assurance-long-demo
+node scripts/examples-suite.mjs --mode run --filter assurance-long-demo
+pnpm video:assure -- --filter assurance-long-demo
+```
+
+`examples:capture` proves the browser flow and required capture artifacts. `--mode run` creates rendered `output.mp4` files under `output/example-suite/`, and `video:assure` samples those MP4s for blank frames, frozen spans, and large visual jumps. The long-demo filter targets `examples/assurance/long-demo/long-demo.demo.yaml` for full-flow QA.
 
 ## Where To Go Next
 

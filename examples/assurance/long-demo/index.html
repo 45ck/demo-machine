@@ -1,0 +1,977 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AssuranceOps Long Demo</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f7f4;
+        --panel: #ffffff;
+        --ink: #1f2933;
+        --muted: #657386;
+        --line: #d9dfd5;
+        --teal: #0f766e;
+        --teal-dark: #115e59;
+        --yellow: #f59e0b;
+        --red: #dc2626;
+        --green: #15803d;
+        --blue: #2563eb;
+        --shadow: 0 18px 45px rgba(35, 48, 38, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+
+      button {
+        border: 0;
+        cursor: pointer;
+      }
+
+      .shell {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 260px minmax(0, 1fr);
+      }
+
+      aside {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        background: #24332f;
+        color: #eef6f0;
+        padding: 28px 20px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 32px;
+      }
+
+      .brand-mark {
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: #e7f7ef;
+        color: var(--teal-dark);
+        font-weight: 800;
+      }
+
+      .brand strong {
+        display: block;
+        font-size: 18px;
+      }
+
+      .brand span,
+      .nav-label {
+        color: #b7c7bd;
+        font-size: 13px;
+      }
+
+      nav {
+        display: grid;
+        gap: 8px;
+      }
+
+      .nav-button {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 8px;
+        color: #dbe8df;
+        background: transparent;
+        text-align: left;
+      }
+
+      .nav-button.active,
+      .nav-button:hover {
+        background: rgba(231, 247, 239, 0.12);
+        color: #ffffff;
+      }
+
+      main {
+        min-width: 0;
+      }
+
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: rgba(246, 247, 244, 0.92);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line);
+        padding: 22px 32px;
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 30px;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        font-size: 22px;
+        letter-spacing: 0;
+      }
+
+      h3 {
+        font-size: 16px;
+        letter-spacing: 0;
+      }
+
+      .subtle {
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.45;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .icon-button,
+      .primary-button,
+      .secondary-button {
+        height: 40px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        white-space: nowrap;
+      }
+
+      .icon-button {
+        width: 40px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        color: var(--ink);
+      }
+
+      .primary-button {
+        padding: 0 16px;
+        background: var(--teal);
+        color: #ffffff;
+      }
+
+      .secondary-button {
+        padding: 0 14px;
+        background: #eef3ec;
+        color: var(--ink);
+        border: 1px solid var(--line);
+      }
+
+      .content {
+        padding: 28px 32px 48px;
+        display: grid;
+        gap: 24px;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .metric,
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+      }
+
+      .metric {
+        padding: 18px;
+      }
+
+      .metric span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .metric strong {
+        display: block;
+        margin-top: 10px;
+        font-size: 28px;
+      }
+
+      .metric em {
+        display: block;
+        margin-top: 8px;
+        color: var(--green);
+        font-size: 13px;
+        font-style: normal;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.9fr);
+        gap: 20px;
+        align-items: start;
+      }
+
+      .panel {
+        overflow: hidden;
+      }
+
+      .panel-head {
+        padding: 18px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+      }
+
+      .filters {
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) 160px 170px;
+        gap: 12px;
+        padding: 18px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      label {
+        display: grid;
+        gap: 7px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--ink);
+        padding: 9px 11px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        font-size: 14px;
+      }
+
+      th {
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+      }
+
+      tr.selected {
+        background: #eef8f5;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-width: 84px;
+        justify-content: center;
+        border-radius: 999px;
+        padding: 5px 8px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .status.review {
+        background: #fff2cc;
+        color: #9a5b00;
+      }
+
+      .status.escalated {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      .status.approved {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .chart {
+        padding: 18px;
+        display: grid;
+        gap: 18px;
+      }
+
+      .bar-row {
+        display: grid;
+        grid-template-columns: 86px minmax(0, 1fr) 42px;
+        gap: 10px;
+        align-items: center;
+        font-size: 13px;
+      }
+
+      .track {
+        height: 18px;
+        border-radius: 999px;
+        background: #e7ece3;
+        overflow: hidden;
+      }
+
+      .bar {
+        height: 100%;
+        width: var(--value);
+        background: var(--blue);
+      }
+
+      .bar.warn {
+        background: var(--yellow);
+      }
+
+      .bar.risk {
+        background: var(--red);
+      }
+
+      .detail {
+        padding: 18px;
+        border-top: 1px solid var(--line);
+        display: grid;
+        gap: 12px;
+      }
+
+      .timeline {
+        display: grid;
+        gap: 12px;
+      }
+
+      .timeline-item {
+        display: grid;
+        grid-template-columns: 98px minmax(0, 1fr);
+        gap: 12px;
+        font-size: 14px;
+      }
+
+      .timeline-item span {
+        color: var(--muted);
+      }
+
+      .drawer-section {
+        min-height: 720px;
+        padding: 22px;
+      }
+
+      .audit-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .audit-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 16px;
+        background: #fbfcfa;
+        min-height: 118px;
+      }
+
+      .audit-card strong {
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      .popover {
+        position: absolute;
+        right: 98px;
+        top: 72px;
+        width: 320px;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        padding: 14px;
+        display: none;
+        z-index: 20;
+      }
+
+      .popover.open {
+        display: grid;
+        gap: 10px;
+      }
+
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 30;
+        display: none;
+        place-items: center;
+        background: rgba(26, 37, 33, 0.46);
+        padding: 28px;
+      }
+
+      .modal-backdrop.open {
+        display: grid;
+      }
+
+      .modal {
+        width: min(640px, 100%);
+        background: #ffffff;
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .modal-body {
+        padding: 20px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .modal-actions {
+        padding: 16px 20px;
+        border-top: 1px solid var(--line);
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+
+      .toast {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        z-index: 40;
+        background: #17352d;
+        color: #ffffff;
+        border-radius: 8px;
+        padding: 14px 16px;
+        box-shadow: var(--shadow);
+        display: none;
+      }
+
+      .toast.open {
+        display: block;
+      }
+
+      .loading {
+        padding: 28px;
+        color: var(--muted);
+        display: none;
+      }
+
+      .loading.open {
+        display: block;
+      }
+
+      @media (max-width: 980px) {
+        .shell {
+          grid-template-columns: 1fr;
+        }
+
+        aside {
+          position: static;
+          height: auto;
+        }
+
+        .metrics,
+        .workspace,
+        .filters,
+        .audit-grid {
+          grid-template-columns: 1fr;
+        }
+
+        header {
+          position: static;
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside>
+        <div class="brand">
+          <div class="brand-mark">AO</div>
+          <div>
+            <strong>AssuranceOps</strong>
+            <span>Evidence command center</span>
+          </div>
+        </div>
+        <div class="nav-label">Workspace</div>
+        <nav aria-label="Primary">
+          <button class="nav-button active" data-testid="nav-review" type="button">
+            Review Queue
+          </button>
+          <button class="nav-button" data-testid="nav-evidence" type="button">
+            Evidence Library
+          </button>
+          <button class="nav-button" data-testid="nav-audit" type="button">Audit Trail</button>
+        </nav>
+      </aside>
+
+      <main>
+        <header>
+          <div>
+            <h1 data-testid="page-title">Review Queue</h1>
+            <p class="subtle">SOC 2 readiness evidence for the April control window.</p>
+          </div>
+          <div class="header-actions">
+            <button
+              class="icon-button"
+              data-testid="help-button"
+              aria-label="Open help"
+              title="Open help"
+              type="button"
+            >
+              ?
+            </button>
+            <button class="secondary-button" data-testid="sync-button" type="button">
+              Sync evidence
+            </button>
+            <button class="primary-button" data-testid="open-approval" type="button">
+              Approve packet
+            </button>
+          </div>
+        </header>
+
+        <div class="popover" data-testid="help-popover">
+          <strong>Reviewer checklist</strong>
+          <p class="subtle">
+            Filter to escalations, inspect owner notes, then approve with a traceable rationale.
+          </p>
+        </div>
+
+        <section class="content">
+          <div class="metrics" aria-label="Assurance summary">
+            <div class="metric">
+              <span>Open packets</span>
+              <strong data-testid="metric-open">18</strong>
+              <em>4 due today</em>
+            </div>
+            <div class="metric">
+              <span>Control coverage</span>
+              <strong data-testid="metric-coverage">94%</strong>
+              <em>+6% this week</em>
+            </div>
+            <div class="metric">
+              <span>Escalations</span>
+              <strong data-testid="metric-escalations">3</strong>
+              <em style="color: var(--red)">Needs review</em>
+            </div>
+            <div class="metric">
+              <span>Ready for audit</span>
+              <strong data-testid="metric-ready">11</strong>
+              <em>2 awaiting signoff</em>
+            </div>
+          </div>
+
+          <div class="workspace">
+            <section class="panel" data-testid="queue-panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Evidence Queue</h2>
+                  <p class="subtle"><span data-testid="result-count">6</span> packets in view</p>
+                </div>
+                <button class="secondary-button" data-testid="refresh-table" type="button">
+                  Refresh
+                </button>
+              </div>
+
+              <div class="filters">
+                <label>
+                  Search
+                  <input data-testid="search-input" placeholder="Owner, control, or packet" />
+                </label>
+                <label>
+                  Status
+                  <select data-testid="status-select">
+                    <option value="all">All statuses</option>
+                    <option value="review">In review</option>
+                    <option value="escalated">Escalated</option>
+                    <option value="approved">Approved</option>
+                  </select>
+                </label>
+                <label>
+                  Reviewer
+                  <select data-testid="reviewer-select">
+                    <option value="all">All reviewers</option>
+                    <option value="mira">Mira Patel</option>
+                    <option value="jamal">Jamal Reed</option>
+                    <option value="lena">Lena Ortiz</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="loading" data-testid="table-loading">Refreshing evidence packets...</div>
+              <table aria-label="Evidence queue">
+                <thead>
+                  <tr>
+                    <th>Packet</th>
+                    <th>Control</th>
+                    <th>Owner</th>
+                    <th>Status</th>
+                    <th>Score</th>
+                  </tr>
+                </thead>
+                <tbody data-testid="queue-body"></tbody>
+              </table>
+            </section>
+
+            <section class="panel" data-testid="insight-panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Control Health</h2>
+                  <p class="subtle">Weighted evidence confidence by domain.</p>
+                </div>
+              </div>
+              <div class="chart" data-testid="chart-panel">
+                <div class="bar-row">
+                  <span>Access</span>
+                  <div class="track"><div class="bar" style="--value: 92%"></div></div>
+                  <strong>92</strong>
+                </div>
+                <div class="bar-row">
+                  <span>Change</span>
+                  <div class="track"><div class="bar warn" style="--value: 74%"></div></div>
+                  <strong>74</strong>
+                </div>
+                <div class="bar-row">
+                  <span>Vendor</span>
+                  <div class="track"><div class="bar risk" style="--value: 58%"></div></div>
+                  <strong>58</strong>
+                </div>
+                <div class="bar-row">
+                  <span>Incident</span>
+                  <div class="track"><div class="bar" style="--value: 88%"></div></div>
+                  <strong>88</strong>
+                </div>
+              </div>
+              <div class="detail" data-testid="packet-detail">
+                <h3>Selected packet</h3>
+                <p class="subtle">Choose a row to view review history.</p>
+              </div>
+            </section>
+          </div>
+
+          <section class="panel drawer-section" data-testid="audit-section">
+            <div class="panel-head">
+              <div>
+                <h2>Audit Trail</h2>
+                <p class="subtle">
+                  Traceable activity generated from the local deterministic data set.
+                </p>
+              </div>
+            </div>
+            <div class="audit-grid">
+              <article class="audit-card">
+                <strong>09:20 - Reviewer assignment</strong>
+                <p class="subtle">Mira Patel accepted AC-7 privileged access packet.</p>
+              </article>
+              <article class="audit-card">
+                <strong>09:44 - Evidence sync</strong>
+                <p class="subtle">
+                  Payroll vendor questionnaire imported from the evidence mailbox.
+                </p>
+              </article>
+              <article class="audit-card">
+                <strong>10:05 - Escalation opened</strong>
+                <p class="subtle">Vendor review requires updated DPA attachment before approval.</p>
+              </article>
+              <article class="audit-card">
+                <strong>10:32 - Control mapped</strong>
+                <p class="subtle">Change-management ticket linked to CC8.1 deployment approval.</p>
+              </article>
+              <article class="audit-card">
+                <strong>11:18 - Packet approved</strong>
+                <p class="subtle">Endpoint inventory evidence approved with exception note.</p>
+              </article>
+              <article class="audit-card" data-testid="final-audit-card">
+                <strong>12:10 - Export ready</strong>
+                <p class="subtle">
+                  Auditor packet can be generated after the last escalation is closed.
+                </p>
+              </article>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <div
+      class="modal-backdrop"
+      data-testid="approval-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="approval-title"
+    >
+      <form class="modal" data-testid="approval-form">
+        <div class="panel-head">
+          <div>
+            <h2 id="approval-title">Approve Evidence Packet</h2>
+            <p class="subtle">Record the review rationale for the selected control packet.</p>
+          </div>
+        </div>
+        <div class="modal-body">
+          <label>
+            Approval owner
+            <input data-testid="approval-owner" value="Mira Patel" />
+          </label>
+          <label>
+            Decision
+            <select data-testid="decision-select">
+              <option value="approve">Approve with note</option>
+              <option value="defer">Defer to control owner</option>
+              <option value="reject">Reject packet</option>
+            </select>
+          </label>
+          <label>
+            Rationale
+            <textarea data-testid="approval-note" rows="4" placeholder="Add rationale"></textarea>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button class="secondary-button" data-testid="cancel-approval" type="button">
+            Cancel
+          </button>
+          <button class="primary-button" data-testid="submit-approval" type="submit">
+            Submit approval
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="toast" data-testid="toast">Approval recorded for AC-7 privileged access.</div>
+
+    <script>
+      const packets = [
+        {
+          id: "AC-7",
+          packet: "Privileged access review",
+          owner: "Mira Patel",
+          reviewer: "mira",
+          status: "review",
+          score: 92,
+        },
+        {
+          id: "CC8.1",
+          packet: "Production change evidence",
+          owner: "Jamal Reed",
+          reviewer: "jamal",
+          status: "review",
+          score: 81,
+        },
+        {
+          id: "VND-4",
+          packet: "Payroll vendor DPA",
+          owner: "Lena Ortiz",
+          reviewer: "lena",
+          status: "escalated",
+          score: 58,
+        },
+        {
+          id: "LOG-2",
+          packet: "SIEM retention sample",
+          owner: "Mira Patel",
+          reviewer: "mira",
+          status: "approved",
+          score: 96,
+        },
+        {
+          id: "IR-3",
+          packet: "Incident tabletop notes",
+          owner: "Jamal Reed",
+          reviewer: "jamal",
+          status: "approved",
+          score: 88,
+        },
+        {
+          id: "HR-1",
+          packet: "Terminated user evidence",
+          owner: "Lena Ortiz",
+          reviewer: "lena",
+          status: "escalated",
+          score: 62,
+        },
+      ];
+
+      const statusLabels = {
+        approved: "Approved",
+        escalated: "Escalated",
+        review: "In review",
+      };
+
+      const state = {
+        search: "",
+        status: "all",
+        reviewer: "all",
+        selectedId: "AC-7",
+      };
+
+      const queueBody = document.querySelector("[data-testid='queue-body']");
+      const resultCount = document.querySelector("[data-testid='result-count']");
+      const detail = document.querySelector("[data-testid='packet-detail']");
+      const loading = document.querySelector("[data-testid='table-loading']");
+      const toast = document.querySelector("[data-testid='toast']");
+
+      function filteredPackets() {
+        const query = state.search.trim().toLowerCase();
+        return packets.filter((packet) => {
+          const matchesQuery =
+            query.length === 0 ||
+            packet.packet.toLowerCase().includes(query) ||
+            packet.owner.toLowerCase().includes(query) ||
+            packet.id.toLowerCase().includes(query);
+          const matchesStatus = state.status === "all" || packet.status === state.status;
+          const matchesReviewer = state.reviewer === "all" || packet.reviewer === state.reviewer;
+          return matchesQuery && matchesStatus && matchesReviewer;
+        });
+      }
+
+      function renderTable() {
+        const rows = filteredPackets();
+        resultCount.textContent = String(rows.length);
+        queueBody.innerHTML = rows
+          .map(
+            (packet) => `
+              <tr data-testid="packet-row" data-id="${packet.id}" class="${packet.id === state.selectedId ? "selected" : ""}">
+                <td><strong>${packet.id}</strong><br><span class="subtle">${packet.packet}</span></td>
+                <td>${packet.id.split("-")[0]}</td>
+                <td>${packet.owner}</td>
+                <td><span class="status ${packet.status}">${statusLabels[packet.status]}</span></td>
+                <td>${packet.score}</td>
+              </tr>`,
+          )
+          .join("");
+
+        for (const row of queueBody.querySelectorAll("tr")) {
+          row.addEventListener("click", () => {
+            state.selectedId = row.dataset.id;
+            renderTable();
+            renderDetail();
+          });
+        }
+      }
+
+      function renderDetail() {
+        const packet = packets.find((item) => item.id === state.selectedId) ?? packets[0];
+        detail.innerHTML = `
+          <h3>${packet.id} - ${packet.packet}</h3>
+          <p class="subtle">Owner ${packet.owner}. Current status: ${statusLabels[packet.status]}. Evidence score ${packet.score}.</p>
+          <div class="timeline">
+            <div class="timeline-item"><span>08:42</span><strong>Packet assembled from mapped evidence.</strong></div>
+            <div class="timeline-item"><span>09:20</span><strong>Reviewer checklist completed.</strong></div>
+            <div class="timeline-item"><span>10:05</span><strong>Exception notes reviewed.</strong></div>
+          </div>
+        `;
+      }
+
+      function refreshWithDelay() {
+        loading.classList.add("open");
+        queueBody.style.opacity = "0.35";
+        renderTable();
+        window.setTimeout(() => {
+          loading.classList.remove("open");
+          queueBody.style.opacity = "1";
+        }, 5600);
+      }
+
+      document.querySelector("[data-testid='search-input']").addEventListener("input", (event) => {
+        state.search = event.target.value;
+        renderTable();
+      });
+
+      document
+        .querySelector("[data-testid='status-select']")
+        .addEventListener("change", (event) => {
+          state.status = event.target.value;
+          refreshWithDelay();
+        });
+
+      document
+        .querySelector("[data-testid='reviewer-select']")
+        .addEventListener("change", (event) => {
+          state.reviewer = event.target.value;
+          renderTable();
+        });
+
+      document
+        .querySelector("[data-testid='refresh-table']")
+        .addEventListener("click", refreshWithDelay);
+
+      document.querySelector("[data-testid='help-button']").addEventListener("click", () => {
+        document.querySelector("[data-testid='help-popover']").classList.toggle("open");
+      });
+
+      document.querySelector("[data-testid='open-approval']").addEventListener("click", () => {
+        document.querySelector("[data-testid='approval-modal']").classList.add("open");
+      });
+
+      document.querySelector("[data-testid='cancel-approval']").addEventListener("click", () => {
+        document.querySelector("[data-testid='approval-modal']").classList.remove("open");
+      });
+
+      document
+        .querySelector("[data-testid='approval-form']")
+        .addEventListener("submit", (event) => {
+          event.preventDefault();
+          document.querySelector("[data-testid='approval-modal']").classList.remove("open");
+          toast.classList.add("open");
+          window.setTimeout(() => toast.classList.remove("open"), 2600);
+        });
+
+      for (const navButton of document.querySelectorAll(".nav-button")) {
+        navButton.addEventListener("click", () => {
+          document.querySelector(".nav-button.active").classList.remove("active");
+          navButton.classList.add("active");
+          document.querySelector("[data-testid='page-title']").textContent = navButton.textContent;
+        });
+      }
+
+      window.setTimeout(() => {
+        renderTable();
+        renderDetail();
+      }, 300);
+    </script>
+  </body>
+</html>

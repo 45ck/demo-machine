@@ -22,10 +22,42 @@ export interface ManifestEntry {
   maxOutputBytes?: number;
 }
 
+export interface RenderedVideoFrameSample {
+  timestampMs: number;
+  blank?: boolean | undefined;
+  frozenWithPrevious?: boolean | undefined;
+  lumaMean?: number | undefined;
+  lumaStdDev?: number | undefined;
+  differenceFromPrevious?: number | undefined;
+  perceptualHash?: string | undefined;
+}
+
+export interface RenderedVideoSampleExtractionMetadata {
+  requestedSampleCount: number;
+  extractedSampleCount: number;
+  status?: "success" | "partial" | "failed" | "skipped" | undefined;
+  durationMs?: number | undefined;
+  extractor?: string | undefined;
+  errors?: string[] | undefined;
+}
+
+export interface RenderedVideoIntegrityThresholds {
+  blankRatio?: number | undefined;
+  frozenAdjacentRatio?: number | undefined;
+  blankLumaMean?: number | undefined;
+  blankLumaStdDev?: number | undefined;
+  frozenDifference?: number | undefined;
+  durationAbsoluteToleranceMs?: number | undefined;
+  durationRelativeTolerance?: number | undefined;
+}
+
 /** Context provided to quality check functions. */
 export interface QualityCheckContext {
   outputMp4Path: string;
-  spec: { meta: { resolution: { width: number; height: number } } };
+  spec: {
+    meta: { resolution: { width: number; height: number } };
+    chapters?: Array<{ steps?: Array<{ action?: string }> }> | undefined;
+  };
   manifestEntry?: ManifestEntry | undefined;
   fileSizeBytes?: number | undefined;
   probeResult?: VideoProbeResult | undefined;
@@ -63,4 +95,10 @@ export interface QualityCheckContext {
   chapterTitleScreenshots?: Map<number, Buffer> | undefined;
   /** Previous run's file size in bytes, for file-size-trend check (#48). */
   previousFileSizeBytes?: number | undefined;
+  /** Rendered-video frame sample metrics, when an extractor has provided them. */
+  renderedVideoFrameSamples?: RenderedVideoFrameSample[] | undefined;
+  /** Metadata from rendered-video frame sample extraction. */
+  renderedVideoSampleExtraction?: RenderedVideoSampleExtractionMetadata | undefined;
+  /** Optional thresholds for rendered-video integrity checks. */
+  renderedVideoIntegrityThresholds?: RenderedVideoIntegrityThresholds | undefined;
 }

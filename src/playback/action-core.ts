@@ -13,6 +13,7 @@ export interface PlaybackContext {
   moveCursorTo(box: BoundingBox | null): Promise<void>;
   reinjectCursor(): Promise<void>;
   waitAfterStep(stepIndex: number, step: Step): Promise<void>;
+  shouldShowActionVisuals?(stepIndex: number, step: Step): boolean;
 }
 
 export type ActionHandler = (

@@ -116,4 +116,29 @@ describe("runPostRenderQualityGate", () => {
     expect(quality.status).toBe("fail");
     expect(quality.error?.message).toBe("ffprobe missing");
   });
+
+  it("passes events to quality gate even when narration segments are absent", async () => {
+    const runQualityGate = await mockedRunner();
+    runQualityGate.mockResolvedValueOnce({
+      results: [],
+      hasFailures: false,
+      durationMs: 1,
+    });
+    const { runPostRenderQualityGate } = await import("../../src/cli/pipeline.js");
+
+    await runPostRenderQualityGate({
+      outputPath: "output.mp4",
+      outputDir: tempDir,
+      spec,
+      events: [{ action: "click", timestamp: 1_500, duration: 200 }],
+      startTimestamp: 1_000,
+    });
+
+    expect(runQualityGate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        events: [{ action: "click", timestamp: 500, duration: 200 }],
+        narrationSegments: [],
+      }),
+    );
+  });
 });

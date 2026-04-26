@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { preStepSchema, stepSchema } from "./step-schema.js";
+import { narrationFocusSchema, preStepSchema, stepSchema } from "./step-schema.js";
 
 const resolutionSchema = z.object({
   width: z.number().int().positive(),
@@ -58,6 +58,20 @@ const narrationSchema = z.object({
   sync: narrationSyncSchema.optional().default({ mode: "manual", bufferMs: 500 }),
 });
 
+const defaultNarrationFocus = {
+  enabled: true,
+  cursor: true,
+  highlight: true,
+  zoom: true,
+  scale: 1.35,
+  durationMs: 2600,
+  transitionMs: 700,
+};
+
+const presentationSchema = z.object({
+  narrationFocus: narrationFocusSchema.optional().default(defaultNarrationFocus),
+});
+
 const changeDetectionSchema = z.object({
   mode: z.enum(["error", "warn", "off"]).optional().default("error"),
   detectors: z
@@ -80,6 +94,7 @@ export const demoSpecSchema = z.object({
   preSteps: z.array(preStepSchema).optional(),
   redaction: redactionConfigSchema.optional(),
   narration: narrationSchema.optional(),
+  presentation: presentationSchema.optional().default({ narrationFocus: defaultNarrationFocus }),
   pacing: pacingSchema.optional().default({}),
   changeDetection: changeDetectionSchema.optional(),
   chapters: z.array(chapterSchema).min(1),

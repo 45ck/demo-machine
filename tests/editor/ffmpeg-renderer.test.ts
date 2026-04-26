@@ -108,4 +108,36 @@ describe("FfmpegRenderer.buildArgs", () => {
     const ssCount = args.filter((a) => a === "-ss").length;
     expect(ssCount).toBe(0);
   });
+
+  it("trims rendered output to the timeline duration when narration does not extend it", async () => {
+    const renderer = new FfmpegRenderer();
+    const options: RenderOptions = {
+      outputPath: "/output/output.mp4",
+      videoPath: "/input/video.webm",
+    };
+
+    await renderer.render(baseTimeline, options);
+
+    const args = mockSpawn.mock.calls[0]![1] as string[];
+    const tIndex = args.indexOf("-t");
+    expect(tIndex).toBeGreaterThan(-1);
+    expect(args[tIndex + 1]).toBe("5.000");
+  });
+
+  it("uses the extended narration duration when narration is longer than the capture", async () => {
+    const renderer = new FfmpegRenderer();
+    const options: RenderOptions = {
+      outputPath: "/output/output.mp4",
+      videoPath: "/input/video.webm",
+      audioPath: "/audio/narration.mp3",
+      extendToMs: 8000,
+    };
+
+    await renderer.render(baseTimeline, options);
+
+    const args = mockSpawn.mock.calls[0]![1] as string[];
+    const tIndex = args.indexOf("-t");
+    expect(tIndex).toBeGreaterThan(-1);
+    expect(args[tIndex + 1]).toBe("8.000");
+  });
 });

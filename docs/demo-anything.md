@@ -54,31 +54,58 @@ If there are multiple matches, add `nth` (0-based):
   nth: 1
 ```
 
+## Examples Layout And Discovery
+
+The organized `examples/` tree separates demo purposes:
+
+- `examples/showcase/`: polished product demos used by docs and gallery generation.
+- `examples/proof/actions/`: focused specs for individual playback primitives.
+- `examples/proof/variants/`: redaction and narration-sync coverage variants.
+- `examples/assurance/long-demo/`: a longer end-to-end flow for full-video QA.
+
+`examples/manifest.json` is the source of truth. Use `demo-machine examples list` to browse showcase and assurance examples, `demo-machine examples list --type proof` for small action fixtures, and `demo-machine examples show <slug>` to print the canonical spec, variants, quality signals, and matching `run` and `validate` commands.
+
 ## “Demo Anything” Acceptance Matrix
 
 The `examples/` suite is the living acceptance test. It intentionally covers different UI patterns:
 
-- **Forms and validation**: `examples/form-wizard*.demo.yaml`
-- **Auth flows (OTP)**: `examples/auth-otp.demo.yaml`
-- **Dialogs, tooltips, overlays**: `examples/modals-popovers*.demo.yaml`
-- **SPA navigation**: `examples/spa-router*.demo.yaml`
-- **Infinite scroll / long pages**: `examples/infinite-scroll*.demo.yaml`
-- **Dense tables / dashboards**: `examples/dashboard-table*.demo.yaml`
-- **Charts + hover tooltips**: `examples/chart-tooltips.demo.yaml`
-- **Virtualized tables**: `examples/virtual-table.demo.yaml`
-- **Controls matrix (checkbox/select/upload/drag)**: `examples/controls-lab*.demo.yaml`
-- **Selector stress (nth disambiguation)**: `examples/selector-stress.demo.yaml`
+- **Forms and validation**: `examples/showcase/form-wizard.demo.yaml`
+- **Auth flows (OTP)**: `examples/showcase/auth-otp.demo.yaml`
+- **Dialogs, tooltips, overlays**: `examples/showcase/modals-popovers.demo.yaml`
+- **SPA navigation**: `examples/showcase/spa-router.demo.yaml`
+- **Long realistic flows**: `examples/assurance/long-demo/long-demo.demo.yaml`
+- **Dense tables / dashboards**: `examples/showcase/dashboard-table.demo.yaml`
+- **Charts + hover tooltips**: `examples/showcase/chart-tooltips.demo.yaml`
+- **Virtualized tables**: `examples/showcase/virtual-table.demo.yaml`
+- **Controls matrix (checkbox/select/upload/drag)**: `examples/showcase/controls-lab.demo.yaml`
+- **Selector stress (nth disambiguation)**: `examples/showcase/selector-stress.demo.yaml`
+- **Agent-created fresh project demos**: `pnpm qa:meta-prompt` scaffolds a complex app plus a Demo Machine Codex skill; `pnpm qa:meta-prompt:run` asks Codex CLI to create narrated MP4s, cover the action/component matrix, self-evaluate, and hand off demos from that clean workspace.
 
 Run:
 
 ```bash
-pnpm quality:verify
 demo-machine examples list --tag forms
+demo-machine examples show assurance-long-demo
+pnpm quality:verify
 pnpm examples:validate
 pnpm examples:capture
+node scripts/examples-suite.mjs --mode run --filter assurance-long-demo
+pnpm video:assure -- --filter assurance-long-demo
+pnpm qa:meta-prompt
 ```
 
-Use `demo-machine examples list` to find a nearby product pattern before writing a new spec. `examples:capture` is the strongest raw-capture signal because it launches each demo app, drives the browser, records video, writes screenshot evidence when available, and writes Playwright `trace.zip`. Rendered quality evidence is produced by `demo-machine run` as `quality.json`.
+Use `demo-machine examples list` to find a nearby product pattern before writing a new spec. `examples:validate` loads every manifest-backed canonical spec and variant. `examples:capture` is the strongest raw-capture signal because it launches each demo app, drives the browser, records video, writes screenshot evidence when available, and writes Playwright `trace.zip`. Rendered quality evidence is produced by `demo-machine run` as `quality.json`; after rendered MP4s exist under `output/example-suite/`, `video:assure` samples them for blank frames, frozen spans, and large visual jumps. The `assurance-long-demo` filter targets the long realistic flow for full-demo QA.
+
+## Meta Prompt QA
+
+Meta prompt QA proves a different end-to-end path: an agent starts in an empty project, uses the local Demo Machine skill, writes demos for a complex app, runs Demo Machine with narration, self-evaluates the artifacts, and then asks for human review.
+
+```bash
+pnpm qa:meta-prompt
+pnpm qa:meta-prompt:run
+```
+
+The first command is deterministic and creates `output/meta-prompt-qa/workspace/` with a fixture app, `.codex/skills/demo-machine/SKILL.md`, and `META_PROMPT.md`. The second command invokes `codex exec`, so it requires a working Codex CLI login and may vary by model. Generated demos are collected into `output/meta-prompt-qa/review.html` with links to MP4s, specs, quality files, action coverage, audio/subtitle status, and `SELF_EVALUATION.md`. The review report marks the run failed if MP4s are silent, subtitles are missing, fewer than three demos exist, or the required action surface is incomplete.
 
 ## How To Demo A New App (Playbook)
 

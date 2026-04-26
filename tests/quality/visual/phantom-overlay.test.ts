@@ -70,6 +70,17 @@ describe("checkPhantomOverlay", () => {
     expect(results[0]!.status).toBe("pass");
   });
 
+  it("passes at the accent pixel threshold boundary", () => {
+    const before = solidPng(10, 10, 0, 0, 0);
+    const after = pngWithAccentPixels(10, 10, 10);
+    const pairs = [{ stepIndex: 0, before, after }];
+
+    const results = checkPhantomOverlay(baseCtx({ assertScreenshotPairs: pairs }));
+
+    expect(results).toHaveLength(1);
+    expect(results[0]!.status).toBe("pass");
+  });
+
   it("fails when accent pixel count exceeds threshold", () => {
     const before = solidPng(10, 10, 0, 0, 0);
     const after = pngWithAccentPixels(10, 10, 50); // 50 accent pixels, exceeds 10

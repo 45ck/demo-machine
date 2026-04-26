@@ -132,3 +132,63 @@ export async function writeScreenshotArtifacts(params: {
     manifest,
   };
 }
+
+export function validateScreenshotArtifactManifestConsistency(params: {
+  manifest: ScreenshotArtifactManifest;
+  screenshotPaths: string[];
+}): string[] {
+  const issues: string[] = [];
+  const listedPaths = manifestScreenshotPaths(params.manifest);
+
+  checkCount(
+    "stepScreenshots",
+    params.manifest.counts.stepScreenshots,
+    params.manifest.stepScreenshots.length,
+    issues,
+  );
+  checkCount(
+    "assertScreenshotPairs",
+    params.manifest.counts.assertScreenshotPairs,
+    params.manifest.assertScreenshotPairs.length,
+    issues,
+  );
+  checkCount(
+    "cursorPositions",
+    params.manifest.counts.cursorPositions,
+    params.manifest.cursorPositions.length,
+    issues,
+  );
+  checkCount(
+    "chapterTitleScreenshots",
+    params.manifest.counts.chapterTitleScreenshots,
+    params.manifest.chapterTitleScreenshots.length,
+    issues,
+  );
+
+  const expectedPaths = new Set(listedPaths);
+  const actualPaths = new Set(params.screenshotPaths);
+  for (const path of expectedPaths) {
+    if (!actualPaths.has(path)) issues.push(`Manifest path missing from screenshotPaths: ${path}`);
+  }
+  for (const path of actualPaths) {
+    if (!expectedPaths.has(path))
+      issues.push(`screenshotPaths entry missing from manifest: ${path}`);
+  }
+
+  return issues;
+}
+
+function manifestScreenshotPaths(manifest: ScreenshotArtifactManifest): string[] {
+  return [
+    ...manifest.stepScreenshots.map((entry) => entry.path),
+    ...manifest.assertScreenshotPairs.flatMap((entry) => [entry.beforePath, entry.afterPath]),
+    ...manifest.chapterTitleScreenshots.map((entry) => entry.path),
+  ];
+}
+
+function checkCount(label: string, expected: number, actual: number, issues: string[]): void {
+  if (expected === actual) return;
+  issues.push(
+    `${label} count mismatch: counts.${label}=${String(expected)}, entries=${String(actual)}`,
+  );
+}

@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import type { DemoSpec } from "../spec/types.js";
 import type { QualityGateResult } from "../quality/runner.js";
+import type { QualityCheckContext } from "../quality/types.js";
 import { createLogger } from "../utils/logger.js";
 
 const log = createLogger("cli:pipeline");
@@ -28,6 +29,10 @@ interface RunPostRenderQualityGateParams {
   narrationSegments?: import("../narration/types.js").TimedNarrationSegment[];
   startTimestamp?: number;
   screenshotData?: ScreenshotData;
+  renderedVideoFrameSamples?: QualityCheckContext["renderedVideoFrameSamples"];
+  renderedVideoSampleExtraction?: QualityCheckContext["renderedVideoSampleExtraction"];
+  renderedVideoIntegrityThresholds?: QualityCheckContext["renderedVideoIntegrityThresholds"];
+  extractRenderedVideoSamples?: boolean | undefined;
 }
 
 interface PostRenderQualityGateSummary {
@@ -52,7 +57,7 @@ function buildNarrationToActionMap(spec: DemoSpec): number[] {
 function buildQualityGateInputs(params: {
   spec: DemoSpec;
   events: import("../playback/types.js").ActionEvent[];
-  narrationSegments: import("../narration/types.js").TimedNarrationSegment[];
+  narrationSegments?: import("../narration/types.js").TimedNarrationSegment[] | undefined;
   startTimestamp: number;
 }): {
   events: Array<{ action: string; timestamp: number; duration: number }>;
@@ -65,7 +70,7 @@ function buildQualityGateInputs(params: {
     duration: e.duration,
   }));
   const narrationToAction = buildNarrationToActionMap(params.spec);
-  const narrationSegments = params.narrationSegments.map((seg, i) => ({
+  const narrationSegments = (params.narrationSegments ?? []).map((seg, i) => ({
     actionIndex: narrationToAction[i] ?? i,
     startMs: seg.startMs,
     text: seg.text,
@@ -108,6 +113,18 @@ async function writeQualityErrorReport(params: {
 function qualityStatus(gate: QualityGateResult): "pass" | "warn" | "fail" {
   if (gate.hasFailures) return "fail";
   return gate.results.some((r) => r.status === "warn") ? "warn" : "pass";
+}
+
+function qualityGateInputsForRun(
+  params: RunPostRenderQualityGateParams,
+): ReturnType<typeof buildQualityGateInputs> | undefined {
+  if (!params.events || params.startTimestamp === undefined) return undefined;
+  return buildQualityGateInputs({
+    spec: params.spec,
+    events: params.events,
+    ...(params.narrationSegments ? { narrationSegments: params.narrationSegments } : {}),
+    startTimestamp: params.startTimestamp,
+  });
 }
 
 async function updateVerificationQuality(params: {
@@ -175,15 +192,7 @@ export async function runPostRenderQualityGate(
   const qualityMod = await import("../quality/runner.js");
 
   try {
-    const inputs =
-      params.events && params.narrationSegments && params.startTimestamp !== undefined
-        ? buildQualityGateInputs({
-            spec: params.spec,
-            events: params.events,
-            narrationSegments: params.narrationSegments,
-            startTimestamp: params.startTimestamp,
-          })
-        : undefined;
+    const inputs = qualityGateInputsForRun(params);
 
     const gate = await qualityMod.runQualityGate({
       outputMp4Path: params.outputPath,
@@ -191,6 +200,10 @@ export async function runPostRenderQualityGate(
       events: inputs?.events,
       narrationSegments: inputs?.narrationSegments,
       ...(params.screenshotData ?? {}),
+      renderedVideoFrameSamples: params.renderedVideoFrameSamples,
+      renderedVideoSampleExtraction: params.renderedVideoSampleExtraction,
+      renderedVideoIntegrityThresholds: params.renderedVideoIntegrityThresholds,
+      extractRenderedVideoSamples: params.extractRenderedVideoSamples ?? false,
     });
     logNonPassingResults(gate);
     const reportPath = await writeQualityReport({

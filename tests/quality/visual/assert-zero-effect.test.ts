@@ -16,6 +16,24 @@ function solidPng(width: number, height: number, r: number, g: number, b: number
   return PNG.sync.write(png);
 }
 
+function pngWithSingleChangedPixel(): { before: Buffer; after: Buffer } {
+  const before = new PNG({ width: 10, height: 10 });
+  const after = new PNG({ width: 10, height: 10 });
+  for (let i = 0; i < 100; i++) {
+    const offset = i * 4;
+    before.data[offset] = 128;
+    before.data[offset + 1] = 128;
+    before.data[offset + 2] = 128;
+    before.data[offset + 3] = 255;
+    after.data[offset] = 128;
+    after.data[offset + 1] = 128;
+    after.data[offset + 2] = 128;
+    after.data[offset + 3] = 255;
+  }
+  after.data[0] = 255;
+  return { before: PNG.sync.write(before), after: PNG.sync.write(after) };
+}
+
 function baseCtx(overrides?: Partial<QualityCheckContext>): QualityCheckContext {
   return {
     outputMp4Path: "/out/output.mp4",
@@ -55,6 +73,17 @@ describe("checkAssertZeroEffect", () => {
     expect(fail).toBeDefined();
     expect(fail!.message).toContain("step 5");
     expect(fail!.message).toContain("pixels changed");
+  });
+
+  it("warns on a small assert visual effect", () => {
+    const { before, after } = pngWithSingleChangedPixel();
+    const pairs = [{ stepIndex: 6, before, after }];
+
+    const results = checkAssertZeroEffect(baseCtx({ assertScreenshotPairs: pairs }));
+
+    const warn = results.find((r) => r.status === "warn");
+    expect(warn).toBeDefined();
+    expect(warn!.message).toContain("1 pixels changed");
   });
 
   it("reports each failing assert step separately", () => {

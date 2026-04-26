@@ -43,7 +43,7 @@ chapters:
         target:
           by: label
           text: "Upload logo"
-        file: "./controls-lab/assets/sample.txt"
+        file: "../../controls-lab/assets/sample.txt"
         narration: "Now we upload a file, resolving paths relative to the spec."
       - action: assert
         target:

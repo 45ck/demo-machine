@@ -21,7 +21,9 @@ export interface CheckContext {
 }
 
 /** Function signature for a validation check. */
-export type CheckFn = (ctx: CheckContext) => CheckResult | CheckResult[];
+export type CheckFn = (
+  ctx: CheckContext,
+) => CheckResult | CheckResult[] | Promise<CheckResult | CheckResult[]>;
 
 /** Definition of a validation check. */
 export interface CheckDefinition {

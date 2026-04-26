@@ -16,6 +16,12 @@ function solidPng(width: number, height: number, r: number, g: number, b: number
   return PNG.sync.write(png);
 }
 
+function transparentPng(width: number, height: number): Buffer {
+  const png = new PNG({ width, height });
+  png.data.fill(0);
+  return PNG.sync.write(png);
+}
+
 function baseCtx(overrides?: Partial<QualityCheckContext>): QualityCheckContext {
   return {
     outputMp4Path: "/out/output.mp4",
@@ -38,6 +44,52 @@ describe("checkStepScreenshots", () => {
     const results = checkStepScreenshots(baseCtx({ stepScreenshots: screenshots }));
     expect(results).toHaveLength(1);
     expect(results[0]!.status).toBe("warn");
+  });
+
+  it("fails when a step screenshot is blank white", () => {
+    const screenshots = new Map<number, Buffer>();
+    screenshots.set(0, solidPng(10, 10, 255, 255, 255));
+    screenshots.set(1, solidPng(10, 10, 128, 128, 128));
+
+    const results = checkStepScreenshots(baseCtx({ stepScreenshots: screenshots }));
+
+    const fail = results.find((r) => r.status === "fail" && r.message.includes("blank"));
+    expect(fail).toBeDefined();
+    expect(fail!.message).toContain("Step 0");
+  });
+
+  it("fails when a step screenshot is fully transparent", () => {
+    const screenshots = new Map<number, Buffer>();
+    screenshots.set(0, transparentPng(10, 10));
+    screenshots.set(1, solidPng(10, 10, 128, 128, 128));
+
+    const results = checkStepScreenshots(baseCtx({ stepScreenshots: screenshots }));
+
+    expect(results.some((r) => r.status === "fail" && r.message.includes("blank"))).toBe(true);
+  });
+
+  it("fails when screenshot dimensions do not match the expected viewport", () => {
+    const screenshots = new Map<number, Buffer>();
+    screenshots.set(0, solidPng(20, 10, 128, 128, 128));
+    screenshots.set(1, solidPng(10, 10, 128, 128, 128));
+
+    const results = checkStepScreenshots(baseCtx({ stepScreenshots: screenshots }));
+
+    const fail = results.find((r) => r.status === "fail" && r.message.includes("20x10"));
+    expect(fail).toBeDefined();
+    expect(fail!.message).toContain("10x10");
+  });
+
+  it("fails when a screenshot artifact is not a readable PNG", () => {
+    const screenshots = new Map<number, Buffer>();
+    screenshots.set(0, Buffer.from("not a png"));
+    screenshots.set(1, solidPng(10, 10, 128, 128, 128));
+
+    const results = checkStepScreenshots(baseCtx({ stepScreenshots: screenshots }));
+
+    expect(results.some((r) => r.status === "fail" && r.message.includes("readable PNG"))).toBe(
+      true,
+    );
   });
 
   it("passes when consecutive screenshots are identical", () => {
@@ -72,32 +124,31 @@ describe("checkStepScreenshots", () => {
     expect(warn!.message).toContain("pixel mismatch");
   });
 
-  it("fails when consecutive screenshots differ catastrophically", () => {
+  it("warns when consecutive screenshots differ catastrophically", () => {
     const gray = solidPng(10, 10, 128, 128, 128);
     const white = solidPng(10, 10, 255, 255, 255);
     const screenshots = new Map<number, Buffer>();
     screenshots.set(0, gray);
     screenshots.set(1, white);
     const results = checkStepScreenshots(baseCtx({ stepScreenshots: screenshots }));
-    const fail = results.find((r) => r.status === "fail");
-    expect(fail).toBeDefined();
-    expect(fail!.message).toContain("0→1");
-    expect(fail!.message).toContain("pixel mismatch");
+    const warn = results.find((r) => r.status === "warn" && r.message.includes("pixel mismatch"));
+    expect(warn).toBeDefined();
+    expect(warn!.message).toContain("0→1");
+    expect(warn!.message).toContain("pixel mismatch");
   });
 
   it("checks pairs in order by step index", () => {
-    const a = solidPng(10, 10, 0, 0, 0);
+    const a = solidPng(10, 10, 20, 20, 20);
     const b = solidPng(10, 10, 128, 128, 128);
-    const c = solidPng(10, 10, 255, 255, 255);
+    const c = solidPng(10, 10, 240, 240, 240);
     const screenshots = new Map<number, Buffer>();
     screenshots.set(5, a);
     screenshots.set(2, b);
     screenshots.set(10, c);
     const results = checkStepScreenshots(baseCtx({ stepScreenshots: screenshots }));
-    // Should compare 2→5 and 5→10
-    const fails = results.filter((r) => r.status === "fail");
-    expect(fails.length).toBeGreaterThanOrEqual(1);
-    expect(fails.some((f) => f.message.includes("2→5"))).toBe(true);
+    const warnings = results.filter((r) => r.status === "warn");
+    expect(warnings.length).toBeGreaterThanOrEqual(1);
+    expect(warnings.some((warning) => warning.message.includes("2→5"))).toBe(true);
   });
 
   it("all results have phase post-render", () => {

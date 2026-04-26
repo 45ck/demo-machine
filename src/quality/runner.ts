@@ -16,7 +16,18 @@ import { checkPhantomOverlay } from "./checks/visual/phantom-overlay.js";
 import { checkCursorPosition } from "./checks/visual/cursor-position.js";
 import { checkChapterTitles } from "./checks/visual/chapter-title.js";
 import { checkFileSizeTrend } from "./checks/file-size-trend.js";
-import type { VideoProbeResult, ManifestEntry, QualityCheckContext } from "./types.js";
+import {
+  checkRenderedVideoIntegrity,
+  renderedVideoIntegrityContextFromQualityGate,
+} from "./checks/rendered-video-integrity.js";
+import { extractRenderedVideoSamples as defaultExtractRenderedVideoSamples } from "./video-sampler.js";
+import type {
+  RenderedVideoFrameSample,
+  RenderedVideoSampleExtractionMetadata,
+  VideoProbeResult,
+  ManifestEntry,
+  QualityCheckContext,
+} from "./types.js";
 
 export interface QualityGateResult {
   results: CheckResult[];
@@ -24,7 +35,7 @@ export interface QualityGateResult {
   durationMs: number;
 }
 
-export async function runQualityGate(params: {
+interface RunQualityGateParams {
   outputMp4Path: string;
   spec: { meta: { resolution: { width: number; height: number } } };
   manifestEntry?: ManifestEntry;
@@ -58,16 +69,31 @@ export async function runQualityGate(params: {
   chapterTitleScreenshots?: QualityCheckContext["chapterTitleScreenshots"];
   /** Previous run's file size in bytes, for file-size-trend check (#48). */
   previousFileSizeBytes?: QualityCheckContext["previousFileSizeBytes"];
-}): Promise<QualityGateResult> {
-  const start = Date.now();
-  const results: CheckResult[] = [];
-  const probeFn = params.probeVideoFn ?? defaultProbeVideo;
-  const statFn = params.statFileFn ?? defaultStatFile;
+  /** Rendered-video frame sample metrics, when an extractor has provided them. */
+  renderedVideoFrameSamples?: QualityCheckContext["renderedVideoFrameSamples"];
+  /** Metadata from rendered-video frame sample extraction. */
+  renderedVideoSampleExtraction?: QualityCheckContext["renderedVideoSampleExtraction"];
+  /** Optional thresholds for rendered-video integrity checks. */
+  renderedVideoIntegrityThresholds?: QualityCheckContext["renderedVideoIntegrityThresholds"];
+  /** Extract rendered frame samples from output.mp4 when explicit samples are absent. */
+  extractRenderedVideoSamples?: boolean;
+  /** Injectable rendered-video sampler for testing. */
+  renderedVideoSamplerFn?: (params: {
+    outputMp4Path: string;
+    videoDurationMs?: number | undefined;
+    events?: QualityCheckContext["events"];
+  }) => Promise<{
+    samples: RenderedVideoFrameSample[];
+    extraction: RenderedVideoSampleExtractionMetadata;
+  }>;
+}
 
-  // Probe video once
-  let probeResult: VideoProbeResult | undefined;
+async function probeForGate(
+  params: RunQualityGateParams,
+  results: CheckResult[],
+): Promise<VideoProbeResult | undefined> {
   try {
-    probeResult = await probeFn(params.outputMp4Path);
+    return await (params.probeVideoFn ?? defaultProbeVideo)(params.outputMp4Path);
   } catch (err) {
     results.push(
       postRenderWarn(
@@ -75,12 +101,16 @@ export async function runQualityGate(params: {
         `Could not probe video: ${err instanceof Error ? err.message : String(err)}`,
       ),
     );
+    return undefined;
   }
+}
 
-  // Stat file once
-  let fileSizeBytes: number | undefined;
+async function statForGate(
+  params: RunQualityGateParams,
+  results: CheckResult[],
+): Promise<number | undefined> {
   try {
-    fileSizeBytes = await statFn(params.outputMp4Path);
+    return await (params.statFileFn ?? defaultStatFile)(params.outputMp4Path);
   } catch (err) {
     results.push(
       postRenderWarn(
@@ -88,7 +118,49 @@ export async function runQualityGate(params: {
         `Could not stat file: ${err instanceof Error ? err.message : String(err)}`,
       ),
     );
+    return undefined;
   }
+}
+
+async function renderedVideoSamplesForGate(params: {
+  gateParams: RunQualityGateParams;
+  probeResult: VideoProbeResult | undefined;
+}): Promise<{
+  renderedVideoFrameSamples: QualityCheckContext["renderedVideoFrameSamples"];
+  renderedVideoSampleExtraction: QualityCheckContext["renderedVideoSampleExtraction"];
+}> {
+  if (
+    !params.gateParams.extractRenderedVideoSamples ||
+    params.gateParams.renderedVideoFrameSamples !== undefined ||
+    params.gateParams.renderedVideoSampleExtraction !== undefined
+  ) {
+    return {
+      renderedVideoFrameSamples: params.gateParams.renderedVideoFrameSamples,
+      renderedVideoSampleExtraction: params.gateParams.renderedVideoSampleExtraction,
+    };
+  }
+
+  const sampler = params.gateParams.renderedVideoSamplerFn ?? defaultExtractRenderedVideoSamples;
+  const sampled = await sampler({
+    outputMp4Path: params.gateParams.outputMp4Path,
+    videoDurationMs:
+      params.probeResult?.videoDurationSec !== undefined
+        ? params.probeResult.videoDurationSec * 1000
+        : undefined,
+    events: params.gateParams.events,
+  });
+  return {
+    renderedVideoFrameSamples: sampled.samples,
+    renderedVideoSampleExtraction: sampled.extraction,
+  };
+}
+
+export async function runQualityGate(params: RunQualityGateParams): Promise<QualityGateResult> {
+  const start = Date.now();
+  const results: CheckResult[] = [];
+  const probeResult = await probeForGate(params, results);
+  const fileSizeBytes = await statForGate(params, results);
+  const renderedVideo = await renderedVideoSamplesForGate({ gateParams: params, probeResult });
 
   const ctx: QualityCheckContext = {
     outputMp4Path: params.outputMp4Path,
@@ -109,6 +181,9 @@ export async function runQualityGate(params: {
     cursorPositions: params.cursorPositions,
     chapterTitleScreenshots: params.chapterTitleScreenshots,
     previousFileSizeBytes: params.previousFileSizeBytes,
+    renderedVideoFrameSamples: renderedVideo.renderedVideoFrameSamples,
+    renderedVideoSampleExtraction: renderedVideo.renderedVideoSampleExtraction,
+    renderedVideoIntegrityThresholds: params.renderedVideoIntegrityThresholds,
   };
 
   results.push(...executeChecks(ctx, probeResult));
@@ -158,6 +233,11 @@ function executeChecks(
   out.push(...safeRun(() => checkPhantomOverlay(ctx)));
   out.push(...safeRun(() => checkCursorPosition(ctx)));
   out.push(...safeRun(() => checkChapterTitles(ctx)));
+  out.push(
+    ...safeRun(() =>
+      checkRenderedVideoIntegrity(renderedVideoIntegrityContextFromQualityGate(ctx)),
+    ),
+  );
   return out;
 }
 

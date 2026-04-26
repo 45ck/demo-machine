@@ -34,6 +34,7 @@
     "vout",
     "boxcolor",
     "boxborderw",
+    "Codex",
     "domcontentloaded",
     "networkidle",
     "reinject",
@@ -87,7 +88,10 @@
     "minmax",
     "healthchecks",
     "reserialize",
-    "Prereqs"
+    "Prereqs",
+    "luma",
+    "unclipped",
+    "Pngs"
   ],
   "ignorePaths": ["node_modules", "dist", "pnpm-lock.yaml", "*.json"]
 }

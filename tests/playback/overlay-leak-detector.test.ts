@@ -55,8 +55,24 @@ describe("detectOverlayLeaks", () => {
   it("returns warnings for visible dm- overlay elements", async () => {
     const page = createMockPage();
     (page.evaluate as ReturnType<typeof vi.fn>).mockResolvedValue([
-      { id: "dm-cursor", className: "", display: "block", opacity: "1" },
-      { id: "dm-focus-ring", className: "", display: "block", opacity: "0.5" },
+      {
+        id: "dm-cursor",
+        className: "",
+        display: "block",
+        visibility: "visible",
+        opacity: "1",
+        width: 24,
+        height: 24,
+      },
+      {
+        id: "dm-focus-ring",
+        className: "",
+        display: "block",
+        visibility: "visible",
+        opacity: "0.5",
+        width: 120,
+        height: 40,
+      },
     ]);
     const result = await detectOverlayLeaks(page);
     expect(result).toHaveLength(2);
@@ -81,7 +97,15 @@ describe("detectOverlayLeaks", () => {
   it("reports overlays found by class name containing dm-", async () => {
     const page = createMockPage();
     (page.evaluate as ReturnType<typeof vi.fn>).mockResolvedValue([
-      { id: "", className: "dm-ripple", display: "block", opacity: "1" },
+      {
+        id: "",
+        className: "dm-ripple",
+        display: "block",
+        visibility: "visible",
+        opacity: "1",
+        width: 16,
+        height: 16,
+      },
     ]);
     const result = await detectOverlayLeaks(page);
     expect(result).toHaveLength(1);
@@ -98,12 +122,22 @@ describe("detectOverlayLeaks", () => {
   it("includes display and opacity in the warning message", async () => {
     const page = createMockPage();
     (page.evaluate as ReturnType<typeof vi.fn>).mockResolvedValue([
-      { id: "dm-spotlight", className: "", display: "block", opacity: "0.8" },
+      {
+        id: "dm-spotlight",
+        className: "",
+        display: "block",
+        visibility: "visible",
+        opacity: "0.8",
+        width: 640,
+        height: 360,
+      },
     ]);
     const result = await detectOverlayLeaks(page);
     expect(result).toHaveLength(1);
     expect(result[0]).toContain("dm-spotlight");
     expect(result[0]).toContain("display=block");
+    expect(result[0]).toContain("visibility=visible");
     expect(result[0]).toContain("opacity=0.8");
+    expect(result[0]).toContain("size=640x360");
   });
 });

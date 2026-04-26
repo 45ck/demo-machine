@@ -27,6 +27,7 @@ export function buildTimeline(
   const t0 = t0Override ?? firstEvent.timestamp;
   const lastEvent = events[events.length - 1]!;
   const videoDurationMs = lastEvent.timestamp + lastEvent.duration - t0;
+  const totalDurationMs = videoDurationMs + OUTRO_DURATION_MS;
 
   addIntroOverlay(segments, spec);
   addChapterAndContentSegments(segments, events, spec, t0);
@@ -34,7 +35,7 @@ export function buildTimeline(
 
   return {
     segments,
-    totalDurationMs: videoDurationMs,
+    totalDurationMs,
     resolution: spec.meta.resolution,
   };
 }
@@ -129,10 +130,9 @@ function addCalloutIfNeeded(segments: Segment[], event: ActionEvent, t0: number)
 }
 
 function addOutroOverlay(segments: Segment[], videoDurationMs: number): void {
-  const outroStart = Math.max(0, videoDurationMs - OUTRO_DURATION_MS);
   segments.push({
-    startMs: outroStart,
-    endMs: videoDurationMs,
+    startMs: videoDurationMs,
+    endMs: videoDurationMs + OUTRO_DURATION_MS,
     type: "outro",
     label: "Thanks for watching",
   });
