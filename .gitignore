@@ -7,6 +7,7 @@ coverage/
 .stryker-tmp/
 reports/
 *.mp4
+!assets/demo-gallery/*.mp4
 *.webm
 *.wav
 *.mp3

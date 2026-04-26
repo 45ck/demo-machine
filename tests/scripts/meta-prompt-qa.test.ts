@@ -80,8 +80,10 @@ describe("meta prompt QA scaffold", () => {
     expect(skill).toContain(JSON.stringify(path.join(root, "dist", "cli.js")));
     expect(skill).toContain("--tts-provider kokoro");
     expect(skill).not.toContain("--no-narration` for each demo");
-    expect(skill).toContain("Treat zoom/highlight as presentation only");
+    expect(skill).toContain("Prefer zoom plus cursor over zoom plus highlight");
+    expect(skill).toContain("Treat zoom as presentation only");
     expect(skill).toContain("confirm the event log contains one real click");
+    expect(skill).toContain("prefer `Escape`, click-away, or an explicit non-narrated close step");
     expect(skill).toContain("SELF_EVALUATION.md");
     expect(prompt).toContain("Use the local skill first");
     expect(prompt).toContain("Do not use --no-narration");

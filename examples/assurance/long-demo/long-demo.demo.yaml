@@ -21,7 +21,7 @@ presentation:
   narrationFocus:
     enabled: true
     cursor: true
-    highlight: true
+    highlight: false
     zoom: true
     scale: 1.35
     durationMs: 1800
@@ -171,8 +171,7 @@ chapters:
         text: "Reviewed mapped evidence, exception notes, and owner response for the April control window."
         narration: "The reviewer records a traceable approval rationale."
         focus:
-          highlight: true
-          zoom: false
+          zoom: true
       - action: assert
         selector: "[data-testid='approval-note']"
         value: "Reviewed mapped evidence, exception notes, and owner response for the April control window."

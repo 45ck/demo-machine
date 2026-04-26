@@ -38,11 +38,11 @@ It is local-first. There is no required cloud service and no current CI dependen
 
 ## Demo
 
-This video was generated from [examples/showcase/todo-app.demo.yaml](examples/showcase/todo-app.demo.yaml):
+The main showcase video was generated from [examples/assurance/long-demo/long-demo.demo.yaml](examples/assurance/long-demo/long-demo.demo.yaml):
 
-![TaskFlow demo](assets/demo-gallery/todo-app.gif)
+<video src="assets/demo-gallery/assurance-long-demo.mp4" controls muted playsinline></video>
 
-More rendered examples are in the [demo gallery](docs/demo-gallery.md).
+If your Markdown viewer does not render embedded MP4s, open the [AssuranceOps showcase video](assets/demo-gallery/assurance-long-demo.mp4). More rendered examples are in the [demo gallery](docs/demo-gallery.md).
 
 ## Quick Start
 

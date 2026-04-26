@@ -880,9 +880,11 @@ Use this skill when creating, validating, running, or reviewing Demo Machine dem
 
 ## Narration Focus And Clicks
 
-- Use narration focus to guide attention: explicit \`focus.selector\` or \`focus.target\`, highlight, cursor, and a gentle zoom are preferred when narration names a specific element.
-- Treat zoom/highlight as presentation only. Show any visual click pulse while zoomed, then clear the transform before the real action runs so Playwright clicks the untransformed DOM coordinates.
+- Use narration focus to guide attention: explicit \`focus.selector\` or \`focus.target\`, cursor motion, and a gentle zoom are preferred when narration names a specific element.
+- Prefer zoom plus cursor over zoom plus highlight. Reserve persistent highlight rings for rare cases where zoom alone cannot identify the target; the real click pulse should remain visible for action feedback.
+- Treat zoom as presentation only. Keep cursor and click math in the transformed viewport coordinate space so real actions land on the target while zoomed; clear the transform only for the zoom-out transition or next step.
 - Avoid double-click-looking first interactions: do not stack a focus highlight pulse and a click pulse with identical timing; keep the click pulse visually distinct and confirm the event log contains one real click for one intended click.
+- If opening and closing a popover by clicking the same trigger looks like a repeated click, prefer \`Escape\`, click-away, or an explicit non-narrated close step.
 - For long narrated demos, watch the MP4 as a user would. If the camera moves to a generic area, misses the narrated element, exits too quickly, overlaps text, or makes the click feel wrong, tighten the selector/focus target and rerun.
 
 ## Acceptance Bar

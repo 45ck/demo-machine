@@ -9,7 +9,7 @@ This repo’s goal is to generate **high-polish, repeatable product demos** from
 2. **Be deterministic**
    - Specs should drive stable demo data, stable URLs, and stable UI states.
 3. **Make the audience track the story**
-   - The cursor and overlays should clearly “select” targets before interaction.
+   - Narrated focus should use cursor motion plus zoom by default. Reserve persistent highlight rings for rare cases where zoom alone cannot identify the target; the real click pulse should provide action feedback.
 4. **Fail with artifacts**
    - When a step fails, capture enough evidence to fix it quickly: trace, screenshot, HTML, and the step context.
 
