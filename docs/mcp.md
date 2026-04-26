@@ -36,15 +36,15 @@ node dist/mcp-server.js
 
 Common tool inputs:
 
-| Tool            | Important Inputs                                                                                   | Defaults / Notes                                                 |
-| --------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `validate-spec` | `specPath`                                                                                         | Fast check before capture or render.                             |
-| `capture-spec`  | `specPath`, `outputDir`, `headless`, `overwrite`                                                   | Capture-only path; narration is not rendered into the final MP4. |
-| `run-pipeline`  | `specPath`, `outputDir`, `headless`, `overwrite`, `ttsProvider`, `selectApproach`, `skipNarration` | Full capture + render path; use it for reviewable narrated MP4s. |
-| `format-spec`   | `specPath`, `format`                                                                               | Use before committing generated specs.                           |
-| `list-voices`   | none                                                                                               | Reports configured voice entries for narration.                  |
+| Tool            | Important Inputs                                                                                        | Defaults / Notes                                                                                  |
+| --------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `validate-spec` | `specPath`                                                                                              | Fast check before capture or render.                                                              |
+| `capture-spec`  | `specPath`, `output`, `headless`, `narration`, `ttsProvider`, `selectApproach`, `overwrite`             | Capture-only path; `narration` defaults to `false` and only pre-synthesizes narration if enabled. |
+| `run-pipeline`  | `specPath`, `output`, `headless`, `narration`, `renderer`, `ttsProvider`, `selectApproach`, `overwrite` | Full capture + render path; `narration` defaults to `true`.                                       |
+| `format-spec`   | `specPath`, `format`                                                                                    | Use before committing generated specs.                                                            |
+| `list-voices`   | none                                                                                                    | Reports configured voice entries for narration.                                                   |
 
-For explicit `outputDir` values, prefer a per-demo folder and use `overwrite` only for deliberate reruns. Automatic output paths are safer during exploration because demo-machine creates a run folder and updates `output/latest.json`.
+For explicit `output` values, prefer a per-demo folder and use `overwrite` only for deliberate reruns. Automatic output paths are safer during exploration because demo-machine creates a run folder and updates `output/latest.json`.
 
 ## Resources
 

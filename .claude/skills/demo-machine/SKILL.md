@@ -67,22 +67,24 @@ chapters:
 
 ### Available Actions
 
-| Action             | Required Fields        | Description                                     |
-| ------------------ | ---------------------- | ----------------------------------------------- |
-| `navigate`         | `url`                  | Go to a URL                                     |
-| `click`            | `selector` or `target` | Click an element                                |
-| `type`             | `selector` or `target` | Type text character-by-character                |
-| `hover`            | `selector` or `target` | Hover over an element                           |
-| `scroll`           | —                      | Scroll the page or a target container           |
-| `press`            | `key`                  | Press a keyboard key                            |
-| `assert`           | `selector` or `target` | Assert visibility, text, or value               |
-| `check`/`uncheck`  | `selector` or `target` | Set checkbox/toggle state                       |
-| `select`           | `selector` or `target` | Select an option by value, label, or index      |
-| `upload`           | `selector` or `target` | Upload one or more files                        |
-| `dragAndDrop`      | `from`, `to`           | Drag from one element to another                |
-| `back` / `forward` | —                      | Navigate browser history                        |
-| `wait`             | `timeout`              | Pause for milliseconds                          |
-| `screenshot`       | —                      | Capture a named screenshot for review artifacts |
+| Action             | Required Fields                                  | Description                                     |
+| ------------------ | ------------------------------------------------ | ----------------------------------------------- |
+| `navigate`         | `url`                                            | Go to a URL                                     |
+| `click`            | `selector` or `target`                           | Click an element                                |
+| `type`             | `selector` or `target`, `text`                   | Type text character-by-character                |
+| `hover`            | `selector` or `target`                           | Hover over an element                           |
+| `scroll`           | —                                                | Scroll the page or a target container           |
+| `press`            | `key`                                            | Press a keyboard key                            |
+| `assert`           | `selector` or `target`, plus one assertion field | Assert visibility, text, count, value, or state |
+| `check`/`uncheck`  | `selector` or `target`                           | Set checkbox/toggle state                       |
+| `select`           | `selector` or `target`, `option`                 | Select an option by value, label, or index      |
+| `upload`           | `selector` or `target`, `file` or `files`        | Upload one or more files                        |
+| `dragAndDrop`      | `from`, `to`                                     | Drag from one element to another                |
+| `back` / `forward` | —                                                | Navigate browser history                        |
+| `wait`             | `timeout`                                        | Pause for milliseconds                          |
+| `screenshot`       | —                                                | Capture a named screenshot for review artifacts |
+
+For `assert`, include at least one of `visible`, `text`, `count`, `value`, `checked`, or `enabled`. Count assertions require a CSS `selector`.
 
 Every action supports an optional `narration` field for voice-over. For narrated product demos, prefer cursor plus zoom focus by default. Reserve persistent highlight rings for rare cases where zoom alone cannot identify the target; keep the real click pulse visible for action feedback.
 
