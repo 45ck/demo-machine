@@ -21,28 +21,6 @@ function paddedBox(
   return { x, y, width, height };
 }
 
-async function mapBoxForActiveNarrationFocus(
-  page: PlaywrightPage,
-  box: BoundingBox,
-): Promise<BoundingBox> {
-  return (await page.evaluate(
-    ((b: { x: number; y: number; width: number; height: number }) => {
-      const w = window as typeof window & {
-        __dmNarrationFocusTransform?: { tx: number; ty: number; scale: number };
-      };
-      const active = w.__dmNarrationFocusTransform;
-      if (!active) return b;
-      return {
-        x: active.tx + b.x * active.scale,
-        y: active.ty + b.y * active.scale,
-        width: b.width * active.scale,
-        height: b.height * active.scale,
-      };
-    }) as (...args: unknown[]) => unknown,
-    box as unknown,
-  )) as BoundingBox;
-}
-
 async function ensureFocusOverlay(page: PlaywrightPage): Promise<void> {
   await page.evaluate(
     ((id: string) => {
@@ -72,7 +50,7 @@ async function ensureSpotlightOverlay(page: PlaywrightPage): Promise<void> {
 export async function pulseFocus(page: PlaywrightPage, box: BoundingBox | null): Promise<void> {
   if (!box) return;
   await ensureFocusOverlay(page);
-  const b = paddedBox(await mapBoxForActiveNarrationFocus(page, box), 10);
+  const b = paddedBox(box, 10);
   await page.evaluate(
     ((p: { b: { x: number; y: number; width: number; height: number }; id: string }) => {
       const el = document.getElementById(p.id);
@@ -104,7 +82,7 @@ export async function pulseFocus(page: PlaywrightPage, box: BoundingBox | null):
 export async function flashSpotlight(page: PlaywrightPage, box: BoundingBox | null): Promise<void> {
   if (!box) return;
   await ensureSpotlightOverlay(page);
-  const b = paddedBox(await mapBoxForActiveNarrationFocus(page, box), 14);
+  const b = paddedBox(box, 14);
   await page.evaluate(
     ((p: { b: { x: number; y: number; width: number; height: number }; id: string }) => {
       const el = document.getElementById(p.id);
@@ -305,7 +283,6 @@ export async function showSelectOverlay(page: PlaywrightPage, optionText: string
 
 export async function spawnRipple(page: PlaywrightPage, box: BoundingBox | null): Promise<void> {
   if (!box) return;
-  const mapped = await mapBoxForActiveNarrationFocus(page, box);
   await page.evaluate(
     ((b: { x: number; y: number; width: number; height: number }) => {
       const x = b.x + b.width / 2;
@@ -317,6 +294,6 @@ export async function spawnRipple(page: PlaywrightPage, box: BoundingBox | null)
       document.body.appendChild(el);
       window.setTimeout(() => el.remove(), 800);
     }) as (...args: unknown[]) => unknown,
-    mapped as unknown,
+    box as unknown,
   );
 }

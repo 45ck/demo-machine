@@ -3,6 +3,7 @@ import { createLogger } from "../utils/logger.js";
 const logger = createLogger("narration-timing");
 
 export const GAP_MS = 200;
+const DEFAULT_ACTION_ANCHOR = 0.5;
 
 export interface TimedSegment {
   path: string;
@@ -18,7 +19,10 @@ export function adjustTiming(segmentFiles: TimedSegment[], leadInBufferMs = 0): 
   for (let i = 0; i < segmentFiles.length; i++) {
     const seg = segmentFiles[i]!;
     const actionMs = actionTimestamps[i]!;
-    seg.startMs = Math.max(0, actionMs - seg.durationMs - leadInBufferMs);
+    seg.startMs = Math.max(
+      0,
+      actionMs - Math.round(seg.durationMs * DEFAULT_ACTION_ANCHOR) - leadInBufferMs,
+    );
     logger.debug(
       `Segment ${i + 1}: action at ${actionMs}ms, narration ${seg.durationMs}ms buffer ${leadInBufferMs}ms → starts at ${seg.startMs}ms`,
     );

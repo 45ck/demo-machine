@@ -11,11 +11,11 @@ function makeSegments(entries: Array<{ startMs: number; durationMs: number }>): 
 }
 
 describe("adjustTiming", () => {
-  it("shifts narration to lead into the action", () => {
+  it("shifts narration so the action lands mid-sentence", () => {
     const segments = makeSegments([{ startMs: 5000, durationMs: 2000 }]);
     adjustTiming(segments);
-    // Narration should start at 5000 - 2000 = 3000
-    expect(segments[0]!.startMs).toBe(3000);
+    // Narration should start at 5000 - 50% of 2000 = 4000
+    expect(segments[0]!.startMs).toBe(4000);
   });
 
   it("clamps startMs to 0 when narration is longer than action time", () => {
@@ -30,10 +30,10 @@ describe("adjustTiming", () => {
       { startMs: 2500, durationMs: 2000 },
     ]);
     adjustTiming(segments);
-    // First: starts at max(0, 2000-2000) = 0, ends at 0+2000 = 2000
-    // Second needs to start after 2000 + GAP_MS
-    expect(segments[0]!.startMs).toBe(0);
-    expect(segments[1]!.startMs).toBe(2000 + GAP_MS);
+    // First starts at 1000 and ends at 3000.
+    // Second would start at 1500, so it is pushed after the first segment + gap.
+    expect(segments[0]!.startMs).toBe(1000);
+    expect(segments[1]!.startMs).toBe(3000 + GAP_MS);
   });
 
   it("does not push forward when there is no overlap", () => {
@@ -42,10 +42,10 @@ describe("adjustTiming", () => {
       { startMs: 10000, durationMs: 1000 },
     ]);
     adjustTiming(segments);
-    // First: starts at 4000, ends at 5000
-    // Second: starts at 9000 (no overlap with 5200)
-    expect(segments[0]!.startMs).toBe(4000);
-    expect(segments[1]!.startMs).toBe(9000);
+    // First: starts at 4500, ends at 5500
+    // Second: starts at 9500 (no overlap with 5700)
+    expect(segments[0]!.startMs).toBe(4500);
+    expect(segments[1]!.startMs).toBe(9500);
   });
 
   it("handles empty array", () => {
@@ -57,7 +57,7 @@ describe("adjustTiming", () => {
   it("handles single segment", () => {
     const segments = makeSegments([{ startMs: 3000, durationMs: 1500 }]);
     adjustTiming(segments);
-    expect(segments[0]!.startMs).toBe(1500);
+    expect(segments[0]!.startMs).toBe(2250);
   });
 
   it("does not mutate durationMs after adjustTiming", () => {
@@ -95,7 +95,7 @@ describe("adjustTiming", () => {
   it("handles zero-duration segment", () => {
     const segments = makeSegments([{ startMs: 5000, durationMs: 0 }]);
     adjustTiming(segments);
-    // max(0, 5000-0) = 5000
+    // max(0, 5000 - 0) = 5000
     expect(segments[0]!.startMs).toBe(5000);
     expect(segments[0]!.durationMs).toBe(0);
   });

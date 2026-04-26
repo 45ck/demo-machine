@@ -13,11 +13,7 @@ import { detectOverlayLeaks } from "./overlay-leak-detector.js";
 import { checkAriaRoleConsistency } from "./a11y-guards.js";
 import { wrapWithScreenshotCapture } from "./capture-hooks.js";
 import type { ScreenshotCollector } from "./screenshot-collector.js";
-import {
-  prepareNarrationFocus,
-  pulseNarrationFocusAction,
-  resetNarrationFocus,
-} from "./narration-focus.js";
+import { prepareNarrationFocus, resetNarrationFocus } from "./narration-focus.js";
 
 const logger = createLogger("playback");
 
@@ -383,18 +379,20 @@ export class PlaybackEngine {
     }
   }
 
-  private async moveCursorTo(box: BoundingBox | null): Promise<void> {
+  private async moveCursorTo(box: BoundingBox | null, mapForNarrationFocus = false): Promise<void> {
     if (!box) return;
     const pacing = this.options.pacing ?? NO_PACING;
     if (pacing.cursorDurationMs === 0) return;
     const rawTargetX = box.x + box.width / 2;
     const rawTargetY = box.y + box.height / 2;
-    const activeTransform = (await this.page.evaluate((() => {
-      const w = window as typeof window & {
-        __dmNarrationFocusTransform?: { tx: number; ty: number; scale: number };
-      };
-      return w.__dmNarrationFocusTransform ?? null;
-    }) as (...args: unknown[]) => unknown)) as { tx: number; ty: number; scale: number } | null;
+    const activeTransform = mapForNarrationFocus
+      ? ((await this.page.evaluate((() => {
+          const w = window as typeof window & {
+            __dmNarrationFocusTransform?: { tx: number; ty: number; scale: number };
+          };
+          return w.__dmNarrationFocusTransform ?? null;
+        }) as (...args: unknown[]) => unknown)) as { tx: number; ty: number; scale: number } | null)
+      : null;
     const targetX = activeTransform
       ? activeTransform.tx + rawTargetX * activeTransform.scale
       : rawTargetX;
@@ -462,22 +460,18 @@ export class PlaybackEngine {
       page: this.page,
       step,
       focus,
-      moveCursorTo: (box) => this.moveCursorTo(box),
+      moveCursorTo: (box) => this.moveCursorTo(box, true),
     });
-    if (preparedFocus && leadInMs <= 0 && preparedFocus.focus.durationMs > 0) {
-      await this.page.waitForTimeout(preparedFocus.focus.durationMs);
+    if (preparedFocus && leadInMs <= 0) {
+      const setupMs = Math.min(
+        450,
+        Math.max(180, Math.round(preparedFocus.focus.transitionMs / 2)),
+      );
+      await this.page.waitForTimeout(setupMs);
     }
     await narrationWaiter.waitBeforeStep(stepIndex);
-    if (preparedFocus) {
-      await pulseNarrationFocusAction(this.page, preparedFocus);
-      if (preparedFocus.canShowActionPulse) {
-        stepsWithPresentedActionVisual.add(stepIndex);
-      }
-      await this.page.waitForTimeout(360);
-      await resetNarrationFocus(this.page);
-      if (preparedFocus.focus.transitionMs > 0) {
-        await this.page.waitForTimeout(preparedFocus.focus.transitionMs);
-      }
+    if (preparedFocus?.canShowActionPulse) {
+      stepsWithPresentedActionVisual.add(stepIndex);
     }
   }
 
@@ -502,7 +496,7 @@ export class PlaybackEngine {
       await changeDetection.setup(this.page);
     }
 
-    const stepsWithPresentedActionVisual = new Set<number>();
+    const stepsWithFocusedPresentation = new Set<number>();
     const ctx: PlaybackContext = {
       page: this.page,
       baseUrl: this.options.baseUrl,
@@ -512,7 +506,7 @@ export class PlaybackEngine {
       moveCursorTo: (box) => this.moveCursorTo(box),
       reinjectCursor: () => this.reinjectOverlays(),
       waitAfterStep: (stepIndex, step) => narrationWaiter.waitAfterStep(stepIndex, step),
-      shouldShowActionVisuals: (stepIndex) => !stepsWithPresentedActionVisual.has(stepIndex),
+      shouldShowActionFocusVisuals: (stepIndex) => !stepsWithFocusedPresentation.has(stepIndex),
     };
 
     await runChapters({
@@ -532,7 +526,7 @@ export class PlaybackEngine {
           stepIndex,
           step,
           narrationWaiter,
-          stepsWithPresentedActionVisual,
+          stepsWithFocusedPresentation,
         ),
       afterStep: async () => {
         await resetNarrationFocus(this.page);

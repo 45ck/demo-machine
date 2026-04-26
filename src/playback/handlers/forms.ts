@@ -6,21 +6,20 @@ import {
   stepTimeoutMs,
 } from "../action-core.js";
 import { resolveStepLocator } from "../selector.js";
-import {
-  flashSpotlight,
-  pulseFocus,
-  showFilePickerOverlay,
-  showSelectOverlay,
-} from "../visuals.js";
+import { flashSpotlight, pulseFocus, showFilePickerOverlay } from "../visuals.js";
 import { getSelectApproach, resolveApproachFn } from "./select-approaches.js";
 import { checkHitTest, checkPointerEvents, checkNetworkIdle } from "../guards.js";
 import { checkActionability, checkSemanticFormTarget } from "../a11y-guards.js";
-import {
-  checkSelectOverlay,
-  checkFilePickerOverlay,
-  checkOverlayZIndex,
-} from "../overlay-visual-guards.js";
+import { checkFilePickerOverlay, checkOverlayZIndex } from "../overlay-visual-guards.js";
 import * as path from "node:path";
+
+function shouldShowActionFocusVisuals(
+  ctx: Parameters<ActionHandler>[0],
+  step: Parameters<ActionHandler>[1],
+  stepIndex: number,
+): boolean {
+  return ctx.shouldShowActionFocusVisuals?.(stepIndex, step) ?? true;
+}
 
 export const handleCheck: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
@@ -45,8 +44,10 @@ export const handleCheck: ActionHandler = async (ctx, step, events, stepIndex) =
   }
 
   await ctx.moveCursorTo(box);
-  await flashSpotlight(ctx.page, box);
-  await pulseFocus(ctx.page, box);
+  if (shouldShowActionFocusVisuals(ctx, step, stepIndex)) {
+    await flashSpotlight(ctx.page, box);
+    await pulseFocus(ctx.page, box);
+  }
   await locator.setChecked(true, { timeout: timeoutMs });
 
   events.push(
@@ -84,8 +85,10 @@ export const handleUncheck: ActionHandler = async (ctx, step, events, stepIndex)
   }
 
   await ctx.moveCursorTo(box);
-  await flashSpotlight(ctx.page, box);
-  await pulseFocus(ctx.page, box);
+  if (shouldShowActionFocusVisuals(ctx, step, stepIndex)) {
+    await flashSpotlight(ctx.page, box);
+    await pulseFocus(ctx.page, box);
+  }
   await locator.setChecked(false, { timeout: timeoutMs });
 
   events.push(
@@ -123,8 +126,10 @@ export const handleSelect: ActionHandler = async (ctx, step, events, stepIndex) 
   }
 
   await ctx.moveCursorTo(box);
-  await flashSpotlight(ctx.page, box);
-  await pulseFocus(ctx.page, box);
+  if (shouldShowActionFocusVisuals(ctx, step, stepIndex)) {
+    await flashSpotlight(ctx.page, box);
+    await pulseFocus(ctx.page, box);
+  }
 
   // Visual dropdown interaction — approach selected via DM_SELECT_APPROACH env var.
   let selectedText: string | null = null;
@@ -140,11 +145,7 @@ export const handleSelect: ActionHandler = async (ctx, step, events, stepIndex) 
     }) as (...args: unknown[]) => unknown)) as string | null;
   }
 
-  if (selectedText) {
-    await showSelectOverlay(ctx.page, selectedText);
-    await checkSelectOverlay(ctx.page, selectedText);
-    await checkOverlayZIndex(ctx.page, "dm-select-overlay");
-  }
+  void selectedText;
 
   events.push(
     buildEvent({
@@ -186,8 +187,10 @@ export const handleSelectFirstNonPlaceholder: ActionHandler = async (
   }
 
   await ctx.moveCursorTo(box);
-  await flashSpotlight(ctx.page, box);
-  await pulseFocus(ctx.page, box);
+  if (shouldShowActionFocusVisuals(ctx, step, stepIndex)) {
+    await flashSpotlight(ctx.page, box);
+    await pulseFocus(ctx.page, box);
+  }
 
   const firstValue = (await locator.evaluate(((el: unknown) => {
     const select = el as HTMLSelectElement;
@@ -224,13 +227,7 @@ export const handleSelectFirstNonPlaceholder: ActionHandler = async (
     }) as (...args: unknown[]) => unknown)) as string | null;
   }
 
-  // Show which option was chosen — confirmation toast.
-  if (selectedText) {
-    await showSelectOverlay(ctx.page, selectedText);
-    // Post-action visual guards (#4, #52) — verify overlay rendered correctly.
-    await checkSelectOverlay(ctx.page, selectedText);
-    await checkOverlayZIndex(ctx.page, "dm-select-overlay");
-  }
+  void selectedText;
 
   events.push(
     buildEvent({
@@ -263,8 +260,10 @@ export const handleUpload: ActionHandler = async (ctx, step, events, stepIndex) 
 
   const box = await locator.boundingBox();
   await ctx.moveCursorTo(box);
-  await flashSpotlight(ctx.page, box);
-  await pulseFocus(ctx.page, box);
+  if (shouldShowActionFocusVisuals(ctx, step, stepIndex)) {
+    await flashSpotlight(ctx.page, box);
+    await pulseFocus(ctx.page, box);
+  }
 
   // Show a file-picker overlay so the viewer understands a file is being selected.
   const fileNames = files.map((f) => path.basename(f));

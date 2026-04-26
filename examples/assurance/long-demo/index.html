@@ -943,6 +943,11 @@
         document.querySelector("[data-testid='help-popover']").classList.toggle("open");
       });
 
+      document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") return;
+        document.querySelector("[data-testid='help-popover']").classList.remove("open");
+      });
+
       document.querySelector("[data-testid='open-approval']").addEventListener("click", () => {
         document.querySelector("[data-testid='approval-modal']").classList.add("open");
       });

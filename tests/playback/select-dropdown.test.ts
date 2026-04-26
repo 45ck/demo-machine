@@ -200,8 +200,8 @@ describe("select-dropdown-visuals", () => {
       expect(injectionArg.box).toEqual(sampleBox);
       expect(injectionArg.options).toEqual(sampleOptions);
 
-      // Animation delay
-      expect(page.waitForTimeout).toHaveBeenCalledWith(150);
+      // Brief render delay
+      expect(page.waitForTimeout).toHaveBeenCalledWith(30);
 
       expect(boxes).toEqual(sampleOptionBoxes);
     });
@@ -270,8 +270,8 @@ describe("select-dropdown-visuals", () => {
       const arg = vi.mocked(page.evaluate).mock.calls[0][1];
       expect(arg).toBe("dm-select-dropdown");
 
-      // Waits for fade-out animation
-      expect(page.waitForTimeout).toHaveBeenCalledWith(180);
+      // Waits for brief fade-out animation
+      expect(page.waitForTimeout).toHaveBeenCalledWith(60);
     });
 
     it("does not throw when element is absent", async () => {

@@ -10,7 +10,7 @@ import {
   readSelectOptions,
 } from "../select-dropdown-visuals.js";
 
-const MAX_VISIBLE_TRAVERSAL = 8;
+const MAX_VISIBLE_TRAVERSAL = 1;
 
 type OptionSpec = { value?: string; label?: string; index?: number };
 
@@ -44,9 +44,10 @@ async function selectApproachA(p: SelectParams): Promise<string | null> {
 
   const optionBoxes = await openClonedListbox(p.ctx.page, p.box);
 
-  const traverseDelay = Math.max(80, Math.floor(p.ctx.pacing.cursorDurationMs / 5));
-  const selectedPause = Math.max(300, Math.floor(p.ctx.pacing.cursorDurationMs / 2));
+  const traverseDelay = Math.max(30, Math.floor(p.ctx.pacing.cursorDurationMs / 10));
+  const selectedPause = Math.max(180, Math.floor(p.ctx.pacing.cursorDurationMs * 0.25));
   const startIdx = Math.max(0, targetIdx - MAX_VISIBLE_TRAVERSAL);
+  let selectedText: string | null = null;
 
   try {
     for (let i = startIdx; i <= targetIdx; i++) {
@@ -56,12 +57,14 @@ async function selectApproachA(p: SelectParams): Promise<string | null> {
       if (rowBox) await p.ctx.moveCursorTo(rowBox);
       await p.ctx.page.waitForTimeout(isTarget ? selectedPause : traverseDelay);
     }
+    await p.locator.selectOption(p.optionSpec, { timeout: p.timeoutMs });
+    selectedText = await readSelectedText(p.locator);
+    await p.ctx.page.waitForTimeout(selectedPause);
   } finally {
     await closeSelectDropdown(p.ctx.page).catch(() => {});
   }
 
-  await p.locator.selectOption(p.optionSpec, { timeout: p.timeoutMs });
-  return readSelectedText(p.locator);
+  return selectedText;
 }
 
 /** Approach B: Click to open native dropdown, keyboard navigate, Enter to select. */
@@ -110,9 +113,10 @@ async function selectApproachC(p: SelectParams): Promise<string | null> {
 
   const optionBoxes = await openFakeDropdown(p.ctx.page, p.box, options);
 
-  const traverseDelay = Math.max(80, Math.floor(p.ctx.pacing.cursorDurationMs / 5));
-  const selectedPause = Math.max(300, Math.floor(p.ctx.pacing.cursorDurationMs / 2));
+  const traverseDelay = Math.max(30, Math.floor(p.ctx.pacing.cursorDurationMs / 10));
+  const selectedPause = Math.max(180, Math.floor(p.ctx.pacing.cursorDurationMs * 0.25));
   const startIdx = Math.max(0, targetIdx - MAX_VISIBLE_TRAVERSAL);
+  let selectedText: string | null = null;
 
   try {
     for (let i = startIdx; i <= targetIdx; i++) {
@@ -122,12 +126,14 @@ async function selectApproachC(p: SelectParams): Promise<string | null> {
       if (rowBox) await p.ctx.moveCursorTo(rowBox);
       await p.ctx.page.waitForTimeout(isTarget ? selectedPause : traverseDelay);
     }
+    await p.locator.selectOption(p.optionSpec, { timeout: p.timeoutMs });
+    selectedText = await readSelectedText(p.locator);
+    await p.ctx.page.waitForTimeout(selectedPause);
   } finally {
     await closeSelectDropdown(p.ctx.page).catch(() => {});
   }
 
-  await p.locator.selectOption(p.optionSpec, { timeout: p.timeoutMs });
-  return readSelectedText(p.locator);
+  return selectedText;
 }
 
 // ---- Approach registry ----

@@ -4,6 +4,7 @@ import type { PlaywrightPage } from "./actions.js";
 import type { Pacing, PlaybackOptions } from "./types.js";
 
 const logger = createLogger("playback");
+const ACTION_ANCHOR = 0.5;
 
 const POST_CLICK_ACTIONS = new Set<Chapter["steps"][number]["action"]>([
   "click",
@@ -54,7 +55,15 @@ export function createNarrationWaiter(params: {
     if (narrationMode === "manual") return 0;
     const entry = narrationTiming.get(stepIndex);
     if (!entry) return 0;
-    return entry.durationMs + narrationBufferMs;
+    return Math.round(entry.durationMs * ACTION_ANCHOR);
+  };
+
+  const narrationTailMs = (stepIndex: number): number => {
+    if (!narrationTiming) return 0;
+    if (narrationMode !== "auto-sync") return 0;
+    const entry = narrationTiming.get(stepIndex);
+    if (!entry) return 0;
+    return Math.round(entry.durationMs * (1 - ACTION_ANCHOR)) + narrationBufferMs;
   };
 
   const basePostDelayMs = (step: Chapter["steps"][number]): number => {
@@ -83,12 +92,14 @@ export function createNarrationWaiter(params: {
   };
 
   const waitAfterStep = async (
-    _stepIndex: number,
+    stepIndex: number,
     step: Chapter["steps"][number],
   ): Promise<void> => {
     const baseDelay = basePostDelayMs(step);
-    if (baseDelay > 0) {
-      await params.page.waitForTimeout(baseDelay);
+    const tailDelay = narrationTailMs(stepIndex);
+    const delay = Math.max(baseDelay, tailDelay);
+    if (delay > 0) {
+      await params.page.waitForTimeout(delay);
     }
   };
 

@@ -36,7 +36,7 @@ export async function openClonedListbox(
         `left:${p.box.x}px`,
         `top:${p.box.y + p.box.height + 2}px`,
         `width:${Math.max(p.box.width, 180)}px`,
-        "z-index:999998",
+        "z-index:2147483647",
         "border:1px solid #767676",
         "box-shadow:0 4px 16px rgba(0,0,0,0.25)",
         "border-radius:4px",
@@ -99,7 +99,7 @@ export async function highlightClonedOption(
         target.style.background = "#e8f0fe";
         target.style.color = "#000";
       }
-      target.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      target.scrollIntoView({ block: "nearest", behavior: "auto" });
     }) as (...args: unknown[]) => unknown,
     { id: SELECT_DROPDOWN_ID, index, isTarget } as unknown,
   );
@@ -139,11 +139,11 @@ export async function openFakeDropdown(
         "border:1px solid #c0c0c0",
         "border-radius:4px",
         "box-shadow:0 4px 16px rgba(0,0,0,0.18)",
-        "z-index:999998",
-        "opacity:0",
-        "transform:scaleY(0.96)",
+        "z-index:2147483647",
+        "opacity:1",
+        "transform:scaleY(1)",
         "transform-origin:top left",
-        "transition:opacity .12s ease,transform .12s ease",
+        "transition:none",
         "pointer-events:none",
         "font:400 13px/1.2 system-ui,-apple-system,sans-serif",
         "color:#000",
@@ -159,7 +159,7 @@ export async function openFakeDropdown(
           "white-space:nowrap",
           "overflow:hidden",
           "text-overflow:ellipsis",
-          "transition:background .08s ease",
+          "transition:none",
           opt.disabled ? "color:#999" : "",
         ]
           .filter(Boolean)
@@ -169,15 +169,11 @@ export async function openFakeDropdown(
       }
 
       document.body.appendChild(el);
-      window.requestAnimationFrame(() => {
-        el.style.opacity = "1";
-        el.style.transform = "scaleY(1)";
-      });
     }) as (...args: unknown[]) => unknown,
     { id: SELECT_DROPDOWN_ID, box: selectBox, options } as unknown,
   );
 
-  await page.waitForTimeout(150);
+  await page.waitForTimeout(30);
 
   return (await page.evaluate(
     ((id: string) => {
@@ -219,7 +215,7 @@ export async function highlightFakeOption(
         target.style.background = "#e8f0fe";
         target.style.color = "#000";
       }
-      target.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      target.scrollIntoView({ block: "nearest", behavior: "auto" });
     }) as (...args: unknown[]) => unknown,
     { id: SELECT_DROPDOWN_ID, index, isTarget } as unknown,
   );
@@ -231,14 +227,13 @@ export async function closeSelectDropdown(page: PlaywrightPage): Promise<void> {
     ((id: string) => {
       const el = document.getElementById(id);
       if (!el) return;
-      el.style.transition = "opacity .12s ease, transform .12s ease";
+      el.style.transition = "opacity .06s ease";
       el.style.opacity = "0";
-      el.style.transform = "scaleY(0.96)";
-      window.setTimeout(() => el.remove(), 180);
+      window.setTimeout(() => el.remove(), 60);
     }) as (...args: unknown[]) => unknown,
     SELECT_DROPDOWN_ID as unknown,
   );
-  await page.waitForTimeout(180);
+  await page.waitForTimeout(60);
 }
 
 /** Read all options from a `<select>` element at the given bounding box. */

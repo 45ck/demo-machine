@@ -20,6 +20,7 @@ type BodyWithPreviousTransform = HTMLElement & {
     dmPrevTransformOrigin?: string;
     dmPrevTransition?: string;
     dmPrevWillChange?: string;
+    dmNarrationTransitionMs?: string;
   };
 };
 
@@ -134,6 +135,7 @@ async function applyNarrationZoom(
         el.style.transition = `transform ${p.transitionMs}ms cubic-bezier(0.16, 1, 0.3, 1)`;
         el.style.willChange = "transform";
         el.style.transform = `translate(${tx}px, ${ty}px) scale(${p.scale})`;
+        el.dataset.dmNarrationTransitionMs = String(p.transitionMs);
       }
 
       const html = document.documentElement as HTMLElement & {
@@ -187,41 +189,57 @@ async function showNarrationRing(
 }
 
 export async function clearNarrationFocus(page: PlaywrightPage): Promise<void> {
-  await page.evaluate(
+  const resetMs = (await page.evaluate(
     ((id: string) => {
       const el = document.getElementById(id);
       if (el) {
         el.style.opacity = "0";
-        window.setTimeout(() => el.remove(), 220);
+        window.setTimeout(() => el.remove(), 140);
       }
 
       const elements = Array.from(document.body.children).filter((el) => {
         return el instanceof HTMLElement && el.dataset["dmPrevTransform"] !== undefined;
       }) as BodyWithPreviousTransform[];
+      let resetMs = 0;
       for (const body of elements) {
+        const transitionMs = Number(body.dataset["dmNarrationTransitionMs"] ?? "0");
+        resetMs = Math.max(resetMs, Number.isFinite(transitionMs) ? transitionMs : 0);
         body.style.transform = body.dataset["dmPrevTransform"] ?? "";
-        body.style.transformOrigin = body.dataset["dmPrevTransformOrigin"] ?? "";
-        body.style.transition = body.dataset["dmPrevTransition"] ?? "";
-        body.style.willChange = body.dataset["dmPrevWillChange"] ?? "";
-        delete body.dataset["dmPrevTransform"];
-        delete body.dataset["dmPrevTransformOrigin"];
-        delete body.dataset["dmPrevTransition"];
-        delete body.dataset["dmPrevWillChange"];
+        window.setTimeout(
+          () => {
+            body.style.transformOrigin = body.dataset["dmPrevTransformOrigin"] ?? "";
+            body.style.transition = body.dataset["dmPrevTransition"] ?? "";
+            body.style.willChange = body.dataset["dmPrevWillChange"] ?? "";
+            delete body.dataset["dmPrevTransform"];
+            delete body.dataset["dmPrevTransformOrigin"];
+            delete body.dataset["dmPrevTransition"];
+            delete body.dataset["dmPrevWillChange"];
+            delete body.dataset["dmNarrationTransitionMs"];
+          },
+          Math.max(0, transitionMs) + 60,
+        );
       }
 
       const html = document.documentElement as HTMLElement & {
         dataset: DOMStringMap & { dmPrevOverflowX?: string };
       };
-      if (html.dataset.dmPrevOverflowX !== undefined) {
-        html.style.overflowX = html.dataset.dmPrevOverflowX;
-        delete html.dataset.dmPrevOverflowX;
-      }
+      window.setTimeout(() => {
+        if (html.dataset.dmPrevOverflowX !== undefined) {
+          html.style.overflowX = html.dataset.dmPrevOverflowX;
+          delete html.dataset.dmPrevOverflowX;
+        }
 
-      const w = window as typeof window & {
-        __dmNarrationFocusTransform?: { tx: number; ty: number; scale: number };
-      };
-      delete w.__dmNarrationFocusTransform;
+        const w = window as typeof window & {
+          __dmNarrationFocusTransform?: { tx: number; ty: number; scale: number };
+        };
+        delete w.__dmNarrationFocusTransform;
+      }, resetMs + 60);
+
+      return resetMs;
     }) as (...args: unknown[]) => unknown,
     NARRATION_FOCUS_ID as unknown,
-  );
+  )) as number;
+  if (resetMs > 0) {
+    await page.waitForTimeout(resetMs + 70);
+  }
 }

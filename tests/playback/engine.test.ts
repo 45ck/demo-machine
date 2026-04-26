@@ -252,6 +252,20 @@ describe("actionHandlers", () => {
     expect(events).toHaveLength(1);
   });
 
+  it("keeps the real click pulse but suppresses duplicate focus visuals during narration focus", async () => {
+    ctx.shouldShowActionFocusVisuals = vi.fn().mockReturnValue(false);
+    const step = { action: "click" as const, selector: "#btn" };
+
+    await actionHandlers["click"]!(ctx, step, events, 0);
+
+    expect(visuals.flashSpotlight).not.toHaveBeenCalled();
+    expect(visuals.pulseFocus).not.toHaveBeenCalled();
+    expect(visuals.spawnRipple).toHaveBeenCalled();
+    const loc = (ctx.page.locator as unknown as ReturnType<typeof vi.fn>).mock.results[0]!.value;
+    expect(loc.click).toHaveBeenCalledTimes(1);
+    expect(events).toHaveLength(1);
+  });
+
   it("handles clickFirstVisible action", async () => {
     const step = { action: "clickFirstVisible" as const, selector: ".row-action" };
     await actionHandlers["clickFirstVisible"]!(ctx, step, events, 0);
@@ -272,6 +286,20 @@ describe("actionHandlers", () => {
     expect(events[0]!.action).toBe("type");
   });
 
+  it("suppresses duplicate type focus visuals when narration focus already presented the field", async () => {
+    ctx.shouldShowActionFocusVisuals = vi.fn().mockReturnValue(false);
+    const step = { action: "type" as const, selector: "#input", text: "hello" };
+
+    await actionHandlers["type"]!(ctx, step, events, 0);
+
+    expect(ctx.moveCursorTo).toHaveBeenCalled();
+    expect(visuals.flashSpotlight).not.toHaveBeenCalled();
+    expect(visuals.pulseFocus).not.toHaveBeenCalled();
+    const loc = (ctx.page.locator as unknown as ReturnType<typeof vi.fn>).mock.results[0]!.value;
+    expect(loc.click).toHaveBeenCalled();
+    expect(ctx.page.keyboard.type).toHaveBeenCalledWith("hello", { delay: 50 });
+  });
+
   it("handles hover action", async () => {
     const step = { action: "hover" as const, selector: ".menu" };
     await actionHandlers["hover"]!(ctx, step, events, 0);
@@ -280,6 +308,20 @@ describe("actionHandlers", () => {
     const loc = (ctx.page.locator as unknown as ReturnType<typeof vi.fn>).mock.results[0]!.value;
     expect(loc.hover).toHaveBeenCalled();
     expect(guards.checkPointerEvents).toHaveBeenCalledWith(ctx.page, ".menu", loc);
+    expect(events).toHaveLength(1);
+  });
+
+  it("suppresses duplicate hover focus visuals when narration focus already presented the target", async () => {
+    ctx.shouldShowActionFocusVisuals = vi.fn().mockReturnValue(false);
+    const step = { action: "hover" as const, selector: ".menu" };
+
+    await actionHandlers["hover"]!(ctx, step, events, 0);
+
+    expect(ctx.moveCursorTo).toHaveBeenCalled();
+    expect(visuals.flashSpotlight).not.toHaveBeenCalled();
+    expect(visuals.pulseFocus).not.toHaveBeenCalled();
+    const loc = (ctx.page.locator as unknown as ReturnType<typeof vi.fn>).mock.results[0]!.value;
+    expect(loc.hover).toHaveBeenCalled();
     expect(events).toHaveLength(1);
   });
 
@@ -482,9 +524,7 @@ describe("actionHandlers", () => {
     expect(events[0]!.action).toBe("select");
   });
 
-  it("select shows option overlay after selectOption when evaluate returns a label", async () => {
-    // Regression: native <select> opens/closes in one frame — the viewer sees nothing.
-    // Fix: showSelectOverlay must run after selectOption with the resolved option text.
+  it("select does not add a separate confirmation toast after selection", async () => {
     const executionOrder: string[] = [];
     ctx.page.locator = vi.fn().mockReturnValue({
       ...createMockLocator(),
@@ -500,8 +540,8 @@ describe("actionHandlers", () => {
     const step = { action: "select" as const, selector: "#plan", option: { value: "pro" } };
     await actionHandlers["select"]!(ctx, step, events, 0);
 
-    expect(executionOrder).toEqual(["selectOption", "overlay"]);
-    expect(visuals.showSelectOverlay).toHaveBeenCalledWith(ctx.page, "Pro Plan");
+    expect(executionOrder).toEqual(["selectOption"]);
+    expect(visuals.showSelectOverlay).not.toHaveBeenCalled();
   });
 
   it("handles upload action (resolves relative paths using specDir when provided)", async () => {
@@ -799,7 +839,7 @@ describe("PlaybackEngine", () => {
       { x: 0, y: 0, width: 100, height: 50 },
       expect.objectContaining({ highlight: true, zoom: true }),
     );
-    expect(page.waitForTimeout).toHaveBeenCalledWith(1000);
+    expect(page.waitForTimeout).toHaveBeenCalledWith(450);
     expect(visuals.clearNarrationFocus).toHaveBeenCalled();
   });
 
@@ -845,16 +885,15 @@ describe("PlaybackEngine", () => {
     await engine.execute(chapters);
 
     expect(visuals.showNarrationFocus).toHaveBeenCalled();
-    expect(page.waitForTimeout).toHaveBeenCalledWith(900);
-    expect(page.waitForTimeout).toHaveBeenCalledWith(700);
-    expect(visuals.showNarrationClick).toHaveBeenCalled();
+    expect(page.waitForTimeout).toHaveBeenCalledWith(350);
+    expect(visuals.showNarrationClick).not.toHaveBeenCalled();
     expect(visuals.clearNarrationFocus).toHaveBeenCalled();
     expect(visuals.flashSpotlight).not.toHaveBeenCalled();
     expect(visuals.pulseFocus).not.toHaveBeenCalled();
-    expect(visuals.spawnRipple).not.toHaveBeenCalled();
-    expect(order[0]).toBe("clear");
+    expect(visuals.spawnRipple).toHaveBeenCalled();
+    expect(order[0]).toBe("click");
     expect(order).toContain("click");
-    expect(order.indexOf("clear")).toBeLessThan(order.indexOf("click"));
+    expect(order.indexOf("click")).toBeLessThan(order.indexOf("clear"));
   });
 
   it("applies settle delay after each step when pacing is set", async () => {

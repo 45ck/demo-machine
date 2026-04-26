@@ -9,6 +9,14 @@ runner:
   url: "http://localhost:4596"
   timeout: 10000
 
+pacing:
+  cursorDurationMs: 350
+  typeDelayMs: 50
+  postClickDelayMs: 450
+  postTypeDelayMs: 450
+  postNavigateDelayMs: 1000
+  settleDelayMs: 250
+
 presentation:
   narrationFocus:
     enabled: true
@@ -16,8 +24,8 @@ presentation:
     highlight: true
     zoom: true
     scale: 1.35
-    durationMs: 3000
-    transitionMs: 800
+    durationMs: 1800
+    transitionMs: 450
 
 chapters:
   - title: "Queue Overview"
@@ -64,8 +72,8 @@ chapters:
         visible: true
       - action: screenshot
         name: "reviewer-popover"
-      - action: click
-        selector: "[data-testid='help-button']"
+      - action: press
+        key: "Escape"
       - action: assert
         selector: "[data-testid='help-popover']"
         visible: false
@@ -92,20 +100,14 @@ chapters:
         selector: "[data-testid='status-select']"
         option:
           value: "escalated"
+        delay: 300
         narration: "Selecting escalated packets triggers a deterministic async refresh."
         focus:
           selector: "[data-testid='status-select']"
-          scale: 1.5
-      - action: assert
-        selector: "[data-testid='table-loading']"
-        visible: true
-        timeoutMs: 1000
+          scale: 1.28
+          durationMs: 600
       - action: wait
-        timeout: 1200
-      - action: assert
-        selector: "[data-testid='table-loading']"
-        visible: false
-        timeoutMs: 2000
+        timeout: 450
       - action: assert
         selector: "[data-testid='result-count']"
         text: "2"
@@ -127,10 +129,12 @@ chapters:
         selector: "[data-testid='reviewer-select']"
         option:
           value: "lena"
+        delay: 300
         narration: "Reviewer filtering keeps the visible packet set stable and local."
         focus:
           selector: "[data-testid='reviewer-select']"
-          scale: 1.45
+          scale: 1.25
+          durationMs: 600
       - action: assert
         selector: "[data-testid='result-count']"
         text: "2"

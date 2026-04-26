@@ -25,8 +25,10 @@ export const handleHover: ActionHandler = async (ctx, step, events, stepIndex) =
   }
 
   await ctx.moveCursorTo(box);
-  await flashSpotlight(ctx.page, box);
-  await pulseFocus(ctx.page, box);
+  if (ctx.shouldShowActionFocusVisuals?.(stepIndex, step) ?? true) {
+    await flashSpotlight(ctx.page, box);
+    await pulseFocus(ctx.page, box);
+  }
   await locator.hover({ timeout: timeoutMs });
 
   events.push(

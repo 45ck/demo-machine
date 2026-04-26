@@ -4,7 +4,7 @@ import { ensureTargetReady, stepTimeoutMs } from "./action-core.js";
 import type { PlaywrightLocator, PlaywrightPage } from "./playwright.js";
 import { resolveLocatorFromInput, resolveStepLocator, type Target } from "./selector.js";
 import type { BoundingBox, NarrationFocusConfig } from "./types.js";
-import { clearNarrationFocus, showNarrationClick, showNarrationFocus } from "./visuals.js";
+import { clearNarrationFocus, showNarrationFocus } from "./visuals.js";
 
 const log = createLogger("playback:narration-focus");
 const PRESENTATION_TIMEOUT_MS = 1500;
@@ -96,14 +96,14 @@ async function applyNarrationFocus(params: {
   focus: NarrationFocusConfig;
   moveCursorTo(box: BoundingBox | null): Promise<void>;
 }): Promise<BoundingBox> {
-  let cursorBox = params.box;
+  let mappedBox = params.box;
   if (params.focus.highlight || params.focus.zoom) {
-    cursorBox = await showNarrationFocus(params.page, params.box, params.focus);
+    mappedBox = await showNarrationFocus(params.page, params.box, params.focus);
   }
   if (params.focus.cursor) {
-    await params.moveCursorTo(cursorBox);
+    await params.moveCursorTo(params.focus.zoom ? params.box : mappedBox);
   }
-  return cursorBox;
+  return mappedBox;
 }
 
 function canShowActionPulse(step: Step): boolean {
@@ -147,14 +147,6 @@ export async function prepareNarrationFocus(params: {
     );
     return undefined;
   }
-}
-
-export async function pulseNarrationFocusAction(
-  page: PlaywrightPage,
-  prepared: PreparedNarrationFocus,
-): Promise<void> {
-  if (!prepared.canShowActionPulse) return;
-  await showNarrationClick(page, prepared.mappedBox);
 }
 
 export async function resetNarrationFocus(page: PlaywrightPage): Promise<void> {

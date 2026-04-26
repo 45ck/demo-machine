@@ -14,6 +14,7 @@ export interface PlaybackContext {
   reinjectCursor(): Promise<void>;
   waitAfterStep(stepIndex: number, step: Step): Promise<void>;
   shouldShowActionVisuals?(stepIndex: number, step: Step): boolean;
+  shouldShowActionFocusVisuals?(stepIndex: number, step: Step): boolean;
 }
 
 export type ActionHandler = (
