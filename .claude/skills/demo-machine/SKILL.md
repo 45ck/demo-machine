@@ -7,7 +7,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash(node *), Bash(pnpm *), Bash(f
 
 # Generate a Demo Video
 
-Create and run demo-machine YAML specs to produce polished product demo videos with smooth cursor movement, natural typing, voice narration, and chapter overlays.
+Create and run demo-machine YAML specs to produce polished product demo videos with smooth cursor movement, natural typing, voice narration, zoom-focused camera movement, and chapter overlays.
 
 ## Input
 
@@ -37,6 +37,16 @@ pacing:
   postClickDelayMs: 500 # pause after clicks
   postTypeDelayMs: 300 # pause after typing
   postNavigateDelayMs: 1000 # pause after navigation
+
+presentation:
+  narrationFocus:
+    enabled: true
+    cursor: true
+    highlight: false
+    zoom: true
+    scale: 1.25
+    durationMs: 1600
+    transitionMs: 450
 
 chapters:
   - title: "Chapter Name"
@@ -68,7 +78,7 @@ chapters:
 | `press`      | `key`              | Press a keyboard key                   |
 | `screenshot` | —                  | Take a screenshot                      |
 
-Every action supports an optional `narration` field for voice-over.
+Every action supports an optional `narration` field for voice-over. For narrated product demos, prefer cursor plus zoom focus by default. Reserve persistent highlight rings for rare cases where zoom alone cannot identify the target; keep the real click pulse visible for action feedback.
 
 ## MCP Tools
 
@@ -106,6 +116,9 @@ Use `demo-machine://templates/basic` resource for a starter template.
 - Add `wait` steps after actions that trigger animations
 - Keep narration text concise — it's spoken aloud
 - Narration is placed to finish just as the action happens, so write it as a lead-in ("Let's click..." not "We clicked...")
+- Narrated focus should zoom into the exact target being discussed, move the cursor there, perform the real click/type/select while framed, then animate back out before the next beat.
+- Avoid double-click-looking interactions: if a popover needs to close, prefer `Escape`, click-away, or a non-narrated close step instead of clicking the same trigger again.
+- Watch the rendered MP4 and inspect `events.json`, `narration-segments.json`, and `quality.json`; logs alone are not enough to accept a demo.
 - Use `--no-narration` flag to skip TTS if not needed
 - Use `--verbose` to debug issues
 

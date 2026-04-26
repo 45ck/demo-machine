@@ -5,7 +5,16 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-const DEFAULT_CHECKS = ["tools", "gallery", "package"];
+const DEFAULT_CHECKS = ["tools", "gallery", "showcase", "package"];
+const MAIN_SHOWCASE = {
+  slug: "assurance-long-demo",
+  spec: "examples/assurance/long-demo/long-demo.demo.yaml",
+  mp4: "assets/demo-gallery/assurance-long-demo.mp4",
+  poster: "assets/demo-gallery/assurance-long-demo-poster.webp",
+  minMp4Bytes: 1_000_000,
+  minPosterBytes: 10_000,
+  minGalleryEntries: 10,
+};
 
 class GateError extends Error {}
 
@@ -56,11 +65,12 @@ function usage() {
       "release-gates",
       "",
       "Usage:",
-      "  node scripts/release-gates.mjs [--checks tools,gallery,package] [--no-package-dry-run] [--launch-chromium] [--strict-gallery-specs]",
+      "  node scripts/release-gates.mjs [--checks tools,gallery,showcase,package] [--no-package-dry-run] [--launch-chromium] [--strict-gallery-specs]",
       "",
       "Checks:",
       "  tools    ffmpeg, ffprobe, and Playwright Chromium executable availability",
       "  gallery  examples/manifest.json gallery-reviewed suites have gallery assets",
+      "  showcase README main showcase MP4/poster links and minimum curated gallery breadth",
       "  package  package entrypoints exist and `pnpm pack --dry-run` succeeds",
     ].join("\n"),
   );
@@ -246,6 +256,103 @@ export async function checkGalleryConsistency({
   return results;
 }
 
+export async function checkShowcaseAssets({
+  root = process.cwd(),
+  mainShowcase = MAIN_SHOWCASE,
+} = {}) {
+  const results = [];
+  const readmePath = path.join(root, "README.md");
+  const examplesManifestPath = path.join(root, "examples", "manifest.json");
+  const galleryManifestPath = path.join(root, "assets", "demo-gallery", "manifest.json");
+  const readme = await readFile(readmePath, "utf8");
+  const examplesManifest = await readJson(examplesManifestPath);
+  const galleryManifest = await readJson(galleryManifestPath);
+
+  for (const linkedPath of [mainShowcase.spec, mainShowcase.mp4, mainShowcase.poster]) {
+    if (readme.includes(linkedPath)) {
+      results.push(pass(`README links main showcase asset: ${linkedPath}`));
+    } else {
+      results.push(fail(`README is missing main showcase link: ${linkedPath}`));
+    }
+  }
+
+  const suite = (examplesManifest.suites ?? []).find((entry) => entry.slug === mainShowcase.slug);
+  if (!suite) {
+    results.push(
+      fail(`Main showcase suite is missing from examples/manifest.json: ${mainShowcase.slug}`),
+    );
+  } else if (normalizeRel(root, suite.canonicalSpec) !== normalizeRel(root, mainShowcase.spec)) {
+    results.push(
+      fail(`Main showcase suite points to ${suite.canonicalSpec}; expected ${mainShowcase.spec}`),
+    );
+  } else {
+    results.push(pass(`Main showcase suite is manifest-backed: ${mainShowcase.slug}`));
+  }
+
+  const requiredSignals = ["narration-sync", "cursor-overlays", "selector-intent"];
+  const missingSignals = requiredSignals.filter(
+    (signal) => !Array.isArray(suite?.qualitySignals) || !suite.qualitySignals.includes(signal),
+  );
+  if (missingSignals.length > 0) {
+    results.push(
+      fail(`Main showcase suite is missing quality signals: ${missingSignals.join(", ")}`),
+    );
+  } else {
+    results.push(
+      pass("Main showcase suite declares narration, cursor, and selector quality signals"),
+    );
+  }
+
+  for (const asset of [
+    { path: mainShowcase.mp4, minBytes: mainShowcase.minMp4Bytes, label: "main showcase MP4" },
+    {
+      path: mainShowcase.poster,
+      minBytes: mainShowcase.minPosterBytes,
+      label: "main showcase poster",
+    },
+  ]) {
+    const assetPath = path.resolve(root, asset.path);
+    if (!(await exists(assetPath))) {
+      results.push(fail(`${asset.label} is missing: ${asset.path}`));
+      continue;
+    }
+    const assetStat = await stat(assetPath);
+    if (assetStat.size < asset.minBytes) {
+      results.push(
+        fail(
+          `${asset.label} is too small: ${asset.path} (${String(assetStat.size)} bytes, expected at least ${String(asset.minBytes)})`,
+        ),
+      );
+    } else {
+      results.push(pass(`${asset.label} exists: ${asset.path}`));
+    }
+  }
+
+  const galleryEntries = Array.isArray(galleryManifest.results) ? galleryManifest.results : [];
+  const highQualityEntries = galleryEntries.filter(
+    (entry) =>
+      entry.gif &&
+      Array.isArray(entry.frames) &&
+      entry.frames.length >= 5 &&
+      Number(entry.durationSec) > 0,
+  );
+  if (highQualityEntries.length < mainShowcase.minGalleryEntries) {
+    results.push(
+      fail(
+        `Curated gallery has only ${String(highQualityEntries.length)} high-quality entries; expected at least ${String(mainShowcase.minGalleryEntries)}`,
+      ),
+    );
+  } else {
+    results.push(
+      pass(
+        `Curated gallery has ${String(highQualityEntries.length)} high-quality entries with GIFs, frames, and durations`,
+      ),
+    );
+  }
+
+  return results;
+}
+
 export async function checkPackageReadiness({ root = process.cwd(), dryRun = true } = {}) {
   const results = [];
   const packageJsonPath = path.join(root, "package.json");
@@ -305,6 +412,9 @@ async function runChecks(opts) {
         strictSpecPaths: opts.strictGallerySpecs,
       })),
     );
+  }
+  if (opts.checks.includes("showcase")) {
+    results.push(...(await checkShowcaseAssets({ root })));
   }
   if (opts.checks.includes("package")) {
     results.push(...(await checkPackageReadiness({ root, dryRun: opts.packageDryRun })));

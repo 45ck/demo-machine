@@ -13,7 +13,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm](https://img.shields.io/npm/v/demo-machine)](https://www.npmjs.com/package/demo-machine)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org)
-[![Tests](https://img.shields.io/badge/Tests-1044%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-1145%20passing-brightgreen)](tests/)
 [![Playwright](https://img.shields.io/badge/Playwright-Browser%20Automation-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev)
 [![FFmpeg](https://img.shields.io/badge/FFmpeg-Video%20Rendering-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org)
 
@@ -31,6 +31,7 @@ Use it when you want product demos that are:
 
 - Repeatable instead of manually re-recorded.
 - Version-controlled next to app code.
+- Narrated, with smooth cursor motion, zoom-focused camera framing, readable click feedback, and clean zoom-out transitions.
 - Reviewable through artifacts like traces, screenshots, manifests, and quality reports.
 - AI-assisted through the built-in MCP server.
 
@@ -43,6 +44,8 @@ The main showcase video was generated from [examples/assurance/long-demo/long-de
 [![AssuranceOps showcase video preview](assets/demo-gallery/assurance-long-demo-poster.webp)](assets/demo-gallery/assurance-long-demo.mp4)
 
 Open the [narrated AssuranceOps showcase video](assets/demo-gallery/assurance-long-demo.mp4). More rendered examples are in the [demo gallery](docs/demo-gallery.md).
+
+The showcase demonstrates the current quality bar: narration leads into the action, the cursor moves to the element being discussed, the camera zooms into the relevant UI instead of a generic region, the real click or typing action lands while framed, and the view eases back out before the next beat.
 
 ## Quick Start
 
@@ -175,6 +178,8 @@ demo-machine includes an MCP server so AI assistants can help create, validate, 
 
 The MCP server exposes 5 tools, 4 resources, and 8 prompts. See the [MCP guide](docs/mcp.md) for the full list.
 
+The repo also includes agent skill files for Claude Code-style workflows under `.claude/skills/`, and `pnpm qa:meta-prompt` creates a fresh Codex-ready workspace with a local Demo Machine skill and prompt. In practice, you can ask a coding agent to inspect an app, write the `.demo.yaml`, run Demo Machine, review the MP4, and iterate until narration, zoom focus, cursor motion, and visual quality are clean.
+
 ## Local Quality
 
 ```bash
@@ -184,11 +189,14 @@ pnpm release-ready:fast
 pnpm release-ready
 pnpm examples:validate -- --no-build
 pnpm examples:smoke:pr -- --limit 2
+pnpm release:gates:showcase
 pnpm video:assure -- --filter assurance-long-demo
 pnpm qa:meta-prompt
 ```
 
 `pnpm validate` runs lint, formatting, spelling, typecheck, tests, dependency checks, and strict verification inventory checks. `pnpm local-ready` adds build and example validation. `pnpm release-ready:fast` adds release gates without rendering smoke videos, while `pnpm release-ready` runs the heavier PR-tier capture/render smoke and video assurance. `pnpm examples:validate` validates manifest-backed specs, and `pnpm video:assure` scans rendered MP4 outputs for blank frames, frozen spans, and large visual jumps after rendered example outputs exist.
+
+`pnpm release:gates:showcase` protects the public-facing demo surface: the README must link the approved MP4 and poster, the main long-demo suite must stay manifest-backed with narration/cursor/selector quality signals, and the curated gallery must keep at least 10 high-quality entries with GIFs, frame captures, and durations.
 
 `pnpm qa:meta-prompt` creates a fresh complex fixture project plus a Demo Machine Codex skill and prompt. Use `pnpm qa:meta-prompt:run` when you want Codex CLI to create narrated demos, cover the action/component matrix, run Demo Machine, self-evaluate, and produce a human review page at `output/meta-prompt-qa/review.html`.
 

@@ -103,10 +103,10 @@ async function main() {
   }
 
   const root = path.resolve(".");
-  const toolGateArgs = ["scripts/release-gates.mjs", "--checks", "tools,gallery"];
+  const toolGateArgs = ["scripts/release-gates.mjs", "--checks", "tools,gallery,showcase"];
   if (opts.launchChromium) toolGateArgs.push("--launch-chromium");
 
-  await runStep("release gates: tools + gallery", "node", toolGateArgs, { cwd: root });
+  await runStep("release gates: tools + gallery + showcase", "node", toolGateArgs, { cwd: root });
   await runStep("build", "pnpm", ["build"], { cwd: root });
   await runStep("validate", "pnpm", ["validate"], { cwd: root });
   await runStep(

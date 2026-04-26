@@ -65,6 +65,13 @@ The organized `examples/` tree separates demo purposes:
 
 `examples/manifest.json` is the source of truth. Use `demo-machine examples list` to browse showcase and assurance examples, `demo-machine examples list --type proof` for small action fixtures, and `demo-machine examples show <slug>` to print the canonical spec, variants, quality signals, and matching `run` and `validate` commands.
 
+The public showcase surface has two layers:
+
+- `assets/demo-gallery/assurance-long-demo.mp4` is the main narrated MP4 with zoom-focused camera movement.
+- `assets/demo-gallery/manifest.json` keeps the broader curated gallery at 10+ high-quality entries, each with a GIF preview, five frame captures, and a duration.
+
+`pnpm release:gates:showcase` protects those links and counts so the README and gallery do not silently drift.
+
 ## “Demo Anything” Acceptance Matrix
 
 The `examples/` suite is the living acceptance test. It intentionally covers different UI patterns:
@@ -106,6 +113,8 @@ pnpm qa:meta-prompt:run
 ```
 
 The first command is deterministic and creates `output/meta-prompt-qa/workspace/` with a fixture app, `.codex/skills/demo-machine/SKILL.md`, and `META_PROMPT.md`. The second command invokes `codex exec`, so it requires a working Codex CLI login and may vary by model. Generated demos are collected into `output/meta-prompt-qa/review.html` with links to MP4s, specs, quality files, action coverage, audio/subtitle status, and `SELF_EVALUATION.md`. The review report marks the run failed if MP4s are silent, subtitles are missing, fewer than three demos exist, or the required action surface is incomplete.
+
+For Claude Code-style usage, the repository also carries `.claude/skills/` entries. The same quality expectation applies in either harness: the agent should run the spec, inspect the rendered MP4 and artifacts, then iterate until narration, target zoom, cursor motion, click feedback, and zoom-out timing feel intentional.
 
 ## How To Demo A New App (Playbook)
 

@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { checkGalleryConsistency } from "../../scripts/release-gates.mjs";
+import { checkGalleryConsistency, checkShowcaseAssets } from "../../scripts/release-gates.mjs";
 
 describe("release gallery gates", () => {
   let tempDir: string | undefined;
@@ -18,10 +18,10 @@ describe("release gallery gates", () => {
     await writeFile(filePath, JSON.stringify(value, null, 2), "utf8");
   }
 
-  async function writeAsset(relativePath: string) {
+  async function writeAsset(relativePath: string, bytes = 5) {
     const filePath = join(tempDir!, relativePath);
     await mkdir(dirname(filePath), { recursive: true });
-    await writeFile(filePath, "asset", "utf8");
+    await writeFile(filePath, Buffer.alloc(bytes, 1));
   }
 
   it("requires gallery-reviewed suites to have gallery entries and assets", async () => {
@@ -98,5 +98,71 @@ describe("release gallery gates", () => {
         (result) => result.status === "fail" && result.message.includes("expected"),
       ),
     ).toBe(true);
+  });
+
+  it("requires the README main showcase video, poster, manifest suite, and broad gallery", async () => {
+    tempDir = await mkdtemp(join(tmpdir(), "demo-machine-gates-"));
+    await writeFile(
+      join(tempDir, "README.md"),
+      [
+        "examples/assurance/long-demo/long-demo.demo.yaml",
+        "assets/demo-gallery/assurance-long-demo-poster.webp",
+        "assets/demo-gallery/assurance-long-demo.mp4",
+      ].join("\n"),
+      "utf8",
+    );
+    await writeJson("examples/manifest.json", {
+      version: 1,
+      suites: [
+        {
+          slug: "assurance-long-demo",
+          canonicalSpec: "examples/assurance/long-demo/long-demo.demo.yaml",
+          qualitySignals: ["narration-sync", "cursor-overlays", "selector-intent"],
+        },
+      ],
+    });
+    await writeJson("assets/demo-gallery/manifest.json", {
+      results: Array.from({ length: 10 }, (_, index) => ({
+        slug: `demo-${String(index)}`,
+        gif: `assets/demo-gallery/demo-${String(index)}.gif`,
+        frames: Array.from(
+          { length: 5 },
+          (_unused, frameIndex) =>
+            `assets/demo-gallery/demo-${String(index)}-${String(frameIndex)}.webp`,
+        ),
+        durationSec: 12,
+      })),
+    });
+    await writeAsset("assets/demo-gallery/assurance-long-demo.mp4", 1_000_000);
+    await writeAsset("assets/demo-gallery/assurance-long-demo-poster.webp", 10_000);
+
+    const results = await checkShowcaseAssets({ root: tempDir });
+
+    expect(results.some((result) => result.status === "fail")).toBe(false);
+    expect(results.some((result) => result.message.includes("10 high-quality entries"))).toBe(true);
+  });
+
+  it("fails when the main showcase is not protected by README assets", async () => {
+    tempDir = await mkdtemp(join(tmpdir(), "demo-machine-gates-"));
+    await writeFile(join(tempDir, "README.md"), "missing showcase", "utf8");
+    await writeJson("examples/manifest.json", {
+      version: 1,
+      suites: [
+        {
+          slug: "assurance-long-demo",
+          canonicalSpec: "examples/assurance/long-demo/long-demo.demo.yaml",
+          qualitySignals: [],
+        },
+      ],
+    });
+    await writeJson("assets/demo-gallery/manifest.json", {
+      results: [],
+    });
+
+    const results = await checkShowcaseAssets({ root: tempDir });
+
+    expect(results.some((result) => result.status === "fail")).toBe(true);
+    expect(results.some((result) => result.message.includes("README is missing"))).toBe(true);
+    expect(results.some((result) => result.message.includes("too small"))).toBe(false);
   });
 });

@@ -51,7 +51,7 @@ The current suite-to-tier mapping lives in `examples/manifest.json`.
 - `pnpm examples:validate:pr`, `pnpm examples:capture:pr`, and `pnpm examples:smoke:pr` target canonical PR-tier showcase suites via `examples/manifest.json`.
 - `demo-machine run` executes post-render quality checks after rendering. It writes `quality.json`; screenshot-backed visual checks use collected step screenshots, assert before/after pairs, cursor positions, and chapter title screenshots.
 - `pnpm examples:capture` verifies raw capture artifacts and `verification.json`.
-- `pnpm release:gates:tools` verifies ffmpeg, ffprobe, and Playwright Chromium availability; `pnpm release:gates:gallery` verifies gallery-reviewed manifest suites have generated gallery assets.
+- `pnpm release:gates:tools` verifies ffmpeg, ffprobe, and Playwright Chromium availability; `pnpm release:gates:gallery` verifies gallery-reviewed manifest suites have generated gallery assets; `pnpm release:gates:showcase` verifies the README main MP4/poster links, the manifest-backed long-demo showcase, and a curated gallery breadth of at least 10 high-quality entries.
 - All known inventory proof gaps have been closed; `quality:verify:strict` enforces zero gaps on every `pnpm validate` run. This is inventory coverage, not a claim that every rendered visual baseline is refreshed on every local validation run.
 
 ## Beyond Inventory

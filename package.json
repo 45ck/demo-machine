@@ -38,6 +38,7 @@
     "release:gates": "node scripts/release-gates.mjs",
     "release:gates:tools": "node scripts/release-gates.mjs --checks tools",
     "release:gates:gallery": "node scripts/release-gates.mjs --checks gallery",
+    "release:gates:showcase": "node scripts/release-gates.mjs --checks showcase",
     "qa:meta-prompt": "node scripts/meta-prompt-qa.mjs",
     "qa:meta-prompt:run": "node scripts/meta-prompt-qa.mjs --run-codex",
     "examples:validate": "node scripts/examples-suite.mjs --mode validate",
