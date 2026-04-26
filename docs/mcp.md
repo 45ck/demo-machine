@@ -2,6 +2,8 @@
 
 demo-machine ships an MCP server so AI assistants can help author, validate, run, review, and repair demos.
 
+Use this doc when wiring demo-machine into an agent harness. For non-agent CLI usage, start with [Getting Started](../GETTING-STARTED.md) or the [CLI reference](cli-reference.md).
+
 ## Claude Desktop Setup
 
 ```json
@@ -32,6 +34,18 @@ node dist/mcp-server.js
 | `format-spec`   | Reserialize a spec as YAML or JSON.                                             |
 | `list-voices`   | List configured TTS voices.                                                     |
 
+Common tool inputs:
+
+| Tool            | Important Inputs                                                                                   | Defaults / Notes                                                 |
+| --------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `validate-spec` | `specPath`                                                                                         | Fast check before capture or render.                             |
+| `capture-spec`  | `specPath`, `outputDir`, `headless`, `overwrite`                                                   | Capture-only path; narration is not rendered into the final MP4. |
+| `run-pipeline`  | `specPath`, `outputDir`, `headless`, `overwrite`, `ttsProvider`, `selectApproach`, `skipNarration` | Full capture + render path; use it for reviewable narrated MP4s. |
+| `format-spec`   | `specPath`, `format`                                                                               | Use before committing generated specs.                           |
+| `list-voices`   | none                                                                                               | Reports configured voice entries for narration.                  |
+
+For explicit `outputDir` values, prefer a per-demo folder and use `overwrite` only for deliberate reruns. Automatic output paths are safer during exploration because demo-machine creates a run folder and updates `output/latest.json`.
+
 ## Resources
 
 | Resource           | URI                               | Description                       |
@@ -54,6 +68,25 @@ node dist/mcp-server.js
 | `spec-from-test`   | Convert a Playwright or Cypress test into a demo spec.          |
 | `review-demo`      | Review a completed demo run, defaulting to `output/latest.json` |
 
+## Agent Workflows
+
+demo-machine works well in coding-agent harnesses because the demo spec, rendered output, quality files, and review artifacts all live in the workspace.
+
+- **Claude Code-style skills**: this repo includes `.claude/skills/`, including a `demo-machine` skill for creating and reviewing narrated demos.
+- **Codex-style skills**: `pnpm qa:meta-prompt` creates `output/meta-prompt-qa/workspace/.codex/skills/demo-machine/SKILL.md` plus a prompt that asks Codex to create, run, self-evaluate, and hand off demos.
+- **Any MCP client**: configure the MCP server below, then ask the agent to validate the spec, run the pipeline, inspect artifacts, and iterate on the MP4.
+
+For high-quality narrated demos, the agent should prefer cursor plus zoom focus by default: narration names the target, the cursor moves there, the camera zooms to the relevant UI, the real action lands while framed, and the view eases back out before the next step. The agent should inspect `events.json`, `narration-segments.json`, `quality.json`, and the MP4 before accepting the result.
+
+Minimal agent loop:
+
+1. Inspect the app and choose stable `target` locators, preferring `testId`, role, label, and text before CSS.
+2. Draft or update the `.demo.yaml`.
+3. Run `validate-spec`.
+4. Run `run-pipeline` with narration enabled.
+5. Review `output.mp4`, `events.json`, `narration-segments.json`, and `quality.json`.
+6. Repair the spec and rerun until the MP4 is visually clean.
+
 ## Output Behavior
 
 `capture-spec` and `run-pipeline` use the same output rules as the CLI:
@@ -63,3 +96,9 @@ node dist/mcp-server.js
 - Explicit output paths are protected from artifact collisions unless `overwrite` is enabled.
 
 Prompts that inspect a completed run prefer `output/latest.json` when no output directory is supplied.
+
+## Related Docs
+
+- [Documentation index](README.md)
+- [Demo Anything](demo-anything.md)
+- [Verification Matrix](verification-matrix.md)

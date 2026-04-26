@@ -1,6 +1,8 @@
-# Demo Anything: Principles And Test Matrix
+# Demo Anything
 
 This repo’s goal is to generate **high-polish, repeatable product demos** from a spec, across many kinds of web applications.
+
+Use this doc for authoring guidance and example selection. Use the [Spec Reference](spec-reference.md) for exact fields, the [CLI Reference](cli-reference.md) for commands, and the [Documentation Index](README.md) for the full map.
 
 ## Design Principles
 

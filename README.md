@@ -13,11 +13,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm](https://img.shields.io/npm/v/demo-machine)](https://www.npmjs.com/package/demo-machine)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org)
-[![Tests](https://img.shields.io/badge/Tests-1145%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-passing-brightgreen)](tests/)
 [![Playwright](https://img.shields.io/badge/Playwright-Browser%20Automation-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev)
 [![FFmpeg](https://img.shields.io/badge/FFmpeg-Video%20Rendering-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org)
 
-[Quick Start](#quick-start) &bull; [CLI](docs/cli-reference.md) &bull; [Spec](docs/spec-reference.md) &bull; [MCP](docs/mcp.md) &bull; [Roadmap](ROADMAP.md)
+[Quick Start](#quick-start) &bull; [Docs](docs/README.md) &bull; [CLI](docs/cli-reference.md) &bull; [Spec](docs/spec-reference.md) &bull; [MCP](docs/mcp.md) &bull; [Roadmap](ROADMAP.md)
 
 </div>
 
@@ -202,24 +202,15 @@ pnpm qa:meta-prompt
 
 ## Learn More
 
-Start here:
+The [documentation index](docs/README.md) groups the docs by workflow: first run, spec authoring, agent workflows, examples, quality gates, and release assurance.
 
-- [Getting Started](GETTING-STARTED.md): first run, starter specs, validation flow.
-- [CLI Reference](docs/cli-reference.md): commands, options, and output behavior.
-- [Spec Reference](docs/spec-reference.md): fields, actions, targets, narration, and redaction.
-- [Demo Anything](docs/demo-anything.md): authoring principles, supported actions, and example matrix.
-- [Examples Assurance Layout](docs/examples-assurance-plan.md): organized examples layout, suite validation, video assurance, and long-demo QA.
-- [MCP Integration](docs/mcp.md): AI assistant tools, resources, and prompts.
+Common entry points:
+
+- [Getting Started](GETTING-STARTED.md): first run, starter specs, and validation flow.
+- [Demo Anything](docs/demo-anything.md): authoring principles, target selection, example matrix, and the new-app playbook.
+- [MCP Integration](docs/mcp.md): AI assistant tools, resources, prompts, and agent setup.
 - [Verification Matrix](docs/verification-matrix.md): what local checks prove and how coverage is tracked.
-- [Demo Gallery](docs/demo-gallery.md): rendered example previews.
-- [Roadmap](ROADMAP.md): project direction, priorities, and non-goals.
-
-Then go deeper:
-
-- [Glossary](docs/glossary.md): shared terms for artifacts and pipeline stages.
-- [Contributing](CONTRIBUTING.md): development workflow and quality gates.
-- [Releasing](RELEASING.md): local release process.
-- [Security](SECURITY.md): supported versions and vulnerability reporting.
+- [Contributing](CONTRIBUTING.md), [Releasing](RELEASING.md), and [Security](SECURITY.md): project operations.
 
 ## License
 

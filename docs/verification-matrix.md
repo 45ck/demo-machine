@@ -1,5 +1,7 @@
 # Verification Matrix
 
+Use this doc to understand what the current checks prove. Use the [Verification Roadmap](verification-roadmap.md) for planned work, [Examples Assurance](examples-assurance-plan.md) for example-suite organization, and the [Documentation Index](README.md) for the full docs map.
+
 `demo-machine` now carries two explicit verification sources:
 
 - `docs/verification-inventory.json`: the supported product surface that needs proof

@@ -1,6 +1,8 @@
-# Examples Assurance Layout
+# Examples Assurance
 
-`examples/` now separates human-facing demos from proof and assurance fixtures.
+`examples/` separates human-facing demos from proof and assurance fixtures.
+
+Use this doc for suite organization and verification contracts. Use [Demo Anything](demo-anything.md) when authoring a new demo, and use the [Verification Matrix](verification-matrix.md) when you need to know which checks are release-gated.
 
 ## Folders
 
@@ -12,9 +14,9 @@
 
 Only `manifest.json` and the standalone `meta-demo.demo.yaml` remain at the `examples/` root.
 
-## Active Cleanup
+## Layout Rules
 
-The redundant root specs for drag sort, file upload, and infinite scroll were removed from the active suite. Their coverage is now handled by the controls lab, async/virtualized showcase specs, and proof-level action specs.
+Root-level throwaway specs should stay out of the active suite. Coverage belongs in the controls lab, async/virtualized showcase specs, assurance specs, or proof-level action specs, and every curated entry should be represented in `examples/manifest.json`.
 
 ## Tooling Contract
 

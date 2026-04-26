@@ -67,16 +67,22 @@ chapters:
 
 ### Available Actions
 
-| Action       | Required Fields    | Description                            |
-| ------------ | ------------------ | -------------------------------------- |
-| `navigate`   | `url`              | Go to a URL                            |
-| `click`      | `selector`         | Click an element                       |
-| `type`       | `selector`, `text` | Type text character-by-character       |
-| `hover`      | `selector`         | Hover over an element                  |
-| `scroll`     | —                  | Scroll (`selector`, `x`, `y` optional) |
-| `wait`       | `timeout`          | Pause for milliseconds                 |
-| `press`      | `key`              | Press a keyboard key                   |
-| `screenshot` | —                  | Take a screenshot                      |
+| Action             | Required Fields        | Description                                     |
+| ------------------ | ---------------------- | ----------------------------------------------- |
+| `navigate`         | `url`                  | Go to a URL                                     |
+| `click`            | `selector` or `target` | Click an element                                |
+| `type`             | `selector` or `target` | Type text character-by-character                |
+| `hover`            | `selector` or `target` | Hover over an element                           |
+| `scroll`           | —                      | Scroll the page or a target container           |
+| `press`            | `key`                  | Press a keyboard key                            |
+| `assert`           | `selector` or `target` | Assert visibility, text, or value               |
+| `check`/`uncheck`  | `selector` or `target` | Set checkbox/toggle state                       |
+| `select`           | `selector` or `target` | Select an option by value, label, or index      |
+| `upload`           | `selector` or `target` | Upload one or more files                        |
+| `dragAndDrop`      | `from`, `to`           | Drag from one element to another                |
+| `back` / `forward` | —                      | Navigate browser history                        |
+| `wait`             | `timeout`              | Pause for milliseconds                          |
+| `screenshot`       | —                      | Capture a named screenshot for review artifacts |
 
 Every action supports an optional `narration` field for voice-over. For narrated product demos, prefer cursor plus zoom focus by default. Reserve persistent highlight rings for rare cases where zoom alone cannot identify the target; keep the real click pulse visible for action feedback.
 
@@ -96,23 +102,31 @@ Use `demo-machine://templates/basic` resource for a starter template.
 
 1. **If creating a new spec**: Write a `.demo.yaml` file with chapters and steps that walk through the app's key features. Add `narration` text to important steps. Place narration on the step BEFORE the action you're describing (narration leads into the action).
 
-2. **Validate** the spec:
+2. **Build local checkout if needed**:
+
+   ```bash
+   pnpm build
+   ```
+
+3. **Validate** the spec:
 
    ```bash
    node dist/cli.js validate <spec.yaml>
    ```
 
-3. **Run** the full pipeline:
+4. **Run** the full pipeline:
 
    ```bash
-   node dist/cli.js run <spec.yaml> --output ./output --no-headless
+   node dist/cli.js run <spec.yaml> --no-headless
    ```
 
-4. Report the output path and any errors.
+   Use an explicit per-demo `--output <folder>` only for deliberate handoffs, and add `--overwrite` only when rerunning that same folder intentionally.
+
+5. Report the output path and any errors.
 
 ## Tips
 
-- Use CSS selectors that are stable (IDs > data attributes > classes)
+- Prefer structured `target` locators: `testId`, role, label, placeholder, title, alt text, or text. Use CSS selectors only when there is no stable semantic locator.
 - Add `wait` steps after actions that trigger animations
 - Keep narration text concise — it's spoken aloud
 - Narration is placed to finish just as the action happens, so write it as a lead-in ("Let's click..." not "We clicked...")

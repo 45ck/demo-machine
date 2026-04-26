@@ -147,6 +147,7 @@ pnpm video:assure -- --filter assurance-long-demo
 ## Where To Go Next
 
 - Use `demo-machine examples list` to find a nearby pattern before authoring a new flow.
-- Read `docs/demo-anything.md` for the spec authoring playbook and acceptance matrix.
-- Read `docs/verification-matrix.md` to understand what each local quality gate proves.
-- Read `ROADMAP.md` for current project priorities and non-goals.
+- Read [Demo Anything](docs/demo-anything.md) for the spec authoring playbook and acceptance matrix.
+- Read [Verification Matrix](docs/verification-matrix.md) to understand what each local quality gate proves.
+- Read the [Documentation Index](docs/README.md) for the full docs map.
+- Read [Roadmap](ROADMAP.md) for current project priorities and non-goals.

@@ -1,5 +1,7 @@
 # Verification Roadmap
 
+Use this doc for planned verification work. Use the [Verification Matrix](verification-matrix.md) for checks enforced today, and the [Documentation Index](README.md) for the full docs map.
+
 This roadmap turns the expanded review into a durable verification and
 validation strategy for `demo-machine`. It is a planning document, not a claim
 that every listed check is already enforced.
