@@ -40,9 +40,9 @@ It is local-first. There is no required cloud service and no current CI dependen
 
 The main showcase video was generated from [examples/assurance/long-demo/long-demo.demo.yaml](examples/assurance/long-demo/long-demo.demo.yaml):
 
-<video src="assets/demo-gallery/assurance-long-demo.mp4" controls muted playsinline></video>
+[![AssuranceOps showcase video preview](assets/demo-gallery/assurance-long-demo-poster.webp)](assets/demo-gallery/assurance-long-demo.mp4)
 
-If your Markdown viewer does not render embedded MP4s, open the [AssuranceOps showcase video](assets/demo-gallery/assurance-long-demo.mp4). More rendered examples are in the [demo gallery](docs/demo-gallery.md).
+Open the [narrated AssuranceOps showcase video](assets/demo-gallery/assurance-long-demo.mp4). More rendered examples are in the [demo gallery](docs/demo-gallery.md).
 
 ## Quick Start
 
