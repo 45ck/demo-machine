@@ -3,9 +3,19 @@
 # demo-machine
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/banner.dark.png" />
-  <source media="(prefers-color-scheme: light)" srcset="assets/banner.light.png" />
-  <img src="assets/banner.light.png" alt="demo-machine banner" width="100%" />
+  <source
+    media="(prefers-color-scheme: dark)"
+    srcset="https://github.com/45ck/demo-machine/raw/master/assets/banner.dark.png"
+  />
+  <source
+    media="(prefers-color-scheme: light)"
+    srcset="https://github.com/45ck/demo-machine/raw/master/assets/banner.light.png"
+  />
+  <img
+    src="https://github.com/45ck/demo-machine/raw/master/assets/banner.light.png"
+    alt="demo-machine banner"
+    width="100%"
+  />
 </picture>
 
 **Demo as code**: turn versioned specs into repeatable browser captures and polished product demo videos.
@@ -41,9 +51,9 @@ It is local-first. There is no required cloud service and no current CI dependen
 
 The main showcase video was generated from [examples/assurance/long-demo/long-demo.demo.yaml](examples/assurance/long-demo/long-demo.demo.yaml):
 
-[![AssuranceOps showcase video preview](assets/demo-gallery/assurance-long-demo-poster.webp)](assets/demo-gallery/assurance-long-demo.mp4)
+[![AssuranceOps showcase video preview](https://github.com/45ck/demo-machine/raw/master/assets/demo-gallery/assurance-long-demo-poster.webp)](https://github.com/45ck/demo-machine/raw/master/assets/demo-gallery/assurance-long-demo.mp4)
 
-Open the [narrated AssuranceOps showcase video](assets/demo-gallery/assurance-long-demo.mp4). More rendered examples are in the [demo gallery](docs/demo-gallery.md).
+Open the [narrated AssuranceOps showcase video](https://github.com/45ck/demo-machine/raw/master/assets/demo-gallery/assurance-long-demo.mp4). More rendered examples are in the [demo gallery](docs/demo-gallery.md).
 
 The showcase demonstrates the current quality bar: narration leads into the action, the cursor moves to the element being discussed, the camera zooms into the relevant UI instead of a generic region, the real click or typing action lands while framed, and the view eases back out before the next beat.
 

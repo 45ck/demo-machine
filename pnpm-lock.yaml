@@ -30,6 +30,9 @@ importers:
       "@remotion/bundler":
         specifier: ">=4.0.0"
         version: 4.0.452(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      "@remotion/media-utils":
+        specifier: ">=4.0.0"
+        version: 4.0.452(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       "@remotion/renderer":
         specifier: ">=4.0.0"
         version: 4.0.452(react-dom@19.2.5(react@19.2.5))(react@19.2.5)

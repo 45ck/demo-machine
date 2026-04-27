@@ -68,9 +68,7 @@ async function executeStep(
     ? wrapWithScreenshotCapture(handler, params.screenshotCollector)
     : handler;
   await effectiveHandler(ctx, step, params.events, params.stepIndex);
-  if (step.action === "navigate") {
-    await checkSecrets(ctx.page, params.secretPatterns, params.redactionSelectors);
-  }
+  await checkSecrets(ctx.page, params.secretPatterns, params.redactionSelectors);
 }
 
 function selectorForError(step: Chapter["steps"][number]): string {
@@ -455,6 +453,12 @@ export class PlaybackEngine {
     stepsWithPresentedActionVisual: Set<number>,
   ): Promise<void> {
     const leadInMs = narrationWaiter.leadInMs(stepIndex);
+    const hasNarrationTiming = this.options.narration !== undefined;
+    const hasExplicitManualFocus = this.options.presentation?.narrationFocus !== undefined;
+    if (!hasNarrationTiming && !hasExplicitManualFocus) {
+      await narrationWaiter.waitBeforeStep(stepIndex);
+      return;
+    }
     const focus = this.options.presentation?.narrationFocus ?? DEFAULT_NARRATION_FOCUS;
     const preparedFocus = await prepareNarrationFocus({
       page: this.page,

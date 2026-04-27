@@ -179,6 +179,23 @@ describe("FfmpegRenderer.buildArgs", () => {
     expect(args[tIndex + 1]).toBe("8.000");
   });
 
+  it("treats extendToMs as a floor and does not truncate the timeline", async () => {
+    const renderer = new FfmpegRenderer();
+    const options: RenderOptions = {
+      outputPath: "/output/output.mp4",
+      videoPath: "/input/video.webm",
+      audioPath: "/audio/narration.mp3",
+      extendToMs: 3000,
+    };
+
+    await renderer.render(baseTimeline, options);
+
+    const args = mockSpawn.mock.calls[0]![1] as string[];
+    const tIndex = args.indexOf("-t");
+    expect(tIndex).toBeGreaterThan(-1);
+    expect(args[tIndex + 1]).toBe("5.000");
+  });
+
   it("pads short narration audio instead of shortening the output", async () => {
     const renderer = new FfmpegRenderer();
     const options: RenderOptions = {

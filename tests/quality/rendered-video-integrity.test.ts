@@ -7,6 +7,7 @@ import {
   checkRenderedVideoIntegrity,
   checkSampleExtractionMetadata,
   computeExpectedEventDurationMs,
+  computeExpectedNarrationDurationMs,
 } from "../../src/quality/checks/rendered-video-integrity.js";
 import type {
   RenderedVideoFrameSample,
@@ -124,6 +125,15 @@ describe("rendered video integrity checks", () => {
     expect(expected).toBe(1750);
   });
 
+  it("computes expected duration from narration span", () => {
+    const expected = computeExpectedNarrationDurationMs([
+      { actionIndex: 0, startMs: 0, durationMs: 1200, text: "Intro" },
+      { actionIndex: 1, startMs: 4500, durationMs: 2000, text: "Outro" },
+    ]);
+
+    expect(expected).toBe(6500);
+  });
+
   it("ignores malformed events when computing expected duration", () => {
     const expected = computeExpectedEventDurationMs([
       { action: "bad-start", timestamp: Number.NaN, duration: 500 },
@@ -150,6 +160,20 @@ describe("rendered video integrity checks", () => {
     expect(results[0]!.status).toBe("fail");
     expect(results[0]!.message).toContain("6000ms");
     expect(results[0]!.message).toContain("2000ms");
+  });
+
+  it("uses narration duration when narration extends beyond the event span", () => {
+    const results = checkDurationEventMismatch(
+      ctx({
+        videoDurationMs: 6400,
+        events: [{ action: "click", timestamp: 1000, duration: 500 }],
+        narrationSegments: [{ actionIndex: 0, startMs: 0, durationMs: 6500, text: "Long" }],
+        thresholds: { durationAbsoluteToleranceMs: 250 },
+      }),
+    );
+
+    expect(results).toHaveLength(1);
+    expect(results[0]!.status).toBe("pass");
   });
 
   it("passes duration mismatch when absolute tolerance covers the delta", () => {

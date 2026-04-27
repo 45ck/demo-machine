@@ -58,13 +58,13 @@ export class FfmpegRenderer implements VideoRenderer {
   }
 
   private addDuration(args: string[], timeline: Timeline, options: RenderOptions): void {
-    const renderDurationMs = options.extendToMs ?? timeline.totalDurationMs;
+    const renderDurationMs = renderDurationMsFor(timeline, options);
     if (renderDurationMs > 0) args.push("-t", msToSec(renderDurationMs));
   }
 
   private buildFilterGraph(timeline: Timeline, options: RenderOptions): string | undefined {
     const filterSteps: string[] = [];
-    const renderDurationMs = options.extendToMs ?? timeline.totalDurationMs;
+    const renderDurationMs = renderDurationMsFor(timeline, options);
 
     if (renderDurationMs > 0) {
       filterSteps.push(`tpad=stop_mode=clone:stop_duration=${msToSec(renderDurationMs)}`);
@@ -159,6 +159,10 @@ export class FfmpegRenderer implements VideoRenderer {
 
 function msToSec(ms: number): string {
   return (ms / 1000).toFixed(3);
+}
+
+function renderDurationMsFor(timeline: Timeline, options: RenderOptions): number {
+  return Math.max(timeline.totalDurationMs, options.extendToMs ?? 0);
 }
 
 function escapeDrawtext(text: string): string {

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
+import { rm } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 
@@ -12,6 +13,7 @@ function parseArgs(argv) {
     smokeType: "showcase",
     smokeLimit: 2,
     outputDir: "output/release-ready-pr",
+    narratedSmoke: true,
     launchChromium: false,
     help: false,
   };
@@ -24,6 +26,8 @@ function parseArgs(argv) {
       opts.video = false;
     } else if (arg === "--skip-package") {
       opts.package = false;
+    } else if (arg === "--skip-narrated-smoke") {
+      opts.narratedSmoke = false;
     } else if (arg === "--smoke-tier") {
       opts.smokeTier = argv[++i] ?? opts.smokeTier;
     } else if (arg === "--smoke-type") {
@@ -49,7 +53,7 @@ function usage() {
       "release-ready",
       "",
       "Usage:",
-      "  node scripts/release-ready.mjs [--skip-smoke] [--skip-video] [--skip-package] [--smoke-tier pr] [--smoke-type showcase] [--smoke-limit <n|all>] [--output-dir <dir>] [--launch-chromium]",
+      "  node scripts/release-ready.mjs [--skip-smoke] [--skip-video] [--skip-package] [--skip-narrated-smoke] [--smoke-tier pr] [--smoke-type showcase] [--smoke-limit <n|all>] [--output-dir <dir>] [--launch-chromium]",
       "",
       "Default flow:",
       "  tool + gallery gates, build, validate, PR-tier example validation, PR-tier run smoke, video assurance, package dry-run gate",
@@ -101,9 +105,20 @@ async function main() {
     console.error("--smoke-limit must be a positive integer or 'all'.");
     process.exit(2);
   }
+  if (opts.video && !opts.smoke) {
+    console.error(
+      "video assurance requires fresh smoke output; pass --skip-video with --skip-smoke.",
+    );
+    process.exit(2);
+  }
 
   const root = path.resolve(".");
-  const toolGateArgs = ["scripts/release-gates.mjs", "--checks", "tools,gallery,showcase"];
+  const toolGateArgs = [
+    "scripts/release-gates.mjs",
+    "--checks",
+    "tools,gallery,showcase",
+    "--strict-gallery-specs",
+  ];
   if (opts.launchChromium) toolGateArgs.push("--launch-chromium");
 
   await runStep("release gates: tools + gallery + showcase", "node", toolGateArgs, { cwd: root });
@@ -117,6 +132,7 @@ async function main() {
   );
 
   if (opts.smoke) {
+    await rm(path.resolve(root, opts.outputDir), { recursive: true, force: true });
     const smokeArgs = [
       "scripts/examples-suite.mjs",
       "--mode",
@@ -130,6 +146,23 @@ async function main() {
     await runStep(`${opts.smokeTier} ${opts.smokeType} capture/render smoke`, "node", smokeArgs, {
       cwd: root,
     });
+    if (opts.narratedSmoke) {
+      await runStep(
+        "narrated hello-world capture/render smoke",
+        "node",
+        [
+          "dist/cli.js",
+          "run",
+          "examples/showcase/hello-world.demo.yaml",
+          "--output",
+          path.join(opts.outputDir, "hello-world-narrated"),
+          "--overwrite",
+        ],
+        { cwd: root },
+      );
+    } else {
+      console.log("\n[skip] narrated capture/render smoke");
+    }
   } else {
     console.log("\n[skip] PR-tier capture/render smoke");
   }

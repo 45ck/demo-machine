@@ -35,9 +35,17 @@ export interface RenderedVideoIntegrityEvent {
   duration: number;
 }
 
+export interface RenderedVideoIntegrityNarrationSegment {
+  actionIndex: number;
+  startMs: number;
+  durationMs?: number | undefined;
+  text: string;
+}
+
 export interface RenderedVideoIntegrityContext {
   videoDurationMs?: number | undefined;
   events?: RenderedVideoIntegrityEvent[] | undefined;
+  narrationSegments?: RenderedVideoIntegrityNarrationSegment[] | undefined;
   frameSamples?: RenderedVideoFrameSample[] | undefined;
   sampleExtraction?: RenderedVideoSampleExtractionMetadata | undefined;
   thresholds?: RenderedVideoIntegrityThresholds | undefined;
@@ -52,6 +60,7 @@ export function renderedVideoIntegrityContextFromQualityGate(
         ? ctx.probeResult.videoDurationSec * 1000
         : undefined,
     events: ctx.events,
+    narrationSegments: ctx.narrationSegments,
     frameSamples: ctx.renderedVideoFrameSamples,
     sampleExtraction: ctx.renderedVideoSampleExtraction,
     thresholds: ctx.renderedVideoIntegrityThresholds,
@@ -145,6 +154,41 @@ export function computeExpectedEventDurationMs(
   return Math.max(0, Math.max(...ends) - Math.min(...starts));
 }
 
+export function computeExpectedNarrationDurationMs(
+  segments: RenderedVideoIntegrityNarrationSegment[] | undefined,
+): number | null {
+  if (!segments || segments.length === 0) return null;
+
+  const spans = segments
+    .filter(
+      (segment) =>
+        Number.isFinite(segment.startMs) &&
+        segment.durationMs !== undefined &&
+        Number.isFinite(segment.durationMs),
+    )
+    .map((segment) => ({
+      start: segment.startMs,
+      end: segment.startMs + segment.durationMs!,
+    }))
+    .filter((span) => Number.isFinite(span.end));
+
+  const starts = spans.map((span) => span.start);
+  const ends = spans.map((span) => span.end);
+
+  if (starts.length === 0 || ends.length === 0) return null;
+
+  return Math.max(0, Math.max(...ends) - Math.min(...starts));
+}
+
+function computeExpectedDurationMs(ctx: RenderedVideoIntegrityContext): number | null {
+  const candidates = [
+    computeExpectedEventDurationMs(ctx.events),
+    computeExpectedNarrationDurationMs(ctx.narrationSegments),
+  ].filter((duration): duration is number => duration !== null);
+
+  return candidates.length === 0 ? null : Math.max(...candidates);
+}
+
 function validSamples(samples: RenderedVideoFrameSample[] | undefined): RenderedVideoFrameSample[] {
   return samples?.filter((sample) => Number.isFinite(sample.timestampMs)) ?? [];
 }
@@ -184,7 +228,7 @@ export function analyzeRenderedVideoIntegrity(
   const blankFrameCount = countBlankFrames(samples, ctx.thresholds);
   const frozenAdjacentPairCount = countFrozenAdjacentPairs(samples, ctx.thresholds);
   const adjacentPairCount = Math.max(0, samples.length - 1);
-  const expectedDurationMs = computeExpectedEventDurationMs(ctx.events);
+  const expectedDurationMs = computeExpectedDurationMs(ctx);
   const actualMs = actualDurationMs(ctx.videoDurationMs);
   const deltaMs = durationDeltaMs(actualMs, expectedDurationMs);
 
@@ -292,7 +336,7 @@ export function checkDurationEventMismatch(ctx: RenderedVideoIntegrityContext): 
   return [
     postRenderFail(
       DURATION_CHECK_NAME,
-      `Rendered duration ${Math.round(signals.actualDurationMs)}ms differs from event span ${Math.round(signals.expectedDurationMs)}ms by ${Math.round(signals.durationDeltaMs!)}ms`,
+      `Rendered duration ${Math.round(signals.actualDurationMs)}ms differs from expected span ${Math.round(signals.expectedDurationMs)}ms by ${Math.round(signals.durationDeltaMs!)}ms`,
       "Verify trim boundaries, timeline padding, and event timestamps used for rendering",
     ),
   ];

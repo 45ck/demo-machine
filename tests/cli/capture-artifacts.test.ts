@@ -107,6 +107,49 @@ describe("capture-artifacts", () => {
     expect(html).toContain("broken");
   });
 
+  it("redacts configured selectors from failure html artifacts", async () => {
+    const page = {
+      screenshot: vi.fn().mockResolvedValue(undefined),
+      evaluate: vi.fn(async (fn: (selectors: string[]) => string, selectors: string[]) => {
+        const previousDocument = globalThis.document;
+        try {
+          globalThis.document = {
+            documentElement: {
+              cloneNode: () => ({
+                outerHTML:
+                  '<html><body><div class="secret">[redacted]</div><input type="email" value="[redacted]"></body></html>',
+                querySelectorAll: (selector: string) =>
+                  selector === ".secret" || selector.includes("input")
+                    ? [
+                        {
+                          textContent: "",
+                          hasAttribute: () => true,
+                          setAttribute: vi.fn(),
+                        },
+                      ]
+                    : [],
+              }),
+            },
+          } as never;
+          return fn(selectors);
+        } finally {
+          globalThis.document = previousDocument;
+        }
+      }),
+    };
+
+    const artifacts = await writeFailureArtifacts({
+      page: page as never,
+      outDir: tempDir,
+      failure: { name: "PlaybackStepError", message: "selector missing" },
+      redactionSelectors: [".secret"],
+    });
+
+    const html = await readFile(artifacts.htmlPath!, "utf8");
+    expect(html).toContain("[redacted]");
+    expect(html).not.toContain("raw secret");
+  });
+
   it("returns undefined when finalizeCaptureSafe catches finalize errors", async () => {
     const captureMod = {
       finalizeCapture: vi.fn().mockRejectedValue(new Error("disk full")),

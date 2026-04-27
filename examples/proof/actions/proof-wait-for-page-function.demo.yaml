@@ -2,17 +2,19 @@ meta:
   title: "Proof: Wait for Page Function"
 
 runner:
-  url: "https://example.com"
+  command: "node examples/async-skeleton/serve.mjs"
+  url: "http://localhost:4583"
+  timeout: 10000
 
 chapters:
   - title: "Wait for Browser Condition"
     steps:
       - action: navigate
-        url: "https://example.com"
+        url: "/"
       - action: waitForPageFunction
-        expression: "document.readyState === 'complete'"
-        label: "document-ready"
-        timeoutMs: 2000
+        expression: 'document.querySelector(''[data-testid="metric-revenue"]'')?.offsetParent !== null'
+        label: "revenue-metric-visible"
+        timeoutMs: 5000
         pollingMs: 100
       - action: screenshot
         name: "wait-for-page-function-proof"

@@ -372,6 +372,18 @@ function packagePathParts(packageName) {
   return packageName.split("/").filter(Boolean);
 }
 
+async function installedBinExists(installDir, binName) {
+  const binDir = path.join(installDir, "node_modules", ".bin");
+  const candidates =
+    process.platform === "win32" ? [`${binName}.cmd`, `${binName}.ps1`, binName] : [binName];
+
+  for (const candidate of candidates) {
+    if (await exists(path.join(binDir, candidate))) return true;
+  }
+
+  return false;
+}
+
 function resolvePackedTarball(packOutput, destinationDir) {
   const lines = packOutput
     .split(/\r?\n/)
@@ -435,23 +447,30 @@ async function checkPackageInstallSmoke({ root, packageName, run = runCapture })
       return fail(commandDetail("node", importArgs, importCheck));
     }
 
-    const packageDir = path.join(installDir, "node_modules", ...packagePathParts(packageName));
-    const cliPath = path.join(packageDir, "dist", "cli.js");
-    const cliArgs = [cliPath, "examples", "list", "--limit", "1"];
-    const cli = run("node", cliArgs, installDir);
+    const cliArgs = ["exec", "--", "demo-machine", "examples", "list", "--limit", "1"];
+    const cli = run("npm", cliArgs, installDir);
     if (cli.error) {
       return fail(`Installed CLI smoke could not start: ${cli.error.message}`);
     }
     if (cli.status !== 0) {
-      return fail(commandDetail("node", cliArgs, cli));
+      return fail(commandDetail("npm", cliArgs, cli));
     }
 
+    for (const binName of ["demo-machine", "demo-machine-mcp"]) {
+      if (!(await installedBinExists(installDir, binName))) {
+        return fail(`Installed package is missing bin shim: ${binName}`);
+      }
+    }
+
+    const packageDir = path.join(installDir, "node_modules", ...packagePathParts(packageName));
     const remotionRoot = path.join(packageDir, "remotion", "src", "Root.tsx");
     if (!(await exists(remotionRoot))) {
       return fail("Installed package is missing remotion/src/Root.tsx");
     }
 
-    return pass("Package tarball installs, imports, runs the CLI, and includes Remotion assets");
+    return pass(
+      "Package tarball installs, imports, runs installed CLI shims, and includes Remotion assets",
+    );
   } finally {
     await rm(tempRoot, { recursive: true, force: true });
   }

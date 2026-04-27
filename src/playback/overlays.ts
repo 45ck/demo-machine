@@ -9,6 +9,29 @@ const logger = createLogger("playback");
 export async function applyRedaction(page: PlaywrightPage, selectors: string[]): Promise<void> {
   if (selectors.length === 0) return;
   const css = generateBlurStyles(selectors);
+  const pageWithInit = page as PlaywrightPage & {
+    addInitScript?: (options: { content: string }) => Promise<void>;
+  };
+  if (pageWithInit.addInitScript) {
+    await pageWithInit.addInitScript({
+      content: `
+(() => {
+  const css = ${JSON.stringify(css)};
+  const id = "dm-redaction-style";
+  const install = () => {
+    const parent = document.head || document.documentElement;
+    if (!parent || document.getElementById(id)) return;
+    const style = document.createElement("style");
+    style.id = id;
+    style.textContent = css;
+    parent.appendChild(style);
+  };
+  install();
+  document.addEventListener("DOMContentLoaded", install, { once: true });
+})();
+`,
+    });
+  }
   await page.addStyleTag({ content: css });
   logger.info(`Applied redaction to ${String(selectors.length)} selectors`);
 }
@@ -59,6 +82,6 @@ export async function checkSecrets(
   )) as string;
   const matches = scanForSecrets(text, patterns);
   for (const match of matches) {
-    logger.warn(`Secret detected: pattern="${match.pattern}" text="${match.text}"`);
+    logger.warn(`Secret detected: pattern="${match.pattern}"`);
   }
 }

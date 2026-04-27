@@ -1013,6 +1013,26 @@ describe("PlaybackEngine", () => {
     expect(order.indexOf("click")).toBeLessThan(order.indexOf("clear"));
   });
 
+  it("does not show default narration focus when narration is disabled", async () => {
+    const chapters: Chapter[] = [
+      {
+        title: "Silent",
+        steps: [{ action: "click", selector: "#btn", narration: "Click the primary button" }],
+      },
+    ];
+
+    const engine = new PlaybackEngine(page, {
+      baseUrl: "https://example.com",
+      pacing: TEST_PACING,
+    });
+
+    await engine.execute(chapters);
+
+    expect(visuals.showNarrationFocus).not.toHaveBeenCalled();
+    expect(visuals.flashSpotlight).toHaveBeenCalled();
+    expect(visuals.pulseFocus).toHaveBeenCalled();
+  });
+
   it("applies settle delay after each step when pacing is set", async () => {
     const chapters: Chapter[] = [
       {

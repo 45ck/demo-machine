@@ -68,7 +68,7 @@ the relevant script explicitly says they are part of `pnpm validate`,
 
 ## Known Gaps
 
-None in the current inventory proof set. All 18 actions, 3 preSteps, and 8
+None in the current inventory proof set. All 21 actions, 3 preSteps, and 8
 target strategies have example proof as of 0.3.0. This does not mean all planned
 rendered-video, security, flake, chaos, performance, docs, or parity checks are
 implemented or release-gated.

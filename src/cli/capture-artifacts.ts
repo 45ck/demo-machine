@@ -82,6 +82,7 @@ export async function writeFailureArtifacts(params: {
   page: PlaywrightPage;
   outDir: string;
   failure: CaptureFailureSummary;
+  redactionSelectors?: string[] | undefined;
 }): Promise<FailureArtifacts> {
   await mkdir(params.outDir, { recursive: true });
   const failureArtifacts: FailureArtifacts = {
@@ -98,7 +99,30 @@ export async function writeFailureArtifacts(params: {
 
   try {
     const html = (await params.page.evaluate(
-      (() => document.documentElement.outerHTML) as (...args: unknown[]) => unknown,
+      ((selectors: string[]) => {
+        const clone = document.documentElement.cloneNode(true) as HTMLElement;
+        const redactElement = (element: Element): void => {
+          element.textContent = "[redacted]";
+          for (const attr of ["value", "title", "aria-label", "data-value"]) {
+            if (element.hasAttribute(attr)) element.setAttribute(attr, "[redacted]");
+          }
+        };
+
+        clone
+          .querySelectorAll('input[type="password"], input[type="email"], textarea')
+          .forEach(redactElement);
+
+        for (const selector of selectors) {
+          try {
+            clone.querySelectorAll(selector).forEach(redactElement);
+          } catch {
+            // Invalid selectors are rejected during spec validation; keep artifact capture best-effort.
+          }
+        }
+
+        return `<!doctype html>\n${clone.outerHTML}`;
+      }) as (...args: unknown[]) => unknown,
+      (params.redactionSelectors ?? []) as unknown,
     )) as string;
     failureArtifacts.htmlPath = path.join(params.outDir, "failure.html");
     await writeFile(failureArtifacts.htmlPath, html, "utf-8");
@@ -231,6 +255,7 @@ export async function handleCaptureFailure(params: {
     page: params.page,
     outDir: params.captureOpts.outputDir,
     failure,
+    redactionSelectors: params.spec.redaction?.selectors,
   });
   const bundle = await finalizeCaptureSafe({
     captureMod: params.captureMod,

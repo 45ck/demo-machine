@@ -185,11 +185,13 @@ describe("release gallery gates", () => {
       types: "dist/index.d.ts",
       bin: {
         "demo-machine": "dist/cli.js",
+        "demo-machine-mcp": "dist/mcp-server.js",
       },
     });
     await writeText("dist/index.js");
     await writeText("dist/index.d.ts");
     await writeText("dist/cli.js");
+    await writeText("dist/mcp-server.js");
 
     const commands: Array<{ command: string; args: string[]; cwd: string }> = [];
     const run = (command: string, args: string[], cwd: string) => {
@@ -207,8 +209,15 @@ describe("release gallery gates", () => {
         const packageDir = join(cwd, "node_modules", "demo-machine");
         mkdirSync(join(packageDir, "dist"), { recursive: true });
         mkdirSync(join(packageDir, "remotion", "src"), { recursive: true });
+        mkdirSync(join(cwd, "node_modules", ".bin"), { recursive: true });
         writeFileSync(join(packageDir, "dist", "cli.js"), "");
+        writeFileSync(join(packageDir, "dist", "mcp-server.js"), "");
         writeFileSync(join(packageDir, "remotion", "src", "Root.tsx"), "");
+        for (const binName of ["demo-machine", "demo-machine-mcp"]) {
+          writeFileSync(join(cwd, "node_modules", ".bin", binName), "");
+          writeFileSync(join(cwd, "node_modules", ".bin", `${binName}.cmd`), "");
+          writeFileSync(join(cwd, "node_modules", ".bin", `${binName}.ps1`), "");
+        }
       }
 
       return { status: 0, stdout: "", stderr: "" };
@@ -236,7 +245,11 @@ describe("release gallery gates", () => {
     expect(
       commands.some(
         (item) =>
-          item.command === "node" && item.args.includes("examples") && item.args.includes("list"),
+          item.command === "npm" &&
+          item.args[0] === "exec" &&
+          item.args.includes("demo-machine") &&
+          item.args.includes("examples") &&
+          item.args.includes("list"),
       ),
     ).toBe(true);
   });
