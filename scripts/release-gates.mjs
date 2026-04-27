@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
-import { access, readFile, stat } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, rm, stat } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -23,6 +24,7 @@ function parseArgs(argv) {
     checks: DEFAULT_CHECKS,
     root: process.cwd(),
     packageDryRun: true,
+    packageSmoke: true,
     launchChromium: false,
     strictGallerySpecs: false,
     help: false,
@@ -47,6 +49,8 @@ function parseArgs(argv) {
       opts.checks = opts.checks.filter((check) => check !== "package");
     } else if (arg === "--no-package-dry-run") {
       opts.packageDryRun = false;
+    } else if (arg === "--no-package-smoke") {
+      opts.packageSmoke = false;
     } else if (arg === "--launch-chromium") {
       opts.launchChromium = true;
     } else if (arg === "--strict-gallery-specs") {
@@ -65,29 +69,35 @@ function usage() {
       "release-gates",
       "",
       "Usage:",
-      "  node scripts/release-gates.mjs [--checks tools,gallery,showcase,package] [--no-package-dry-run] [--launch-chromium] [--strict-gallery-specs]",
+      "  node scripts/release-gates.mjs [--checks tools,gallery,showcase,package] [--no-package-dry-run] [--no-package-smoke] [--launch-chromium] [--strict-gallery-specs]",
       "",
       "Checks:",
       "  tools    ffmpeg, ffprobe, and Playwright Chromium executable availability",
       "  gallery  examples/manifest.json gallery-reviewed suites have gallery assets",
       "  showcase README main showcase MP4/poster links and minimum curated gallery breadth",
-      "  package  package entrypoints exist and `pnpm pack --dry-run` succeeds",
+      "  package  package entrypoints exist, `pnpm pack --dry-run` succeeds, and the tarball installs cleanly",
     ].join("\n"),
   );
 }
 
 function commandForPlatform(command) {
   if (process.platform !== "win32") return command;
-  if (command === "pnpm") return "pnpm.cmd";
   if (command === "node") return "node.exe";
   return command;
 }
 
+function quoteCmdArg(value) {
+  const text = String(value);
+  if (text.length === 0) return '""';
+  if (!/[\s"&()<>^|]/.test(text)) return text;
+  return `"${text.replaceAll("^", "^^").replaceAll('"', '""')}"`;
+}
+
 function runCapture(command, args, cwd) {
-  if (process.platform === "win32" && command === "pnpm") {
+  if (process.platform === "win32" && (command === "pnpm" || command === "npm")) {
     return spawnSync(
       process.env.ComSpec ?? "cmd.exe",
-      ["/d", "/s", "/c", [command, ...args].join(" ")],
+      ["/d", "/s", "/c", [command, ...args].map(quoteCmdArg).join(" ")],
       {
         cwd,
         encoding: "utf8",
@@ -353,7 +363,106 @@ export async function checkShowcaseAssets({
   return results;
 }
 
-export async function checkPackageReadiness({ root = process.cwd(), dryRun = true } = {}) {
+function commandDetail(command, args, result) {
+  const output = (result.stderr || result.stdout || "").trim();
+  return `${command} ${args.join(" ")} failed${output ? `: ${output}` : ""}`;
+}
+
+function packagePathParts(packageName) {
+  return packageName.split("/").filter(Boolean);
+}
+
+function resolvePackedTarball(packOutput, destinationDir) {
+  const lines = packOutput
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const tarball = lines.reverse().find((line) => line.endsWith(".tgz"));
+  if (!tarball) return undefined;
+  return path.isAbsolute(tarball) ? tarball : path.resolve(destinationDir, tarball);
+}
+
+async function checkPackageInstallSmoke({ root, packageName, run = runCapture }) {
+  const tempRoot = await mkdtemp(path.join(tmpdir(), "demo-machine-package-smoke-"));
+  try {
+    const packDir = path.join(tempRoot, "pack");
+    const installDir = path.join(tempRoot, "install");
+    await mkdir(packDir, { recursive: true });
+    await mkdir(installDir, { recursive: true });
+
+    const packArgs = ["pack", "--pack-destination", packDir];
+    const pack = run("pnpm", packArgs, root);
+    if (pack.error) {
+      return fail(`pnpm pack could not start: ${pack.error.message}`);
+    }
+    if (pack.status !== 0) {
+      return fail(commandDetail("pnpm", packArgs, pack));
+    }
+
+    const tarballPath = resolvePackedTarball(`${pack.stdout ?? ""}\n${pack.stderr ?? ""}`, packDir);
+    if (!tarballPath || !(await exists(tarballPath))) {
+      return fail("pnpm pack did not produce a discoverable .tgz tarball");
+    }
+
+    const initArgs = ["init", "-y"];
+    const init = run("npm", initArgs, installDir);
+    if (init.error) {
+      return fail(`npm init could not start: ${init.error.message}`);
+    }
+    if (init.status !== 0) {
+      return fail(commandDetail("npm", initArgs, init));
+    }
+
+    const installArgs = ["install", "--omit=optional", "--no-audit", "--no-fund", tarballPath];
+    const install = run("npm", installArgs, installDir);
+    if (install.error) {
+      return fail(`npm install could not start: ${install.error.message}`);
+    }
+    if (install.status !== 0) {
+      return fail(commandDetail("npm", installArgs, install));
+    }
+
+    const importArgs = [
+      "--input-type=module",
+      "-e",
+      `await import(${JSON.stringify(packageName)});`,
+    ];
+    const importCheck = run("node", importArgs, installDir);
+    if (importCheck.error) {
+      return fail(`Installed package import could not start: ${importCheck.error.message}`);
+    }
+    if (importCheck.status !== 0) {
+      return fail(commandDetail("node", importArgs, importCheck));
+    }
+
+    const packageDir = path.join(installDir, "node_modules", ...packagePathParts(packageName));
+    const cliPath = path.join(packageDir, "dist", "cli.js");
+    const cliArgs = [cliPath, "examples", "list", "--limit", "1"];
+    const cli = run("node", cliArgs, installDir);
+    if (cli.error) {
+      return fail(`Installed CLI smoke could not start: ${cli.error.message}`);
+    }
+    if (cli.status !== 0) {
+      return fail(commandDetail("node", cliArgs, cli));
+    }
+
+    const remotionRoot = path.join(packageDir, "remotion", "src", "Root.tsx");
+    if (!(await exists(remotionRoot))) {
+      return fail("Installed package is missing remotion/src/Root.tsx");
+    }
+
+    return pass("Package tarball installs, imports, runs the CLI, and includes Remotion assets");
+  } finally {
+    await rm(tempRoot, { recursive: true, force: true });
+  }
+}
+
+export async function checkPackageReadiness({
+  root = process.cwd(),
+  dryRun = true,
+  installSmoke = true,
+  run = runCapture,
+} = {}) {
   const results = [];
   const packageJsonPath = path.join(root, "package.json");
   const pkg = await readJson(packageJsonPath);
@@ -369,7 +478,7 @@ export async function checkPackageReadiness({ root = process.cwd(), dryRun = tru
   }
 
   if (dryRun) {
-    const result = runCapture("pnpm", ["pack", "--dry-run"], root);
+    const result = run("pnpm", ["pack", "--dry-run"], root);
     if (result.error) {
       results.push(fail(`pnpm pack --dry-run could not start: ${result.error.message}`));
     } else if (result.status !== 0) {
@@ -380,6 +489,12 @@ export async function checkPackageReadiness({ root = process.cwd(), dryRun = tru
     }
   } else {
     results.push(warn("Skipped pnpm pack --dry-run"));
+  }
+
+  if (installSmoke) {
+    results.push(await checkPackageInstallSmoke({ root, packageName: pkg.name, run }));
+  } else {
+    results.push(warn("Skipped package install smoke"));
   }
 
   return results;
@@ -417,7 +532,13 @@ async function runChecks(opts) {
     results.push(...(await checkShowcaseAssets({ root })));
   }
   if (opts.checks.includes("package")) {
-    results.push(...(await checkPackageReadiness({ root, dryRun: opts.packageDryRun })));
+    results.push(
+      ...(await checkPackageReadiness({
+        root,
+        dryRun: opts.packageDryRun,
+        installSmoke: opts.packageSmoke,
+      })),
+    );
   }
   return results;
 }

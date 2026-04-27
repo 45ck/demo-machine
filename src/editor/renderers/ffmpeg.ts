@@ -54,7 +54,7 @@ export class FfmpegRenderer implements VideoRenderer {
   private addAudioMapping(args: string[], options: RenderOptions): void {
     if (!options.audioPath) return;
     args.push("-map", "1:a");
-    if (!options.extendToMs) args.push("-shortest");
+    args.push("-af", "apad");
   }
 
   private addDuration(args: string[], timeline: Timeline, options: RenderOptions): void {
@@ -64,10 +64,10 @@ export class FfmpegRenderer implements VideoRenderer {
 
   private buildFilterGraph(timeline: Timeline, options: RenderOptions): string | undefined {
     const filterSteps: string[] = [];
+    const renderDurationMs = options.extendToMs ?? timeline.totalDurationMs;
 
-    if (options.extendToMs && options.extendToMs > timeline.totalDurationMs) {
-      const padSeconds = (options.extendToMs - timeline.totalDurationMs) / 1000;
-      filterSteps.push(`tpad=stop_mode=clone:stop_duration=${padSeconds.toFixed(3)}`);
+    if (renderDurationMs > 0) {
+      filterSteps.push(`tpad=stop_mode=clone:stop_duration=${msToSec(renderDurationMs)}`);
     }
 
     for (const segment of timeline.segments) {

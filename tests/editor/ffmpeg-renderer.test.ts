@@ -147,6 +147,21 @@ describe("FfmpegRenderer.buildArgs", () => {
     expect(args[tIndex + 1]).toBe("5.000");
   });
 
+  it("pads the video stream to the requested timeline duration", async () => {
+    const renderer = new FfmpegRenderer();
+    const options: RenderOptions = {
+      outputPath: "/output/output.mp4",
+      videoPath: "/input/video.webm",
+    };
+
+    await renderer.render(baseTimeline, options);
+
+    const args = mockSpawn.mock.calls[0]![1] as string[];
+    const filterIndex = args.indexOf("-filter_complex");
+    expect(filterIndex).toBeGreaterThan(-1);
+    expect(args[filterIndex + 1]).toContain("tpad=stop_mode=clone:stop_duration=5.000");
+  });
+
   it("uses the extended narration duration when narration is longer than the capture", async () => {
     const renderer = new FfmpegRenderer();
     const options: RenderOptions = {
@@ -162,5 +177,23 @@ describe("FfmpegRenderer.buildArgs", () => {
     const tIndex = args.indexOf("-t");
     expect(tIndex).toBeGreaterThan(-1);
     expect(args[tIndex + 1]).toBe("8.000");
+  });
+
+  it("pads short narration audio instead of shortening the output", async () => {
+    const renderer = new FfmpegRenderer();
+    const options: RenderOptions = {
+      outputPath: "/output/output.mp4",
+      videoPath: "/input/video.webm",
+      audioPath: "/audio/short-narration.mp3",
+    };
+
+    await renderer.render(baseTimeline, options);
+
+    const args = mockSpawn.mock.calls[0]![1] as string[];
+    expect(args).not.toContain("-shortest");
+    const audioFilterIndex = args.indexOf("-af");
+    expect(args[audioFilterIndex + 1]).toBe("apad");
+    const tIndex = args.indexOf("-t");
+    expect(args[tIndex + 1]).toBe("5.000");
   });
 });

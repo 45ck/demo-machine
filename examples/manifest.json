@@ -330,6 +330,16 @@
       "qualitySignals": ["artifact-capture", "deterministic-data"]
     },
     {
+      "slug": "proof-wait-for-page-function",
+      "suiteType": "proof",
+      "canonicalSpec": "examples/proof/actions/proof-wait-for-page-function.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "proof",
+      "visualBaseline": "none",
+      "patternTags": ["async-loading"],
+      "qualitySignals": ["artifact-capture", "deterministic-data"]
+    },
+    {
       "slug": "assurance-long-demo",
       "suiteType": "assurance",
       "canonicalSpec": "examples/assurance/long-demo/long-demo.demo.yaml",

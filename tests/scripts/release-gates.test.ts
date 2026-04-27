@@ -1,8 +1,13 @@
+import { mkdirSync, writeFileSync } from "node:fs";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { checkGalleryConsistency, checkShowcaseAssets } from "../../scripts/release-gates.mjs";
+import {
+  checkGalleryConsistency,
+  checkPackageReadiness,
+  checkShowcaseAssets,
+} from "../../scripts/release-gates.mjs";
 
 describe("release gallery gates", () => {
   let tempDir: string | undefined;
@@ -22,6 +27,12 @@ describe("release gallery gates", () => {
     const filePath = join(tempDir!, relativePath);
     await mkdir(dirname(filePath), { recursive: true });
     await writeFile(filePath, Buffer.alloc(bytes, 1));
+  }
+
+  async function writeText(relativePath: string, value = "") {
+    const filePath = join(tempDir!, relativePath);
+    await mkdir(dirname(filePath), { recursive: true });
+    await writeFile(filePath, value, "utf8");
   }
 
   it("requires gallery-reviewed suites to have gallery entries and assets", async () => {
@@ -164,5 +175,69 @@ describe("release gallery gates", () => {
     expect(results.some((result) => result.status === "fail")).toBe(true);
     expect(results.some((result) => result.message.includes("README is missing"))).toBe(true);
     expect(results.some((result) => result.message.includes("too small"))).toBe(false);
+  });
+
+  it("smokes the packed package from a clean install directory", async () => {
+    tempDir = await mkdtemp(join(tmpdir(), "demo-machine-gates-"));
+    await writeJson("package.json", {
+      name: "demo-machine",
+      main: "dist/index.js",
+      types: "dist/index.d.ts",
+      bin: {
+        "demo-machine": "dist/cli.js",
+      },
+    });
+    await writeText("dist/index.js");
+    await writeText("dist/index.d.ts");
+    await writeText("dist/cli.js");
+
+    const commands: Array<{ command: string; args: string[]; cwd: string }> = [];
+    const run = (command: string, args: string[], cwd: string) => {
+      commands.push({ command, args, cwd });
+
+      if (command === "pnpm" && args[0] === "pack" && args.includes("--pack-destination")) {
+        const destination = args[args.indexOf("--pack-destination") + 1]!;
+        mkdirSync(destination, { recursive: true });
+        const tarball = join(destination, "demo-machine-0.3.0.tgz");
+        writeFileSync(tarball, "packed");
+        return { status: 0, stdout: `${tarball}\n`, stderr: "" };
+      }
+
+      if (command === "npm" && args[0] === "install") {
+        const packageDir = join(cwd, "node_modules", "demo-machine");
+        mkdirSync(join(packageDir, "dist"), { recursive: true });
+        mkdirSync(join(packageDir, "remotion", "src"), { recursive: true });
+        writeFileSync(join(packageDir, "dist", "cli.js"), "");
+        writeFileSync(join(packageDir, "remotion", "src", "Root.tsx"), "");
+      }
+
+      return { status: 0, stdout: "", stderr: "" };
+    };
+
+    const results = await checkPackageReadiness({
+      root: tempDir,
+      dryRun: true,
+      installSmoke: true,
+      run,
+    });
+
+    expect(results.some((result) => result.status === "fail")).toBe(false);
+    expect(
+      commands.some((item) => item.command === "pnpm" && item.args.includes("--dry-run")),
+    ).toBe(true);
+    expect(
+      commands.some(
+        (item) =>
+          item.command === "npm" &&
+          item.args[0] === "install" &&
+          item.args.includes("--omit=optional"),
+      ),
+    ).toBe(true);
+    expect(
+      commands.some(
+        (item) =>
+          item.command === "node" && item.args.includes("examples") && item.args.includes("list"),
+      ),
+    ).toBe(true);
   });
 });
