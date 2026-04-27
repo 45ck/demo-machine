@@ -1,8 +1,10 @@
+/* eslint-disable max-lines */
 import type { DemoSpec } from "../spec/types.js";
 import type { RunResult } from "../pipeline-types.js";
 import { createLogger } from "../utils/logger.js";
 import type { GlobalOptions } from "./options.js";
 import type { NarrationSettings } from "./narration.js";
+import type { NarrationPreSynthesisResult } from "../utils/narration-sync-types.js";
 import { captureFromSpec } from "./capture.js";
 import { prepareNarration, writeSubtitlesFromTimed } from "./narration.js";
 import { displayTimelineAndSaveSegments } from "./timeline-display.js";
@@ -28,6 +30,28 @@ function extractBranding(
   return result;
 }
 
+function recordingOffsetMs(capture: Awaited<ReturnType<typeof captureFromSpec>>): number {
+  const recordingStart = capture.recordingStartTimestamp;
+  if (recordingStart === undefined) return 0;
+  return Math.max(0, capture.startTimestamp - recordingStart);
+}
+
+function remapPreSynthForTrim(
+  preSynth: NarrationPreSynthesisResult | undefined,
+  startEventIndex: number,
+): NarrationPreSynthesisResult | undefined {
+  if (!preSynth || startEventIndex <= 0) return preSynth;
+
+  const timing: NarrationPreSynthesisResult["timing"] = new Map();
+  for (const [actionIndex, entry] of preSynth.timing) {
+    if (actionIndex >= startEventIndex) {
+      timing.set(actionIndex - startEventIndex, entry);
+    }
+  }
+
+  return { ...preSynth, timing };
+}
+
 async function prepareTrimmedCapture(params: {
   capture: Awaited<ReturnType<typeof captureFromSpec>>;
   opts: GlobalOptions;
@@ -50,6 +74,14 @@ async function prepareTrimmedCapture(params: {
     );
   }
 
+  const preSynth = remapPreSynthForTrim(params.capture.narration?.preSynth, trim.startEventIndex);
+  const narration = params.capture.narration
+    ? {
+        settings: params.capture.narration.settings,
+        ...(preSynth ? { preSynth } : {}),
+      }
+    : undefined;
+
   return {
     trim,
     workingCapture: {
@@ -57,6 +89,7 @@ async function prepareTrimmedCapture(params: {
       events: trim.events,
       spec: trim.spec,
       startTimestamp: trim.timelineStartTimestamp,
+      ...(narration ? { narration } : {}),
     },
   };
 }
@@ -64,7 +97,8 @@ async function prepareTrimmedCapture(params: {
 async function renderFromTimeline(params: {
   workingCapture: Awaited<ReturnType<typeof captureFromSpec>>;
   narrationPrep: Awaited<ReturnType<typeof prepareNarration>>;
-  trimStartMs: number;
+  videoOffsetMs: number;
+  userTrimStartMs: number;
   renderer: GlobalOptions["renderer"];
   outputDir: string;
 }): Promise<string> {
@@ -74,7 +108,7 @@ async function renderFromTimeline(params: {
   const branding = extractBranding(params.workingCapture.spec);
 
   if (params.renderer === "remotion") {
-    if (params.trimStartMs > 0) {
+    if (params.userTrimStartMs > 0) {
       throw new Error(
         "Timeline trimming (--from-chapter/--from-step/--trim-start-ms) is not supported with the remotion renderer",
       );
@@ -85,6 +119,10 @@ async function renderFromTimeline(params: {
       outFile: outputPath,
       tempDir: params.outputDir,
       assetsDir: params.outputDir,
+      videoPath: params.workingCapture.videoPath,
+      ...(params.videoOffsetMs > 0 ? { videoStartMs: params.videoOffsetMs } : {}),
+      ...(params.narrationPrep.audioPath ? { audioPath: params.narrationPrep.audioPath } : {}),
+      durationMs: params.narrationPrep.extendToMs ?? params.narrationPrep.timeline.totalDurationMs,
     });
     return outputPath;
   }
@@ -93,7 +131,7 @@ async function renderFromTimeline(params: {
   await ffmpegRenderer.render(params.narrationPrep.timeline, {
     outputPath,
     videoPath: params.workingCapture.videoPath,
-    trimStartMs: params.trimStartMs,
+    trimStartMs: params.videoOffsetMs + params.userTrimStartMs,
     resolution: params.workingCapture.spec.meta.resolution,
     ...(params.narrationPrep.audioPath ? { audioPath: params.narrationPrep.audioPath } : {}),
     ...(params.narrationPrep.extendToMs ? { extendToMs: params.narrationPrep.extendToMs } : {}),
@@ -174,7 +212,8 @@ async function runEditPhase(params: {
   const outputPath = await renderFromTimeline({
     workingCapture,
     narrationPrep,
-    trimStartMs: trim.videoTrimStartMs,
+    videoOffsetMs: recordingOffsetMs(params.capture),
+    userTrimStartMs: trim.videoTrimStartMs,
     renderer: params.opts.renderer,
     outputDir: params.opts.output,
   });
@@ -192,7 +231,7 @@ async function runEditPhase(params: {
     outputPath,
     outputDir: params.opts.output,
     verificationPath: params.capture.artifacts?.verificationPath,
-    spec: params.spec,
+    spec: workingCapture.spec,
     events: workingCapture.events,
     ...(narrationPrep.timedSegments ? { narrationSegments: narrationPrep.timedSegments } : {}),
     startTimestamp: workingCapture.startTimestamp,

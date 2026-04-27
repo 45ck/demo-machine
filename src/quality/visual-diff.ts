@@ -1,4 +1,4 @@
-import { createRequire } from "node:module";
+import { loadVisualDiffDeps } from "./optional-visual-deps.js";
 
 /** Result of comparing two PNG images pixel-by-pixel. */
 export interface PixelDiffResult {
@@ -7,30 +7,6 @@ export interface PixelDiffResult {
   totalPixels: number;
 }
 
-/** Locally typed PNG sync interface (pngjs has no @types package). */
-interface PngImage {
-  data: Uint8Array;
-  width: number;
-  height: number;
-}
-
-interface PngStatic {
-  sync: { read: (buf: Buffer) => PngImage };
-}
-
-type PixelmatchFn = (
-  img1: Uint8Array,
-  img2: Uint8Array,
-  output: null,
-  width: number,
-  height: number,
-  options: { threshold: number },
-) => number;
-
-const require = createRequire(import.meta.url);
-const { PNG } = require("pngjs") as { PNG: PngStatic };
-const pixelmatch = (require("pixelmatch") as { default: PixelmatchFn }).default;
-
 /**
  * Compare two PNG buffers and return pixel-level diff statistics.
  * @param img1 - First PNG image as a Buffer.
@@ -38,6 +14,7 @@ const pixelmatch = (require("pixelmatch") as { default: PixelmatchFn }).default;
  * @param threshold - Matching threshold (0-1), passed to pixelmatch. Default 0.1.
  */
 export function diffImages(img1: Buffer, img2: Buffer, threshold = 0.1): PixelDiffResult {
+  const { PNG, pixelmatch } = loadVisualDiffDeps();
   const a = PNG.sync.read(img1);
   const b = PNG.sync.read(img2);
 
@@ -72,6 +49,7 @@ export interface ColorTarget {
  * @param color - Target RGB color and optional tolerance.
  */
 export function countColorPixels(img: Buffer, color: ColorTarget): number {
+  const { PNG } = loadVisualDiffDeps();
   const { r, g, b, tolerance = 10 } = color;
   const png = PNG.sync.read(img);
   const { data, width, height } = png;

@@ -31,9 +31,11 @@ export class RunnerHealthMonitor implements CaptureMonitor {
         });
       }
     } catch (err) {
+      const isTimeoutAbort =
+        err instanceof Error && (err.name === "AbortError" || err.message.includes("aborted"));
       this._issues.push({
         monitor: this.name,
-        severity: "error",
+        severity: isTimeoutAbort ? "warn" : "error",
         message: `Runner health check failed: ${String(err)}`,
         timestamp: Date.now(),
       });

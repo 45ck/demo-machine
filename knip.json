@@ -1,5 +1,8 @@
 {
   "project": ["src/**/*.ts"],
-  "ignore": ["**/*.test.ts"],
+  "ignoreExportsUsedInFile": {
+    "interface": true,
+    "type": true
+  },
   "ignoreDependencies": ["kokoro-js", "openai", "json5", "@iarna/toml", "pixelmatch", "pngjs"]
 }

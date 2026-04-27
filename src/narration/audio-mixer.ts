@@ -40,7 +40,7 @@ function probeAudioDurationMs(filePath: string): Promise<number> {
 }
 
 async function mixSegmentFiles(segmentFiles: TimedSegment[], audioPath: string): Promise<void> {
-  if (segmentFiles.length === 1) {
+  if (segmentFiles.length === 1 && segmentFiles[0]!.startMs <= 0) {
     await copyFile(segmentFiles[0]!.path, audioPath);
     return;
   }

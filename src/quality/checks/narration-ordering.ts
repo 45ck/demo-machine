@@ -12,7 +12,8 @@ function collectViolations(
   const violations: string[] = [];
   let skippedCount = 0;
 
-  for (const segment of segments) {
+  for (let i = 0; i < segments.length; i++) {
+    const segment = segments[i]!;
     const event = events[segment.actionIndex];
     if (!event) {
       skippedCount++;
@@ -23,6 +24,27 @@ function collectViolations(
       violations.push(
         `step ${segment.actionIndex}: narration starts ${deltaMs}ms after action ` +
           `(narration=${segment.startMs}ms, action=${event.timestamp}ms, "${segment.text}")`,
+      );
+    }
+    if (
+      segment.durationMs !== undefined &&
+      event.timestamp > segment.startMs + segment.durationMs
+    ) {
+      const deltaMs = event.timestamp - (segment.startMs + segment.durationMs);
+      violations.push(
+        `step ${segment.actionIndex}: action occurs ${deltaMs}ms after narration ends ` +
+          `(narration=${segment.startMs}-${segment.startMs + segment.durationMs}ms, action=${event.timestamp}ms, "${segment.text}")`,
+      );
+    }
+    const next = segments[i + 1];
+    if (
+      next &&
+      segment.durationMs !== undefined &&
+      segment.startMs + segment.durationMs > next.startMs
+    ) {
+      violations.push(
+        `segments ${i} and ${i + 1} overlap ` +
+          `(current=${segment.startMs}-${segment.startMs + segment.durationMs}ms, next=${next.startMs}ms)`,
       );
     }
   }
@@ -53,7 +75,7 @@ export function checkNarrationOrdering(ctx: QualityCheckContext): CheckResult[] 
     results.push(
       postRenderFail(
         CHECK_NAME,
-        `Narration plays after action in ${violations.length} segment(s): ${violations.join("; ")}`,
+        `Narration timing failed in ${violations.length} segment(s): ${violations.join("; ")}`,
         "Review narration timing — consider increasing inter-step delays or reducing narration length",
       ),
     );

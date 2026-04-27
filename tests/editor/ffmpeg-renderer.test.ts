@@ -37,7 +37,7 @@ describe("FfmpegRenderer.buildArgs", () => {
     resolution: { width: 1920, height: 1080 },
   };
 
-  it("places -ss before both video and audio inputs when trimStartMs > 0 and audioPath is set", async () => {
+  it("places video -ss only before the video input when trimStartMs > 0 and audioPath is set", async () => {
     const renderer = new FfmpegRenderer();
     const options: RenderOptions = {
       outputPath: "/output/output.mp4",
@@ -57,8 +57,7 @@ describe("FfmpegRenderer.buildArgs", () => {
       return acc;
     }, []);
 
-    // Should have two -ss flags
-    expect(ssIndices).toHaveLength(2);
+    expect(ssIndices).toHaveLength(1);
 
     // Find -i occurrences
     const iIndices = args.reduce<number[]>((acc, arg, i) => {
@@ -70,12 +69,36 @@ describe("FfmpegRenderer.buildArgs", () => {
 
     // First -ss before first -i (video)
     expect(ssIndices[0]).toBeLessThan(iIndices[0]!);
-    // Second -ss before second -i (audio)
-    expect(ssIndices[1]).toBeLessThan(iIndices[1]!);
-
-    // Both -ss values should be "2.000"
     expect(args[ssIndices[0]! + 1]).toBe("2.000");
-    expect(args[ssIndices[1]! + 1]).toBe("2.000");
+  });
+
+  it("trims audio separately when audioTrimStartMs is set", async () => {
+    const renderer = new FfmpegRenderer();
+    const options: RenderOptions = {
+      outputPath: "/output/output.mp4",
+      videoPath: "/input/video.webm",
+      trimStartMs: 2000,
+      audioTrimStartMs: 750,
+      audioPath: "/audio/narration.mp3",
+    };
+
+    await renderer.render(baseTimeline, options);
+
+    const args = mockSpawn.mock.calls[0]![1] as string[];
+    const ssIndices = args.reduce<number[]>((acc, arg, i) => {
+      if (arg === "-ss") acc.push(i);
+      return acc;
+    }, []);
+    const iIndices = args.reduce<number[]>((acc, arg, i) => {
+      if (arg === "-i") acc.push(i);
+      return acc;
+    }, []);
+
+    expect(ssIndices).toHaveLength(2);
+    expect(ssIndices[0]).toBeLessThan(iIndices[0]!);
+    expect(ssIndices[1]).toBeLessThan(iIndices[1]!);
+    expect(args[ssIndices[0]! + 1]).toBe("2.000");
+    expect(args[ssIndices[1]! + 1]).toBe("0.750");
   });
 
   it("has only one -ss when trimStartMs > 0 but no audioPath", async () => {

@@ -26,7 +26,10 @@ export interface Timeline {
 export interface RenderOptions {
   outputPath: string;
   videoPath: string;
+  /** Trim applied to the video input. */
   trimStartMs?: number | undefined;
+  /** Trim applied to the audio input. Defaults to no audio trim. */
+  audioTrimStartMs?: number | undefined;
   audioPath?: string | undefined;
   extendToMs?: number | undefined;
   resolution?: { width: number; height: number } | undefined;

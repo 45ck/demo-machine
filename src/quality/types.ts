@@ -64,7 +64,9 @@ export interface QualityCheckContext {
   /** Action events from events.json, for narration ordering check. */
   events?: Array<{ action: string; timestamp: number; duration: number }> | undefined;
   /** Timed narration segments, for narration ordering check. */
-  narrationSegments?: Array<{ actionIndex: number; startMs: number; text: string }> | undefined;
+  narrationSegments?:
+    | Array<{ actionIndex: number; startMs: number; durationMs?: number; text: string }>
+    | undefined;
   /** Frame presentation timestamps in seconds, for frame rate check. */
   framePtsSec?: number[] | undefined;
   /** Whether the spec includes an intro segment. */

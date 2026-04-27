@@ -130,6 +130,7 @@ describe("wrapWithScreenshotCapture", () => {
   });
 
   it("records cursor position for click steps with bounding box", async () => {
+    (page.evaluate as ReturnType<typeof vi.fn>).mockResolvedValue({ x: 137, y: 219 });
     const handler: ActionHandler = vi.fn(async (_ctx, _step, events: ActionEvent[]) => {
       events.push({
         action: "click",
@@ -147,8 +148,8 @@ describe("wrapWithScreenshotCapture", () => {
 
     expect(collector.recordCursorPosition).toHaveBeenCalledWith({
       stepIndex: 2,
-      cursorX: 140, // x + width/2
-      cursorY: 220, // y + height/2
+      cursorX: 137,
+      cursorY: 219,
       targetCenterX: 140,
       targetCenterY: 220,
     });

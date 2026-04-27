@@ -174,4 +174,21 @@ describe("examples CLI helpers", () => {
 
     expect(manifest.suites).toHaveLength(raw.suites.length);
   });
+
+  it("falls back to the packaged manifest only when the supplied root has no manifest", async () => {
+    tempDir = await mkdtemp(join(tmpdir(), "demo-machine-examples-"));
+
+    const manifest = await loadExamplesManifest(tempDir);
+
+    expect(manifest.suites.some((suite) => suite.slug === "hello-world")).toBe(true);
+  });
+
+  it("does not hide invalid local manifest JSON behind the packaged fallback", async () => {
+    tempDir = await mkdtemp(join(tmpdir(), "demo-machine-examples-"));
+    const examplesDir = join(tempDir, "examples");
+    await mkdir(examplesDir);
+    await writeFile(join(examplesDir, "manifest.json"), "{not json", "utf8");
+
+    await expect(loadExamplesManifest(tempDir)).rejects.toThrow("Invalid JSON");
+  });
 });

@@ -12,9 +12,18 @@ const log = createLogger("cli:pipeline");
 type EditCapture = {
   events: Awaited<ReturnType<typeof import("../capture/event-log.js").readEventLog>>;
   startTimestamp: number;
+  recordingStartTimestamp?: number | undefined;
   assetsDir: string;
   trim: Awaited<ReturnType<typeof import("../editor/trim.js").applyTimelineTrim>>;
 };
+
+function recordingOffsetMs(
+  capture: Pick<EditCapture, "recordingStartTimestamp" | "startTimestamp">,
+): number {
+  const recordingStart = capture.recordingStartTimestamp;
+  if (recordingStart === undefined) return 0;
+  return Math.max(0, capture.startTimestamp - recordingStart);
+}
 
 async function loadAndTrimEditCapture(
   eventsPath: string,
@@ -40,6 +49,9 @@ async function loadAndTrimEditCapture(
   );
   const startTimestamp = meta?.startTimestamp ?? events[0]?.timestamp ?? 0;
   if (meta?.startTimestamp) log.info(`Using capture startTimestamp: ${String(startTimestamp)}`);
+  if (meta?.recordingStartTimestamp) {
+    log.info(`Using recordingStartTimestamp: ${String(meta.recordingStartTimestamp)}`);
+  }
 
   const dummySpec = specMod.validateSpec({
     meta: { title: "Demo", resolution: { width: 1920, height: 1080 } },
@@ -60,11 +72,18 @@ async function loadAndTrimEditCapture(
       `Applying trim start at ${String(trim.videoTrimStartMs)}ms (event index ${String(trim.startEventIndex)})`,
     );
   }
-  return { events, startTimestamp, assetsDir, trim };
+  return {
+    events,
+    startTimestamp,
+    recordingStartTimestamp: meta?.recordingStartTimestamp,
+    assetsDir,
+    trim,
+  };
 }
 
 async function renderEditNarrated(params: {
   specPath: string;
+  spec: Awaited<ReturnType<typeof import("../spec/loader.js").loadSpec>>;
   events: EditCapture["events"];
   startTimestamp: number;
   timeline: Awaited<ReturnType<typeof import("../editor/timeline.js").buildTimeline>>;
@@ -74,22 +93,20 @@ async function renderEditNarrated(params: {
   outputPath: string;
   trimStartMs: number;
 }): Promise<boolean> {
-  const { loadSpec } = await import("../spec/loader.js");
-  const realSpec = await loadSpec(params.specPath);
   const narrationSettings = resolveNarrationSettings({
-    spec: realSpec,
+    spec: params.spec,
     opts: params.opts,
     getOptionSource: () => undefined,
   });
   if (!narrationSettings.enabled) return false;
 
   const narrationPrep = await prepareNarration({
-    capture: { spec: realSpec, events: params.events, startTimestamp: params.startTimestamp },
+    capture: { spec: params.spec, events: params.events, startTimestamp: params.startTimestamp },
     timeline: params.timeline,
     opts: params.opts,
     settings: narrationSettings,
   });
-  await params.renderer.render(params.timeline, {
+  await params.renderer.render(narrationPrep.timeline, {
     outputPath: params.outputPath,
     videoPath: params.videoPath,
     trimStartMs: params.trimStartMs,
@@ -101,8 +118,8 @@ async function renderEditNarrated(params: {
       timedSegments: narrationPrep.timedSegments,
       events: params.events,
       startTimestamp: params.startTimestamp,
-      spec: realSpec,
-      totalDurationMs: params.timeline.totalDurationMs,
+      spec: params.spec,
+      totalDurationMs: narrationPrep.timeline.totalDurationMs,
       outputDir: params.opts.output,
       showTimeline: params.opts.timeline,
     });
@@ -125,14 +142,15 @@ export async function runEditPipeline(
     );
   }
 
-  const [timelineMod, rendererMod, pathMod, fsMod] = await Promise.all([
+  const [timelineMod, rendererMod, trimMod, pathMod, fsMod] = await Promise.all([
     import("../editor/timeline.js"),
     import("../editor/renderer.js"),
+    import("../editor/trim.js"),
     import("node:path"),
     import("node:fs/promises"),
   ]);
 
-  const { events, startTimestamp, assetsDir, trim } = await loadAndTrimEditCapture(
+  const { startTimestamp, recordingStartTimestamp, assetsDir, trim } = await loadAndTrimEditCapture(
     eventsPath,
     opts,
   );
@@ -140,6 +158,11 @@ export async function runEditPipeline(
   const renderer = rendererMod.createRenderer(opts.renderer);
   const outputPath = pathMod.join(opts.output, "output.mp4");
   const videoPath = pathMod.join(assetsDir, "video.webm");
+  const videoTrimStartMs =
+    recordingOffsetMs({
+      recordingStartTimestamp,
+      startTimestamp,
+    }) + trim.videoTrimStartMs;
 
   try {
     await fsMod.access(videoPath);
@@ -149,16 +172,20 @@ export async function runEditPipeline(
   await fsMod.mkdir(opts.output, { recursive: true });
 
   if (specPath && opts.narration) {
+    const { loadSpec } = await import("../spec/loader.js");
+    const realSpec = await loadSpec(specPath);
+    const trimmedSpec = trimMod.trimSpecFromStepIndex(realSpec, trim.startEventIndex);
     const rendered = await renderEditNarrated({
       specPath,
-      events,
-      startTimestamp,
+      spec: trimmedSpec,
+      events: trim.events,
+      startTimestamp: trim.timelineStartTimestamp,
       timeline,
       renderer,
       opts,
       videoPath,
       outputPath,
-      trimStartMs: trim.videoTrimStartMs,
+      trimStartMs: videoTrimStartMs,
     });
     if (rendered) {
       log.info(`Output: ${outputPath}`);
@@ -166,6 +193,6 @@ export async function runEditPipeline(
     }
   }
 
-  await renderer.render(timeline, { outputPath, videoPath, trimStartMs: trim.videoTrimStartMs });
+  await renderer.render(timeline, { outputPath, videoPath, trimStartMs: videoTrimStartMs });
   log.info(`Output: ${outputPath}`);
 }

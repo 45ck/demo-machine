@@ -1,7 +1,11 @@
-import { createRequire } from "node:module";
 import { postRenderPass, postRenderFail, postRenderWarn } from "../../../validation/types.js";
 import type { CheckResult } from "../../../validation/types.js";
 import type { QualityCheckContext } from "../../types.js";
+import {
+  isOptionalVisualDependencyError,
+  loadPng,
+  type PngImage,
+} from "../../optional-visual-deps.js";
 
 const CHECK_NAME = "visual:chapter-title";
 
@@ -9,23 +13,10 @@ const BLANK_STDDEV_THRESHOLD = 4;
 const BLANK_DARK_LUMA = 8;
 const BLANK_LIGHT_LUMA = 247;
 
-interface PngImage {
-  data: Uint8Array;
-  width: number;
-  height: number;
-}
-
-interface PngStatic {
-  sync: { read: (buf: Buffer) => PngImage };
-}
-
 interface Dimensions {
   width: number;
   height: number;
 }
-
-const require = createRequire(import.meta.url);
-const { PNG } = require("pngjs") as { PNG: PngStatic };
 
 /**
  * Validate captured chapter title frames. Different chapters are expected to
@@ -94,8 +85,17 @@ function decodeChapterScreenshot(
   screenshot: Buffer,
 ): { status: "ok"; image: PngImage } | { status: "fail"; result: CheckResult } {
   try {
-    return { status: "ok", image: PNG.sync.read(screenshot) };
+    return { status: "ok", image: loadPng().sync.read(screenshot) };
   } catch (err) {
+    if (isOptionalVisualDependencyError(err)) {
+      return {
+        status: "fail",
+        result: postRenderWarn(
+          CHECK_NAME,
+          `Chapter ${String(chapterIndex)} title screenshot skipped: ${err.message}`,
+        ),
+      };
+    }
     return {
       status: "fail",
       result: postRenderFail(

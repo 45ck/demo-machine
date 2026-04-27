@@ -49,16 +49,17 @@ export class RemotionRenderer implements Renderer {
     log.info("Bundling Remotion composition...");
     const bundleLocation = await bundlerMod.bundle({ entryPoint });
 
-    const videoSrc = join(args.assetsDir, "video.webm");
-    const audioSrc = join(args.assetsDir, "narration.wav");
+    const videoSrc = args.videoPath ?? join(args.assetsDir, "video.webm");
 
     const inputProps: Record<string, unknown> = {
       specTitle: args.spec.meta.title,
       videoSrc,
-      audioSrc,
       resolution: args.spec.meta.resolution,
       fps: 30,
     };
+    if (args.videoStartMs !== undefined) inputProps["videoStartMs"] = args.videoStartMs;
+    if (args.audioPath) inputProps["audioSrc"] = args.audioPath;
+    if (args.durationMs !== undefined) inputProps["durationMs"] = args.durationMs;
 
     log.info("Selecting composition...");
     const composition = await rendererMod.selectComposition({

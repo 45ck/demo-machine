@@ -85,6 +85,41 @@ describe("RemotionRenderer", () => {
     const renderArgs = mockRenderMedia.mock.calls[0]![0] as { codec: string };
     expect(renderArgs.codec).toBe("h264");
   });
+
+  it("passes explicit media paths, duration, and video start offset to Remotion", async () => {
+    mockSelectComposition.mockClear();
+    mockRenderMedia.mockClear();
+    const { RemotionRenderer } = await import("../../src/editor/renderers/remotion.js");
+    const renderer = new RemotionRenderer();
+
+    await renderer.render({
+      spec: {
+        meta: { title: "Test", resolution: { width: 1920, height: 1080 } },
+        runner: { url: "http://localhost:3000", timeout: 30000 },
+        chapters: [{ title: "Ch1", steps: [{ action: "navigate" as const, url: "/" }] }],
+      } as Parameters<typeof renderer.render>[0]["spec"],
+      outFile: "/output/output.mp4",
+      tempDir: "/tmp",
+      assetsDir: "/assets",
+      videoPath: "/capture/video.webm",
+      audioPath: "/capture/narration.wav",
+      videoStartMs: 1250,
+      durationMs: 9000,
+    });
+
+    const selectArgs = mockSelectComposition.mock.calls[0]![0] as {
+      inputProps: Record<string, unknown>;
+    };
+    expect(selectArgs.inputProps.videoSrc).toBe("/capture/video.webm");
+    expect(selectArgs.inputProps.audioSrc).toBe("/capture/narration.wav");
+    expect(selectArgs.inputProps.videoStartMs).toBe(1250);
+    expect(selectArgs.inputProps.durationMs).toBe(9000);
+
+    const renderArgs = mockRenderMedia.mock.calls[0]![0] as {
+      inputProps: Record<string, unknown>;
+    };
+    expect(renderArgs.inputProps).toEqual(selectArgs.inputProps);
+  });
 });
 
 describe("RemotionRenderer import failures", () => {

@@ -60,6 +60,7 @@ function standardOutput(overrides?: {
   pixFmt?: string;
   videoDuration?: string;
   audioDuration?: string;
+  formatDuration?: string;
   formatName?: string;
 }): string {
   const o = {
@@ -70,6 +71,7 @@ function standardOutput(overrides?: {
     pixFmt: "yuv420p",
     videoDuration: "10.500000",
     audioDuration: "10.400000",
+    formatDuration: "10.500000",
     formatName: "mov,mp4,m4a,3gp,3g2,mj2",
     ...overrides,
   };
@@ -92,6 +94,7 @@ function standardOutput(overrides?: {
     ],
     format: {
       format_name: o.formatName,
+      duration: o.formatDuration,
     },
   });
 }
@@ -237,13 +240,32 @@ describe("probeVideo", () => {
   it("returns finite duration when ffprobe reports N/A for duration", async () => {
     const promise = probeVideo("/path/to/video.mp4");
 
-    emitOutput(standardOutput({ videoDuration: "N/A", audioDuration: "N/A" }));
+    emitOutput(
+      standardOutput({ videoDuration: "N/A", audioDuration: "N/A", formatDuration: "N/A" }),
+    );
     closeWith(0);
 
     const result = await promise;
     expect(Number.isFinite(result.videoDurationSec)).toBe(true);
     expect(result.videoDurationSec).toBe(0);
     expect(result.audioDurationSec).toBe(0);
+  });
+
+  it("falls back to format duration when stream durations are missing", async () => {
+    const promise = probeVideo("/path/to/video.mp4");
+
+    emitOutput(
+      standardOutput({
+        videoDuration: undefined,
+        audioDuration: undefined,
+        formatDuration: "12.250000",
+      }),
+    );
+    closeWith(0);
+
+    const result = await promise;
+    expect(result.videoDurationSec).toBe(12.25);
+    expect(result.audioDurationSec).toBe(12.25);
   });
 
   it("handles stdout split across multiple data events", async () => {

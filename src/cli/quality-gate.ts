@@ -61,7 +61,12 @@ function buildQualityGateInputs(params: {
   startTimestamp: number;
 }): {
   events: Array<{ action: string; timestamp: number; duration: number }>;
-  narrationSegments: Array<{ actionIndex: number; startMs: number; text: string }>;
+  narrationSegments: Array<{
+    actionIndex: number;
+    startMs: number;
+    durationMs: number;
+    text: string;
+  }>;
 } {
   const t0 = params.startTimestamp;
   const events = params.events.map((e) => ({
@@ -73,6 +78,7 @@ function buildQualityGateInputs(params: {
   const narrationSegments = (params.narrationSegments ?? []).map((seg, i) => ({
     actionIndex: narrationToAction[i] ?? i,
     startMs: seg.startMs,
+    durationMs: seg.durationMs,
     text: seg.text,
   }));
   return { events, narrationSegments };

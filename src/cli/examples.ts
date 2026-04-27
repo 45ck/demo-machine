@@ -1,6 +1,8 @@
+/* eslint-disable max-lines */
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { fileURLToPath } from "node:url";
 import { Command, InvalidArgumentError } from "commander";
 import { createLogger } from "../utils/logger.js";
 
@@ -35,6 +37,14 @@ type ExampleSuiteType = "showcase" | "assurance" | "proof";
 type ExampleTypeFilter = ExampleSuiteType | "all";
 
 const DEFAULT_EXAMPLE_TYPES = new Set(["showcase", "assurance"]);
+const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
+
+class MissingExamplesManifestError extends Error {
+  constructor(manifestPath: string, cause: unknown) {
+    super(`Unable to read examples manifest at ${manifestPath}`, { cause });
+    this.name = "MissingExamplesManifestError";
+  }
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -104,11 +114,14 @@ export function parseExamplesManifest(raw: unknown): ExamplesManifest {
   };
 }
 
-export async function loadExamplesManifest(rootDir = process.cwd()): Promise<ExamplesManifest> {
+async function readManifestAt(rootDir: string): Promise<ExamplesManifest> {
   const manifestPath = path.join(rootDir, "examples", "manifest.json");
   try {
     return parseExamplesManifest(JSON.parse(await readFile(manifestPath, "utf8")));
   } catch (err) {
+    if (err instanceof Error && "code" in err && (err as NodeJS.ErrnoException).code === "ENOENT") {
+      throw new MissingExamplesManifestError(manifestPath, err);
+    }
     if (err instanceof SyntaxError) {
       throw new Error(`Invalid JSON in ${manifestPath}: ${err.message}`, { cause: err });
     }
@@ -116,6 +129,16 @@ export async function loadExamplesManifest(rootDir = process.cwd()): Promise<Exa
       throw err;
     }
     throw new Error(`Unable to read examples manifest at ${manifestPath}`, { cause: err });
+  }
+}
+
+export async function loadExamplesManifest(rootDir = process.cwd()): Promise<ExamplesManifest> {
+  try {
+    return await readManifestAt(rootDir);
+  } catch (err) {
+    if (!(err instanceof MissingExamplesManifestError)) throw err;
+    if (path.resolve(rootDir) === PACKAGE_ROOT) throw err;
+    return await readManifestAt(PACKAGE_ROOT);
   }
 }
 

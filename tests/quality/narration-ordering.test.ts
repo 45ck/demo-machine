@@ -4,7 +4,12 @@ import { checkNarrationOrdering } from "../../src/quality/checks/narration-order
 
 function ctx(
   events: Array<{ action: string; timestamp: number; duration: number }>,
-  narrationSegments: Array<{ actionIndex: number; startMs: number; text: string }>,
+  narrationSegments: Array<{
+    actionIndex: number;
+    startMs: number;
+    durationMs?: number;
+    text: string;
+  }>,
 ): QualityCheckContext {
   return {
     outputMp4Path: "/out/output.mp4",
@@ -92,6 +97,30 @@ describe("checkNarrationOrdering", () => {
     const results = checkNarrationOrdering(ctx(events, segments));
     expect(results[0]!.message).toContain("step 0");
     expect(results[0]!.message).toContain("Click the button");
+  });
+
+  it("fails when an action occurs after its narration has already ended", () => {
+    const events = [{ action: "click", timestamp: 3000, duration: 200 }];
+    const segments = [
+      { actionIndex: 0, startMs: 1000, durationMs: 1000, text: "Click the button" },
+    ];
+    const results = checkNarrationOrdering(ctx(events, segments));
+    expect(results[0]!.status).toBe("fail");
+    expect(results[0]!.message).toContain("after narration ends");
+  });
+
+  it("fails when adjacent narration segments overlap", () => {
+    const events = [
+      { action: "click", timestamp: 1000, duration: 200 },
+      { action: "type", timestamp: 2500, duration: 200 },
+    ];
+    const segments = [
+      { actionIndex: 0, startMs: 500, durationMs: 2500, text: "Click the button" },
+      { actionIndex: 1, startMs: 2000, durationMs: 1000, text: "Type the text" },
+    ];
+    const results = checkNarrationOrdering(ctx(events, segments));
+    expect(results[0]!.status).toBe("fail");
+    expect(results[0]!.message).toContain("overlap");
   });
 
   it("handles multiple violations (reports all, not just first)", () => {

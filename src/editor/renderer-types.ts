@@ -5,6 +5,10 @@ export interface RenderArgs {
   outFile: string;
   tempDir: string;
   assetsDir: string;
+  videoPath?: string | undefined;
+  videoStartMs?: number | undefined;
+  audioPath?: string | undefined;
+  durationMs?: number | undefined;
 }
 
 export interface RenderResult {

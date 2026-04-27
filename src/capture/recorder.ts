@@ -107,6 +107,7 @@ export async function createRecordingContext(
 ): Promise<{
   context: PlaywrightContext;
   page: PlaywrightPage;
+  recordingStartTimestamp: number;
   geometry?: CaptureGeometrySnapshot;
 }> {
   await mkdir(options.outputDir, { recursive: true });
@@ -128,6 +129,7 @@ export async function createRecordingContext(
   });
 
   const page = await context.newPage();
+  const recordingStartTimestamp = Date.now();
   const geometry = await inspectGeometry(page);
   if (geometry) {
     logger.info(
@@ -147,7 +149,7 @@ export async function createRecordingContext(
   await context.tracing.start({ screenshots: true, snapshots: true });
   logger.info("Tracing started");
 
-  return { context, page, ...(geometry ? { geometry } : {}) };
+  return { context, page, recordingStartTimestamp, ...(geometry ? { geometry } : {}) };
 }
 
 export async function finalizeCapture(

@@ -13,7 +13,7 @@ interface FfprobeStream {
 
 interface FfprobeOutput {
   streams?: FfprobeStream[];
-  format?: { format_name?: string };
+  format?: { format_name?: string; duration?: string };
 }
 
 function extractVideoStream(parsed: FfprobeOutput): FfprobeStream {
@@ -30,8 +30,15 @@ function parseDuration(s: string | undefined): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+function chooseDuration(streamDuration: string | undefined, fallback: number): number {
+  return parseDuration(streamDuration) || fallback;
+}
+
 function buildResult(parsed: FfprobeOutput, video: FfprobeStream): VideoProbeResult {
   const audio = (parsed.streams ?? []).find((s) => s.codec_type === "audio");
+  const formatDuration = parseDuration(parsed.format?.duration);
+  const videoDuration = chooseDuration(video.duration, formatDuration);
+  const audioDuration = audio ? chooseDuration(audio.duration, formatDuration) : null;
   return {
     width: video.width ?? 0,
     height: video.height ?? 0,
@@ -39,8 +46,8 @@ function buildResult(parsed: FfprobeOutput, video: FfprobeStream): VideoProbeRes
     videoCodec: video.codec_name ?? "unknown",
     pixFmt: video.pix_fmt ?? "unknown",
     containerFormat: parsed.format?.format_name ?? "unknown",
-    videoDurationSec: parseDuration(video.duration),
-    audioDurationSec: audio ? parseDuration(audio.duration) : null,
+    videoDurationSec: videoDuration,
+    audioDurationSec: audioDuration,
   };
 }
 

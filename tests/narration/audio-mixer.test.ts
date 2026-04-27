@@ -97,10 +97,10 @@ describe("mixNarrationAudio", () => {
     expect(result).toBeUndefined();
   });
 
-  it("uses copyFile (not ffmpeg) for a single segment", async () => {
+  it("uses copyFile for a single segment that starts immediately", async () => {
     const { mixNarrationAudio } = await import("../../src/narration/audio-mixer.js");
     const provider = makeProvider();
-    const segments = makeSegments(["hello world"], [3000]);
+    const segments = makeSegments(["hello world"], [0]);
 
     const result = await mixNarrationAudio(segments, provider, "/out");
 
@@ -119,6 +119,21 @@ describe("mixNarrationAudio", () => {
 
     expect(result).toBeDefined();
     expect(result!.audioPath).toContain("narration.wav");
+  });
+
+  it("uses ffmpeg delay for a single segment with a scheduled offset", async () => {
+    const { mixNarrationAudio } = await import("../../src/narration/audio-mixer.js");
+    const provider = makeProvider();
+    const segments = makeSegments(["hello world"], [3000]);
+
+    const result = await mixNarrationAudio(segments, provider, "/out");
+
+    expect(provider.synthesize).toHaveBeenCalledTimes(1);
+    expect(mockCopyFile).not.toHaveBeenCalled();
+    const ffmpegCalls = mockSpawn.mock.calls.filter((c) => c[0] === "ffmpeg");
+    expect(ffmpegCalls).toHaveLength(1);
+    expect(ffmpegCalls[0]![1].join(" ")).toContain("adelay=2250|2250");
+    expect(result).toBeDefined();
   });
 
   it("calls ffmpeg for multi-segment mixing", async () => {

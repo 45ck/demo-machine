@@ -2,6 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 
 export interface CaptureMetadataV1 {
   schemaVersion: 1;
+  recordingStartTimestamp?: number;
   startTimestamp: number;
   createdAt: string;
   specTitle?: string;
@@ -31,6 +32,10 @@ async function readCaptureMetadata(path: string): Promise<CaptureMetadata> {
   if (typeof record["startTimestamp"] !== "number") {
     throw new Error("Capture metadata missing numeric startTimestamp");
   }
+  const recordingStartTimestamp =
+    typeof record["recordingStartTimestamp"] === "number"
+      ? record["recordingStartTimestamp"]
+      : undefined;
   if (typeof record["createdAt"] !== "string") {
     throw new Error("Capture metadata missing string createdAt");
   }
@@ -39,6 +44,7 @@ async function readCaptureMetadata(path: string): Promise<CaptureMetadata> {
 
   return {
     schemaVersion: 1,
+    ...(recordingStartTimestamp !== undefined ? { recordingStartTimestamp } : {}),
     startTimestamp: record["startTimestamp"],
     createdAt: record["createdAt"],
     ...(specTitle ? { specTitle } : {}),

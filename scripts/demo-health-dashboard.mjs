@@ -26,6 +26,15 @@ function fileSizeBytes(filePath) {
   }
 }
 
+function toRepoRelative(filePath) {
+  if (!filePath) return filePath;
+  const resolved = path.resolve(filePath);
+  const relative = path.relative(ROOT, resolved);
+  return relative && !relative.startsWith("..") && !path.isAbsolute(relative)
+    ? relative.replaceAll("\\", "/")
+    : filePath.replaceAll("\\", "/");
+}
+
 function findVideoArtifact(dir, verification) {
   const candidates = [
     verification?.artifacts?.videoPath,
@@ -36,7 +45,7 @@ function findVideoArtifact(dir, verification) {
   for (const candidate of candidates) {
     if (existsSync(candidate)) {
       return {
-        path: candidate,
+        path: toRepoRelative(candidate),
         exists: true,
         sizeBytes: fileSizeBytes(candidate),
         extension: path.extname(candidate).slice(1) || null,
@@ -44,7 +53,12 @@ function findVideoArtifact(dir, verification) {
     }
   }
 
-  return { path: candidates[0] ?? null, exists: false, sizeBytes: 0, extension: null };
+  return {
+    path: candidates[0] ? toRepoRelative(candidates[0]) : null,
+    exists: false,
+    sizeBytes: 0,
+    extension: null,
+  };
 }
 
 /** Collect per-demo metrics from a single output directory. */
@@ -143,7 +157,7 @@ function collectDemo(slug, dir) {
   const lastCaptureTimestamp = metadata?.createdAt ?? verification?.createdAt ?? null;
 
   // Spec path
-  const specPath = verification?.spec?.path ?? null;
+  const specPath = verification?.spec?.path ? toRepoRelative(verification.spec.path) : null;
   const specTitle = verification?.spec?.title ?? metadata?.specTitle ?? slug;
 
   return {

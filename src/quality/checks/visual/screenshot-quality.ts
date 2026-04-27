@@ -1,16 +1,10 @@
-import { createRequire } from "node:module";
-import { postRenderFail } from "../../../validation/types.js";
+import { postRenderFail, postRenderWarn } from "../../../validation/types.js";
 import type { CheckResult } from "../../../validation/types.js";
-
-interface PngImage {
-  data: Uint8Array;
-  width: number;
-  height: number;
-}
-
-interface PngStatic {
-  sync: { read: (buf: Buffer) => PngImage };
-}
+import {
+  isOptionalVisualDependencyError,
+  loadPng,
+  type PngImage,
+} from "../../optional-visual-deps.js";
 
 interface ScreenshotQualityArtifact {
   label: string;
@@ -21,9 +15,6 @@ interface ExpectedScreenshotDimensions {
   width: number;
   height: number;
 }
-
-const require = createRequire(import.meta.url);
-const { PNG } = require("pngjs") as { PNG: PngStatic };
 
 export function checkScreenshotArtifactQuality(params: {
   checkName: string;
@@ -54,8 +45,12 @@ function readPng(
   results: CheckResult[],
 ): PngImage | null {
   try {
-    return PNG.sync.read(artifact.buffer);
+    return loadPng().sync.read(artifact.buffer);
   } catch (err) {
+    if (isOptionalVisualDependencyError(err)) {
+      results.push(postRenderWarn(checkName, `${artifact.label}: ${err.message} (skipped)`));
+      return null;
+    }
     results.push(
       postRenderFail(
         checkName,

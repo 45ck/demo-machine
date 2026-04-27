@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import type { DemoSpec } from "../spec/types.js";
 import type { ActionEvent } from "../playback/types.js";
 import type { PlaywrightPage } from "../playback/actions.js";
@@ -41,6 +42,7 @@ export interface CaptureResult {
   videoPath: string;
   events: ActionEvent[];
   spec: DemoSpec;
+  recordingStartTimestamp?: number;
   startTimestamp: number;
   artifacts?: CaptureArtifacts | undefined;
   narration?:
@@ -99,7 +101,7 @@ async function prepareCaptureSession(params: {
 
 async function finalizeSuccessfulCapture(params: {
   captureMod: CaptureRecorderModule;
-  recording: { context: unknown; page: unknown };
+  recording: { context: unknown; page: unknown; recordingStartTimestamp: number };
   captureOpts: { outputDir: string; resolution: DemoSpec["meta"]["resolution"] };
   spec: DemoSpec;
   specPath?: string | undefined;
@@ -117,6 +119,7 @@ async function finalizeSuccessfulCapture(params: {
       ...params.captureOpts,
       meta: {
         schemaVersion: 1,
+        recordingStartTimestamp: params.recording.recordingStartTimestamp,
         startTimestamp: params.startTimestamp,
         createdAt: new Date().toISOString(),
         specTitle: params.spec.meta.title,
@@ -149,6 +152,7 @@ async function finalizeSuccessfulCapture(params: {
     videoPath: bundle.videoPath,
     events: params.events,
     spec: params.spec,
+    recordingStartTimestamp: params.recording.recordingStartTimestamp,
     startTimestamp: params.startTimestamp,
     artifacts: {
       tracePath: bundle.tracePath,
@@ -259,7 +263,6 @@ async function captureWithBrowser(params: CaptureWithBrowserParams): Promise<Cap
 export async function captureFromSpec(params: {
   spec: DemoSpec;
   specPath?: string;
-  /** Explicit specDir override; takes precedence over the value derived from specPath. */
   specDir?: string | undefined;
   opts: GlobalOptions;
   settings: NarrationSettings;
@@ -281,14 +284,15 @@ export async function captureFromSpec(params: {
     settings: params.settings,
   });
 
-  // Spec-level selectApproach as fallback when CLI flag was not provided.
-  if (!process.env["DM_SELECT_APPROACH"] && spec.meta.selectApproach) {
-    process.env["DM_SELECT_APPROACH"] = spec.meta.selectApproach;
-  }
-
   log.info(`Running: "${spec.meta.title}"`);
 
-  const handle = spec.runner?.command
+  const previousSelectApproach = process.env["DM_SELECT_APPROACH"];
+  const runSelectApproach = params.opts.selectApproach ?? spec.meta.selectApproach;
+  if (runSelectApproach) {
+    process.env["DM_SELECT_APPROACH"] = runSelectApproach;
+  }
+
+  const handle = spec.runner
     ? await runnerMod.startRunner(runnerMod.createRunnerOptions(spec.runner))
     : undefined;
 
@@ -312,5 +316,10 @@ export async function captureFromSpec(params: {
     }
   } finally {
     await handle?.stop();
+    if (previousSelectApproach === undefined) {
+      delete process.env["DM_SELECT_APPROACH"];
+    } else {
+      process.env["DM_SELECT_APPROACH"] = previousSelectApproach;
+    }
   }
 }

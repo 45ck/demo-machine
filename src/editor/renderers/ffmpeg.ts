@@ -20,7 +20,7 @@ export class FfmpegRenderer implements VideoRenderer {
   private buildArgs(timeline: Timeline, options: RenderOptions): string[] {
     const args: string[] = ["-y"];
 
-    this.addTrimStart(args, options);
+    this.addTrimStart(args, options.trimStartMs);
     args.push("-i", options.videoPath);
     this.addAudioInput(args, options);
     this.addFilterGraph(args, timeline, options);
@@ -32,15 +32,15 @@ export class FfmpegRenderer implements VideoRenderer {
     return args;
   }
 
-  private addTrimStart(args: string[], options: RenderOptions): void {
-    if (options.trimStartMs !== undefined && options.trimStartMs > 0) {
-      args.push("-ss", msToSec(options.trimStartMs));
+  private addTrimStart(args: string[], trimStartMs: number | undefined): void {
+    if (trimStartMs !== undefined && trimStartMs > 0) {
+      args.push("-ss", msToSec(trimStartMs));
     }
   }
 
   private addAudioInput(args: string[], options: RenderOptions): void {
     if (!options.audioPath) return;
-    this.addTrimStart(args, options);
+    this.addTrimStart(args, options.audioTrimStartMs);
     args.push("-i", options.audioPath);
   }
 

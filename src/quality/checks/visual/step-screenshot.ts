@@ -2,6 +2,7 @@ import { postRenderPass, postRenderFail, postRenderWarn } from "../../../validat
 import type { CheckResult } from "../../../validation/types.js";
 import type { QualityCheckContext } from "../../types.js";
 import { diffImages } from "../../visual-diff.js";
+import { isOptionalVisualDependencyError } from "../../optional-visual-deps.js";
 import { checkScreenshotArtifactQuality } from "./screenshot-quality.js";
 
 const CHECK_NAME = "visual:step-screenshot";
@@ -94,6 +95,15 @@ function diffStepImages(params: {
   try {
     return diffImages(prevBuf, currBuf);
   } catch (err) {
+    if (isOptionalVisualDependencyError(err)) {
+      results.push(
+        postRenderWarn(
+          CHECK_NAME,
+          `Steps ${String(prevIdx)}→${String(currIdx)}: screenshot diff skipped: ${err.message}`,
+        ),
+      );
+      return null;
+    }
     results.push(
       postRenderFail(
         CHECK_NAME,

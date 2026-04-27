@@ -133,7 +133,7 @@ describe("runQualityGate", () => {
     expect(fileSizeResult!.status).toBe("fail");
   });
 
-  it("emits probe-video warn with error message when probeVideoFn throws", async () => {
+  it("emits probe-video failure with error message when probeVideoFn throws", async () => {
     const { runQualityGate } = await import("../../src/quality/runner.js");
 
     const result = await runQualityGate({
@@ -145,10 +145,11 @@ describe("runQualityGate", () => {
       statFileFn: async () => 5_000_000,
     });
 
-    const probeWarn = result.results.find((r) => r.checkName === "probe-video");
-    expect(probeWarn).toBeDefined();
-    expect(probeWarn!.status).toBe("warn");
-    expect(probeWarn!.message).toContain("ffprobe not installed");
+    const probeFailure = result.results.find((r) => r.checkName === "probe-video");
+    expect(probeFailure).toBeDefined();
+    expect(probeFailure!.status).toBe("fail");
+    expect(probeFailure!.message).toContain("ffprobe not installed");
+    expect(result.hasFailures).toBe(true);
   });
 
   it("emits stat-file warn and continues when statFileFn throws", async () => {
@@ -326,6 +327,7 @@ describe("runQualityGate", () => {
       {
         get(target, prop) {
           if (prop === "length") return 1;
+          if (prop === "0") throw new Error("boom from check");
           if (prop === Symbol.iterator) {
             return function* () {
               throw new Error("boom from check");

@@ -5,9 +5,11 @@ export const calculateMetadata: CalculateMetadataFunction<DemoCompositionProps> 
   props,
 }) => {
   const fps = props.fps || 30;
-  let durationInFrames = fps * 10; // default 10s
+  let durationInFrames = props.durationMs
+    ? Math.max(1, Math.ceil((props.durationMs / 1000) * fps))
+    : fps * 10; // default 10s
 
-  if (props.audioSrc) {
+  if (!props.durationMs && props.audioSrc) {
     try {
       const { getAudioDurationInSeconds } = await import("@remotion/media-utils");
       const audioDuration = await getAudioDurationInSeconds(props.audioSrc);

@@ -32,6 +32,16 @@ describe("RunnerHealthMonitor", () => {
     expect(monitor.issues()[0].message).toContain("ECONNREFUSED");
   });
 
+  it("records warn when the health check times out", async () => {
+    const abortError = new DOMException("This operation was aborted", "AbortError");
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(abortError);
+    monitor.attach({});
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(monitor.issues()).toHaveLength(1);
+    expect(monitor.issues()[0].severity).toBe("warn");
+    expect(monitor.issues()[0].message).toContain("AbortError");
+  });
+
   it("records warn when response is not ok", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: false,

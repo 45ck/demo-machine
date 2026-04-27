@@ -249,6 +249,9 @@ describe("applyTimelineTrim", () => {
     expect(result.events).toHaveLength(1);
     expect(result.timelineStartTimestamp).toBe(startTimestamp + 3500);
     expect(result.videoTrimStartMs).toBe(3500);
+    expect(result.spec.chapters).toHaveLength(1);
+    expect(result.spec.chapters[0]!.title).toBe("Dashboard");
+    expect(result.spec.chapters[0]!.steps).toHaveLength(1);
   });
 
   it("applies trimStartMs alone without fromChapter", () => {
@@ -265,6 +268,10 @@ describe("applyTimelineTrim", () => {
     expect(result.events).toHaveLength(3);
     expect(result.timelineStartTimestamp).toBe(startTimestamp + 1500);
     expect(result.videoTrimStartMs).toBe(1500);
+    expect(result.spec.chapters).toHaveLength(2);
+    expect(result.spec.chapters[0]!.title).toBe("Login");
+    expect(result.spec.chapters[0]!.steps).toHaveLength(1);
+    expect(result.spec.chapters[1]!.title).toBe("Dashboard");
   });
 
   it("trims events when fromStep is set", () => {

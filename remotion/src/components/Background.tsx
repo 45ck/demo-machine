@@ -3,12 +3,13 @@ import { AbsoluteFill, Video } from "remotion";
 
 interface BackgroundProps {
   src: string;
+  startFrom?: number;
 }
 
-export const Background: React.FC<BackgroundProps> = ({ src }) => {
+export const Background: React.FC<BackgroundProps> = ({ src, startFrom }) => {
   return (
     <AbsoluteFill>
-      <Video src={src} style={{ width: "100%", height: "100%" }} />
+      <Video src={src} startFrom={startFrom} style={{ width: "100%", height: "100%" }} />
     </AbsoluteFill>
   );
 };

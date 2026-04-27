@@ -141,7 +141,7 @@ export function applyTimelineTrim(params: {
 
   return {
     events: events.slice(startEventIndex),
-    spec: trimSpecFromStepIndex(params.spec, requestedStepIndex),
+    spec: trimSpecFromStepIndex(params.spec, startEventIndex),
     timelineStartTimestamp: trimStartTimestamp,
     videoTrimStartMs: trimStartMs,
     startEventIndex,

@@ -1,6 +1,6 @@
 import { stat } from "node:fs/promises";
 import type { CheckResult } from "../validation/types.js";
-import { postRenderWarn } from "../validation/types.js";
+import { postRenderFail, postRenderWarn } from "../validation/types.js";
 import { probeVideo as defaultProbeVideo } from "./ffprobe.js";
 import { checkResolution } from "./checks/resolution.js";
 import { checkAudioVideoDuration } from "./checks/av-duration.js";
@@ -96,9 +96,10 @@ async function probeForGate(
     return await (params.probeVideoFn ?? defaultProbeVideo)(params.outputMp4Path);
   } catch (err) {
     results.push(
-      postRenderWarn(
+      postRenderFail(
         "probe-video",
         `Could not probe video: ${err instanceof Error ? err.message : String(err)}`,
+        "Ensure output.mp4 is readable by ffprobe before trusting post-render checks",
       ),
     );
     return undefined;
