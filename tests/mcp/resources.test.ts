@@ -50,6 +50,8 @@ describe("MCP resources", () => {
     expect(result.contents[0]!.mimeType).toBe("text/markdown");
     expect(result.contents[0]!.text).toContain("navigate");
     expect(result.contents[0]!.text).toContain("click");
+    expect(result.contents[0]!.text).toContain("waitForLocalDirectoryStable");
+    expect(result.contents[0]!.text).toContain("waitForLocalFile");
     expect(result.contents[0]!.text).toContain("dragAndDrop");
   });
 

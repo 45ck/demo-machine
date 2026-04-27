@@ -1,4 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { mkdir, rm, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { actionHandlers } from "../../src/playback/actions.js";
 import type { PlaywrightPage, PlaybackContext } from "../../src/playback/actions.js";
 import { PlaybackEngine } from "../../src/playback/engine.js";
@@ -129,6 +132,15 @@ function createMockPage(): PlaywrightPage {
         .mockResolvedValue(undefined),
     },
     waitForTimeout: vi.fn<(ms: number) => Promise<void>>().mockResolvedValue(undefined),
+    waitForFunction: vi
+      .fn<
+        (
+          fn: string | ((...args: unknown[]) => unknown),
+          arg?: unknown,
+          options?: { timeout?: number; polling?: number | "raf" },
+        ) => Promise<unknown>
+      >()
+      .mockResolvedValue(undefined),
     locator: vi.fn().mockReturnValue(locator),
     getByRole: vi.fn().mockReturnValue(locator),
     getByText: vi.fn().mockReturnValue(locator),
@@ -183,6 +195,7 @@ function createMockContext(page?: PlaywrightPage): PlaybackContext {
 describe("actionHandlers", () => {
   let ctx: PlaybackContext;
   let events: ActionEvent[];
+  const tempDirs: string[] = [];
 
   beforeEach(() => {
     ctx = createMockContext();
@@ -202,6 +215,10 @@ describe("actionHandlers", () => {
     vi.mocked(guards.checkHitTest).mockClear();
     vi.mocked(guards.checkPointerEvents).mockClear();
     vi.mocked(guards.checkTypedText).mockClear();
+  });
+
+  afterEach(async () => {
+    await Promise.all(tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
   });
 
   it("handles navigate action", async () => {
@@ -347,6 +364,106 @@ describe("actionHandlers", () => {
     await actionHandlers["wait"]!(ctx, step, events, 0);
     expect(ctx.page.waitForTimeout).toHaveBeenCalledWith(1000);
     expect(events).toHaveLength(1);
+  });
+
+  it("handles waitForLocalDirectoryStable action", async () => {
+    const dir = join(tmpdir(), `demo-machine-${String(Date.now())}-stable`);
+    tempDirs.push(dir);
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, "README.md"), "ready", "utf8");
+    await writeFile(join(dir, "init.lua"), "ready", "utf8");
+    ctx = { ...ctx, specDir: dir };
+    const step = {
+      action: "waitForLocalDirectoryStable" as const,
+      path: ".",
+      stableMs: 25,
+      minFiles: 2,
+      timeoutMs: 1000,
+      pollingMs: 10,
+    };
+
+    await actionHandlers["waitForLocalDirectoryStable"]!(ctx, step, events, 0);
+
+    expect(events).toHaveLength(1);
+    expect(events[0]!.action).toBe("waitForLocalDirectoryStable");
+  });
+
+  it("handles waitForLocalFile action with content matching", async () => {
+    const dir = join(tmpdir(), `demo-machine-${String(Date.now())}`);
+    tempDirs.push(dir);
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, "init.lua"), "minetest.register_chatcommand('score', {})", "utf8");
+    ctx = { ...ctx, specDir: dir };
+    const step = {
+      action: "waitForLocalFile" as const,
+      path: "init.lua",
+      contains: "register_chatcommand",
+      timeoutMs: 1000,
+      pollingMs: 25,
+    };
+
+    await actionHandlers["waitForLocalFile"]!(ctx, step, events, 0);
+
+    expect(events).toHaveLength(1);
+    expect(events[0]!.action).toBe("waitForLocalFile");
+    expect(events[0]!.selector).toContain("init.lua");
+  });
+
+  it("handles waitForLocalFile action with multiple paths", async () => {
+    const dir = join(tmpdir(), `demo-machine-${String(Date.now())}-multi`);
+    tempDirs.push(dir);
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, "game.conf"), "ready", "utf8");
+    await writeFile(join(dir, "README.md"), "ready", "utf8");
+    ctx = { ...ctx, specDir: dir };
+    const step = {
+      action: "waitForLocalFile" as const,
+      paths: ["game.conf", "README.md"],
+      timeoutMs: 1000,
+      pollingMs: 25,
+    };
+
+    await actionHandlers["waitForLocalFile"]!(ctx, step, events, 0);
+
+    expect(events).toHaveLength(1);
+    expect(events[0]!.selector).toContain("game.conf");
+    expect(events[0]!.selector).toContain("README.md");
+  });
+
+  it("throws when waitForLocalFile content does not appear before timeout", async () => {
+    const dir = join(tmpdir(), `demo-machine-${String(Date.now())}-timeout`);
+    tempDirs.push(dir);
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, "init.lua"), "not yet", "utf8");
+    ctx = { ...ctx, specDir: dir };
+    const step = {
+      action: "waitForLocalFile" as const,
+      path: "init.lua",
+      contains: "ready",
+      timeoutMs: 25,
+      pollingMs: 5,
+    };
+
+    await expect(actionHandlers["waitForLocalFile"]!(ctx, step, events, 0)).rejects.toThrow(
+      "Timed out",
+    );
+  });
+
+  it("handles waitForPageFunction action", async () => {
+    const step = {
+      action: "waitForPageFunction" as const,
+      expression: "document.body.innerText.includes('Ready')",
+      timeoutMs: 5000,
+      pollingMs: 250,
+    };
+    await actionHandlers["waitForPageFunction"]!(ctx, step, events, 0);
+    expect(ctx.page.waitForFunction).toHaveBeenCalledWith(
+      "document.body.innerText.includes('Ready')",
+      undefined,
+      { timeout: 5000, polling: 250 },
+    );
+    expect(events).toHaveLength(1);
+    expect(events[0]!.action).toBe("waitForPageFunction");
   });
 
   it("handles assert action with visibility", async () => {

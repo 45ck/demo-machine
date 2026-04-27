@@ -149,6 +149,33 @@ describe("demoSpecSchema", () => {
       { action: "scroll", step: { action: "scroll" } },
       { action: "wait", step: { action: "wait", timeout: 100 } },
       {
+        action: "waitForLocalDirectoryStable",
+        step: {
+          action: "waitForLocalDirectoryStable",
+          path: "./generated",
+          stableMs: 1000,
+          minFiles: 2,
+          timeoutMs: 5000,
+        },
+      },
+      {
+        action: "waitForLocalFile",
+        step: {
+          action: "waitForLocalFile",
+          path: "./generated/mods/example/init.lua",
+          contains: "minetest.register_chatcommand",
+          timeoutMs: 1000,
+        },
+      },
+      {
+        action: "waitForPageFunction",
+        step: {
+          action: "waitForPageFunction",
+          expression: "document.body.innerText.includes('Ready')",
+          timeoutMs: 1000,
+        },
+      },
+      {
         action: "assert",
         step: { action: "assert", selector: ".x", visible: true },
       },
@@ -400,6 +427,20 @@ describe("demoSpecSchema", () => {
       const spec = minimalSpec();
       spec.chapters[0]!.steps = [{ action: "wait" } as never];
       const result = demoSpecSchema.safeParse(spec);
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects waitForLocalFile with neither path nor paths", () => {
+      const result = stepSchema.safeParse({ action: "waitForLocalFile" });
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects waitForLocalFile with both path and paths", () => {
+      const result = stepSchema.safeParse({
+        action: "waitForLocalFile",
+        path: "./a.txt",
+        paths: ["./b.txt"],
+      });
       expect(result.success).toBe(false);
     });
 

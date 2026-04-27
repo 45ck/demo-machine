@@ -39,28 +39,36 @@ Relative `navigate.url` values are resolved against `runner.url`.
 
 ## Actions
 
-| Action                      | Required Fields                           | Description                              |
-| --------------------------- | ----------------------------------------- | ---------------------------------------- |
-| `navigate`                  | `url`                                     | Go to a URL.                             |
-| `click`                     | `selector` or `target`                    | Click an element.                        |
-| `clickFirstVisible`         | `selector`                                | Click the first visible matching item.   |
-| `check`                     | `selector` or `target`                    | Check a checkbox or toggle.              |
-| `uncheck`                   | `selector` or `target`                    | Uncheck a checkbox or toggle.            |
-| `type`                      | `selector` or `target`, `text`            | Type text character-by-character.        |
-| `select`                    | `selector` or `target`, `option`          | Select an option in a `<select>`.        |
-| `selectFirstNonPlaceholder` | `selector` or `target`                    | Select the first non-placeholder option. |
-| `upload`                    | `selector` or `target`, `file` or `files` | Upload files through a file input.       |
-| `hover`                     | `selector` or `target`                    | Hover over an element.                   |
-| `scroll`                    | Optional `selector`/`target`, `x`, `y`    | Scroll the page or a container.          |
-| `wait`                      | `timeout`                                 | Pause for milliseconds.                  |
-| `press`                     | `key`                                     | Press a keyboard key.                    |
-| `back`                      | -                                         | Go back in browser history.              |
-| `forward`                   | -                                         | Go forward in browser history.           |
-| `assert`                    | `selector` or `target`                    | Assert visibility or text content.       |
-| `screenshot`                | Optional `name`                           | Capture screenshot evidence.             |
-| `dragAndDrop`               | `from`, `to`                              | Drag from one target to another.         |
+| Action                        | Required Fields                           | Description                              |
+| ----------------------------- | ----------------------------------------- | ---------------------------------------- |
+| `navigate`                    | `url`                                     | Go to a URL.                             |
+| `click`                       | `selector` or `target`                    | Click an element.                        |
+| `clickFirstVisible`           | `selector`                                | Click the first visible matching item.   |
+| `check`                       | `selector` or `target`                    | Check a checkbox or toggle.              |
+| `uncheck`                     | `selector` or `target`                    | Uncheck a checkbox or toggle.            |
+| `type`                        | `selector` or `target`, `text`            | Type text character-by-character.        |
+| `select`                      | `selector` or `target`, `option`          | Select an option in a `<select>`.        |
+| `selectFirstNonPlaceholder`   | `selector` or `target`                    | Select the first non-placeholder option. |
+| `upload`                      | `selector` or `target`, `file` or `files` | Upload files through a file input.       |
+| `hover`                       | `selector` or `target`                    | Hover over an element.                   |
+| `scroll`                      | Optional `selector`/`target`, `x`, `y`    | Scroll the page or a container.          |
+| `wait`                        | `timeout`                                 | Pause for milliseconds.                  |
+| `waitForLocalDirectoryStable` | `path`                                    | Wait for local file writes to settle.    |
+| `waitForLocalFile`            | `path` or `paths`                         | Wait for local file evidence.            |
+| `waitForPageFunction`         | `expression`                              | Wait for a browser-side condition.       |
+| `press`                       | `key`                                     | Press a keyboard key.                    |
+| `back`                        | -                                         | Go back in browser history.              |
+| `forward`                     | -                                         | Go forward in browser history.           |
+| `assert`                      | `selector` or `target`                    | Assert visibility or text content.       |
+| `screenshot`                  | Optional `name`                           | Capture screenshot evidence.             |
+| `dragAndDrop`                 | `from`, `to`                              | Drag from one target to another.         |
 
 Every action supports optional `narration`, `delay`, and `timeoutMs` where relevant.
+
+`waitForLocalFile` resolves relative paths against the spec directory. Add `contains` to require
+each target file to include specific text before the demo continues.
+`waitForLocalDirectoryStable` resolves its path the same way and waits until recursive file count,
+latest write time, and total size stop changing for `stableMs`.
 
 ## Targets
 

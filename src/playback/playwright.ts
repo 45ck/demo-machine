@@ -48,6 +48,11 @@ export interface PlaywrightPage {
     type(text: string, options?: { delay?: number | undefined }): Promise<void>;
   };
   waitForTimeout(ms: number): Promise<void>;
+  waitForFunction(
+    fn: string | ((...args: unknown[]) => unknown),
+    arg?: unknown,
+    options?: { timeout?: number; polling?: number | "raf" },
+  ): Promise<unknown>;
   locator(selector: string): PlaywrightLocator;
   getByRole(role: string, options?: { name?: string | RegExp; exact?: boolean }): PlaywrightLocator;
   getByText(text: string | RegExp, options?: { exact?: boolean }): PlaywrightLocator;

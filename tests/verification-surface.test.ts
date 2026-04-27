@@ -35,6 +35,12 @@ function minimalStepForAction(action: string): Record<string, unknown> {
       return { action, selector: "#target", y: 100 };
     case "wait":
       return { action, timeout: 100 };
+    case "waitForLocalDirectoryStable":
+      return { action, path: "./generated", stableMs: 1000 };
+    case "waitForLocalFile":
+      return { action, path: "./generated.txt" };
+    case "waitForPageFunction":
+      return { action, expression: "document.body.innerText.includes('Ready')" };
     case "assert":
       return { action, selector: "#target", visible: true };
     case "screenshot":

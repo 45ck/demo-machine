@@ -310,6 +310,26 @@
       "qualitySignals": ["artifact-capture"]
     },
     {
+      "slug": "proof-wait-for-local-directory-stable",
+      "suiteType": "proof",
+      "canonicalSpec": "examples/proof/actions/proof-wait-for-local-directory-stable.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "proof",
+      "visualBaseline": "none",
+      "patternTags": ["async-loading"],
+      "qualitySignals": ["artifact-capture", "deterministic-data"]
+    },
+    {
+      "slug": "proof-wait-for-local-file",
+      "suiteType": "proof",
+      "canonicalSpec": "examples/proof/actions/proof-wait-for-local-file.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "proof",
+      "visualBaseline": "none",
+      "patternTags": ["async-loading"],
+      "qualitySignals": ["artifact-capture", "deterministic-data"]
+    },
+    {
       "slug": "assurance-long-demo",
       "suiteType": "assurance",
       "canonicalSpec": "examples/assurance/long-demo/long-demo.demo.yaml",

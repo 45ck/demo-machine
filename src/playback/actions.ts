@@ -17,6 +17,9 @@ import { handleScroll } from "./handlers/scroll.js";
 import { handleScreenshot } from "./handlers/screenshot.js";
 import { handleType } from "./handlers/type.js";
 import { handleWait } from "./handlers/wait.js";
+import { handleWaitForLocalDirectoryStable } from "./handlers/wait-for-local-directory-stable.js";
+import { handleWaitForLocalFile } from "./handlers/wait-for-local-file.js";
+import { handleWaitForPageFunction } from "./handlers/wait-for-page-function.js";
 
 export type { PlaywrightPage } from "./playwright.js";
 export type { PlaybackContext } from "./action-core.js";
@@ -29,6 +32,9 @@ export const actionHandlers: Record<string, ActionHandler> = {
   hover: handleHover,
   scroll: handleScroll,
   wait: handleWait,
+  waitForLocalDirectoryStable: handleWaitForLocalDirectoryStable,
+  waitForLocalFile: handleWaitForLocalFile,
+  waitForPageFunction: handleWaitForPageFunction,
   assert: handleAssert,
   screenshot: handleScreenshot,
   press: handlePress,

@@ -216,7 +216,9 @@ async function captureWithBrowser(params: CaptureWithBrowserParams): Promise<Cap
     screenshotCollector,
   });
 
-  const monitors = await attachMonitors(session.page, { runnerUrl: session.baseUrl });
+  const monitors = await attachMonitors(session.page, {
+    ...(params.spec.runner?.command ? { runnerUrl: session.baseUrl } : {}),
+  });
 
   try {
     const result = await engine.execute(params.spec.chapters);

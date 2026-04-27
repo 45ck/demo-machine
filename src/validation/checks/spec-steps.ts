@@ -10,6 +10,9 @@ const KNOWN_ACTIONS = new Set([
   "hover",
   "scroll",
   "wait",
+  "waitForLocalDirectoryStable",
+  "waitForLocalFile",
+  "waitForPageFunction",
   "assert",
   "screenshot",
   "press",
@@ -39,6 +42,53 @@ interface StepsSpecShape {
 const CHECK_NAME = "spec-steps";
 const HIGH_TIMEOUT = 30000;
 
+const TIMEOUT_WARNINGS = [
+  { action: "assert", field: "timeoutMs", message: "assert timeout {value}ms is very high" },
+  { action: "wait", field: "timeout", message: "wait timeout {value}ms is very long" },
+  {
+    action: "waitForLocalDirectoryStable",
+    field: "timeoutMs",
+    message: "waitForLocalDirectoryStable timeout {value}ms is very high",
+  },
+  {
+    action: "waitForLocalFile",
+    field: "timeoutMs",
+    message: "waitForLocalFile timeout {value}ms is very high",
+  },
+  {
+    action: "waitForPageFunction",
+    field: "timeoutMs",
+    message: "waitForPageFunction timeout {value}ms is very high",
+  },
+] as const;
+
+function pushUnknownActionResult(action: string, stepIndex: number, results: CheckResult[]): void {
+  if (KNOWN_ACTIONS.has(action)) return;
+  results.push(
+    fail(
+      CHECK_NAME,
+      `Step ${stepIndex}: unknown action "${action}"`,
+      `Known actions: ${[...KNOWN_ACTIONS].join(", ")}`,
+    ),
+  );
+}
+
+function pushTimeoutWarning(
+  step: { action?: string; timeoutMs?: number; timeout?: number },
+  stepIndex: number,
+  results: CheckResult[],
+): void {
+  const warning = TIMEOUT_WARNINGS.find((candidate) => candidate.action === step.action);
+  if (!warning) return;
+
+  const value = step[warning.field];
+  if (typeof value !== "number" || value <= HIGH_TIMEOUT) return;
+
+  results.push(
+    warn(CHECK_NAME, `Step ${stepIndex}: ${warning.message.replace("{value}", String(value))}`),
+  );
+}
+
 function checkStepAction(
   step: { action?: string; timeoutMs?: number; timeout?: number },
   stepIndex: number,
@@ -46,27 +96,8 @@ function checkStepAction(
 ): void {
   const action = step.action as string;
 
-  if (!KNOWN_ACTIONS.has(action)) {
-    results.push(
-      fail(
-        CHECK_NAME,
-        `Step ${stepIndex}: unknown action "${action}"`,
-        `Known actions: ${[...KNOWN_ACTIONS].join(", ")}`,
-      ),
-    );
-  }
-
-  if (action === "assert" && typeof step.timeoutMs === "number" && step.timeoutMs > HIGH_TIMEOUT) {
-    results.push(
-      warn(CHECK_NAME, `Step ${stepIndex}: assert timeout ${step.timeoutMs}ms is very high`),
-    );
-  }
-
-  if (action === "wait" && typeof step.timeout === "number" && step.timeout > HIGH_TIMEOUT) {
-    results.push(
-      warn(CHECK_NAME, `Step ${stepIndex}: wait timeout ${step.timeout}ms is very long`),
-    );
-  }
+  pushUnknownActionResult(action, stepIndex, results);
+  pushTimeoutWarning(step, stepIndex, results);
 }
 
 function checkSteps(ctx: CheckContext): CheckResult[] {

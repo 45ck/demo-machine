@@ -174,6 +174,45 @@ const waitStepSchema = z.object({
   focus: stepFocusSchema.optional(),
 });
 
+const waitForPageFunctionStepSchema = z.object({
+  action: z.literal("waitForPageFunction"),
+  expression: nonBlankString,
+  label: nonBlankString.optional(),
+  timeoutMs: z.number().int().positive().optional(),
+  pollingMs: z.number().int().positive().optional(),
+  narration: z.string().optional(),
+  focus: stepFocusSchema.optional(),
+});
+
+const waitForLocalFileStepSchema = z
+  .object({
+    action: z.literal("waitForLocalFile"),
+    path: nonBlankString.optional(),
+    paths: z.array(nonBlankString).min(1).optional(),
+    contains: nonBlankString.optional(),
+    timeoutMs: z.number().int().positive().optional(),
+    pollingMs: z.number().int().positive().optional(),
+    narration: z.string().optional(),
+    focus: stepFocusSchema.optional(),
+  })
+  .refine((v) => v.path !== undefined || v.paths !== undefined, {
+    message: "waitForLocalFile requires path or paths",
+  })
+  .refine((v) => !(v.path !== undefined && v.paths !== undefined), {
+    message: 'waitForLocalFile: provide either "path" or "paths", not both',
+  });
+
+const waitForLocalDirectoryStableStepSchema = z.object({
+  action: z.literal("waitForLocalDirectoryStable"),
+  path: nonBlankString,
+  stableMs: z.number().int().positive().optional(),
+  minFiles: z.number().int().nonnegative().optional(),
+  timeoutMs: z.number().int().positive().optional(),
+  pollingMs: z.number().int().positive().optional(),
+  narration: z.string().optional(),
+  focus: stepFocusSchema.optional(),
+});
+
 const assertStepSchema = z.object({
   action: z.literal("assert"),
   selector: nonBlankString.optional(),
@@ -354,6 +393,9 @@ export const stepSchema = z.union([
   hoverStepSchemaValidated,
   scrollStepSchema,
   waitStepSchema,
+  waitForLocalDirectoryStableStepSchema,
+  waitForLocalFileStepSchema,
+  waitForPageFunctionStepSchema,
   assertStepSchemaValidated,
   screenshotStepSchema,
   pressStepSchema,

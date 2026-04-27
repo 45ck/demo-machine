@@ -1,0 +1,18 @@
+meta:
+  title: "Proof: Wait for Local Directory Stable"
+
+runner:
+  url: "https://example.com"
+
+chapters:
+  - title: "Wait for Stable Generated Directory"
+    steps:
+      - action: navigate
+        url: "https://example.com"
+      - action: waitForLocalDirectoryStable
+        path: "./examples/proof/fixtures"
+        stableMs: 100
+        minFiles: 1
+        timeoutMs: 1000
+      - action: screenshot
+        name: "wait-for-local-directory-stable-proof"

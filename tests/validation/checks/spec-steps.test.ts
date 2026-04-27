@@ -118,6 +118,22 @@ describe("spec-steps check", () => {
     expect(results.some((r) => r.status === "warn" && r.message.includes("60000ms"))).toBe(true);
   });
 
+  it("warns on very high waitForLocalFile timeout", async () => {
+    const results = await stepsResults({
+      meta: { title: "T" },
+      chapters: [
+        {
+          title: "C",
+          steps: [
+            { action: "navigate", url: "http://localhost:3000" },
+            { action: "waitForLocalFile", path: "./generated.txt", timeoutMs: 60000 },
+          ],
+        },
+      ],
+    });
+    expect(results.some((r) => r.status === "warn" && r.message.includes("60000ms"))).toBe(true);
+  });
+
   it("KNOWN_ACTIONS includes all expected actions", () => {
     const expected = [
       "navigate",
@@ -127,6 +143,9 @@ describe("spec-steps check", () => {
       "hover",
       "scroll",
       "wait",
+      "waitForLocalDirectoryStable",
+      "waitForLocalFile",
+      "waitForPageFunction",
       "assert",
       "screenshot",
       "press",

@@ -1,0 +1,17 @@
+meta:
+  title: "Proof: Wait for Local File"
+
+runner:
+  url: "https://example.com"
+
+chapters:
+  - title: "Wait for Generated Evidence"
+    steps:
+      - action: navigate
+        url: "https://example.com"
+      - action: waitForLocalFile
+        path: "./examples/proof/fixtures/wait-for-local-file.txt"
+        contains: "ready"
+        timeoutMs: 1000
+      - action: screenshot
+        name: "wait-for-local-file-proof"

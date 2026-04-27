@@ -38,6 +38,9 @@ const ACTIONS_DOCS = `# Available Actions
 | hover            | selector or target | Hover over an element                    |
 | scroll           | -                  | Scroll (selector or target, x, y optional)|
 | wait             | timeout            | Pause for milliseconds                   |
+| waitForLocalDirectoryStable | path  | Wait for local file writes to settle     |
+| waitForLocalFile | path or paths      | Wait for local file evidence             |
+| waitForPageFunction | expression      | Wait for a browser-side condition        |
 | press            | key                | Press a keyboard key                     |
 | screenshot       | -                  | Take a screenshot                        |
 | assert           | selector or target | Assert element visibility or text        |
@@ -52,6 +55,8 @@ const ACTIONS_DOCS = `# Available Actions
 
 Every action supports an optional \`narration\` field for voice-over text.
 Every action supports an optional \`delay\` field to override post-action delay (ms).
+\`waitForLocalFile\` supports optional \`contains\`, \`timeoutMs\`, and \`pollingMs\`.
+\`waitForLocalDirectoryStable\` supports optional \`stableMs\`, \`minFiles\`, \`timeoutMs\`, and \`pollingMs\`.
 `;
 
 const SPEC_FORMAT_DOCS = `# Demo Spec Format
