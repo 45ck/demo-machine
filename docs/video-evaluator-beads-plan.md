@@ -91,9 +91,16 @@ Current artifact contract:
 - `layout-safety.report.json`
 - `review-prompt.md`
 
+Implemented dependent slice:
+
+- `demo-machine-cu4`: `runQualityGate()` now consumes
+  `layout-safety.report.json`, `segment.evidence.json`, and
+  `review-bundle.json` when they are present beside the rendered video. Analyzer
+  findings are emitted as normal post-render check results inside the existing
+  `quality.json` shape; missing analyzer artifacts remain optional.
+
 Remaining work stays in the dependent beads:
 
-- `demo-machine-cu4`: consume analyzer status inside `quality.json`.
 - `demo-machine-bs4`: replace MCP `review-demo` prompt internals.
 - `demo-machine-lzc`: expand README/user docs once the quality-gate behavior is
   wired.

@@ -17,7 +17,7 @@ describe("MCP prompts", () => {
   >;
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     server = new McpServer({ name: "test", version: "0.0.1" }, { capabilities: { prompts: {} } });
     registeredPrompts = new Map();
     const origPrompt = server.prompt.bind(server);
@@ -323,13 +323,10 @@ describe("MCP prompts", () => {
     expect(registeredPrompts.has("review-demo")).toBe(true);
   });
 
-  it("review-demo reads output artifacts and spec", async () => {
+  it("review-demo uses analyzer package review prompt and spec when present", async () => {
     const { readFile } = await import("node:fs/promises");
     vi.mocked(readFile)
-      .mockResolvedValueOnce('[{"action":"click","timestamp":100}]')
-      .mockResolvedValueOnce('{"duration":5000}')
-      .mockResolvedValueOnce("WEBVTT\n\n00:00.000 --> 00:02.000\nWelcome")
-      .mockResolvedValueOnce('{"complete":true}')
+      .mockResolvedValueOnce("# Review\n\nInspect the evidence-backed bundle.")
       .mockResolvedValueOnce("meta:\n  title: Review Me\n");
 
     const handler = registeredPrompts.get("review-demo")!.handler;
@@ -340,20 +337,21 @@ describe("MCP prompts", () => {
 
     const text = result.messages[0]!.content.text;
     expect(text).toContain(resolve("./out"));
+    expect(text).toContain(join(resolve("./out"), "review-prompt.md"));
     expect(text).toContain(resolve("demo.yaml"));
-    expect(text).toContain('"action":"click"');
-    expect(text).toContain("duration");
-    expect(text).toContain("WEBVTT");
+    expect(text).toContain("video-evaluator package review prompt");
+    expect(text).toContain("Inspect the evidence-backed bundle");
     expect(text).toContain("Review Me");
-    expect(text).toContain("Timing");
-    expect(text).toContain("Artifact verification");
-    expect(text).toContain("output.mp4");
-    expect(readFile).toHaveBeenCalledTimes(5);
+    expect(text).toContain("Demo-specific focus items");
+    expect(text).toContain("Spec fidelity");
+    expect(text).toContain("Pass/Warn/Fail");
+    expect(readFile).toHaveBeenCalledTimes(2);
   });
 
-  it("review-demo works without spec path", async () => {
+  it("review-demo falls back to raw artifacts without spec path", async () => {
     const { readFile } = await import("node:fs/promises");
     vi.mocked(readFile)
+      .mockRejectedValueOnce(new Error("ENOENT"))
       .mockRejectedValueOnce(new Error("ENOENT"))
       .mockResolvedValueOnce("[]")
       .mockResolvedValueOnce("{}")
@@ -366,22 +364,21 @@ describe("MCP prompts", () => {
     const text = result.messages[0]!.content.text;
     expect(text).toContain(resolve("./output"));
     expect(text).not.toContain("Spec file:");
-    expect(readFile).toHaveBeenCalledTimes(5);
+    expect(text).toContain("demo-machine analyze");
+    expect(text).toContain("limited raw-artifact review");
+    expect(readFile).toHaveBeenCalledTimes(6);
   });
 
   it("review-demo handles missing artifacts gracefully", async () => {
     const { readFile } = await import("node:fs/promises");
-    vi.mocked(readFile)
-      .mockRejectedValueOnce(new Error("ENOENT"))
-      .mockRejectedValueOnce(new Error("ENOENT"))
-      .mockRejectedValueOnce(new Error("ENOENT"))
-      .mockRejectedValueOnce(new Error("ENOENT"))
-      .mockRejectedValueOnce(new Error("ENOENT"));
+    vi.mocked(readFile).mockRejectedValue(new Error("ENOENT"));
 
     const handler = registeredPrompts.get("review-demo")!.handler;
     const result = (await handler({})) as PromptMessages;
 
     const text = result.messages[0]!.content.text;
+    expect(text).toContain("Analyzer artifacts are missing");
+    expect(text).toContain("demo-machine analyze");
     expect(text).toContain("could not read file:");
   });
 

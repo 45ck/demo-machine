@@ -1,6 +1,8 @@
-import { describe, it, expect, vi } from "vitest";
-import type { VideoProbeResult, QualityCheckContext } from "../../src/quality/types.js";
-import type { CheckResult } from "../../src/validation/types.js";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, describe, it, expect, vi } from "vitest";
+import type { VideoProbeResult } from "../../src/quality/types.js";
 
 const validProbe: VideoProbeResult = {
   width: 1920,
@@ -12,6 +14,22 @@ const validProbe: VideoProbeResult = {
   videoDurationSec: 10,
   audioDurationSec: 10,
 };
+
+let tempDir: string | undefined;
+
+async function makeTempDir(): Promise<string> {
+  tempDir = await mkdtemp(join(tmpdir(), "demo-machine-quality-"));
+  return tempDir;
+}
+
+async function writeJson(path: string, value: unknown): Promise<void> {
+  await writeFile(path, JSON.stringify(value, null, 2) + "\n", "utf-8");
+}
+
+afterEach(async () => {
+  if (tempDir) await rm(tempDir, { recursive: true, force: true });
+  tempDir = undefined;
+});
 
 describe("runQualityGate", () => {
   it("runs all checks and returns combined results", async () => {
@@ -197,6 +215,108 @@ describe("runQualityGate", () => {
         "file-size-budget",
       ]),
     );
+  });
+
+  it("does not add analyzer checks when analyzer artifacts are absent", async () => {
+    const { runQualityGate } = await import("../../src/quality/runner.js");
+
+    const result = await runQualityGate({
+      outputMp4Path: "/out/output.mp4",
+      spec: { meta: { resolution: { width: 1920, height: 1080 } } },
+      probeVideoFn: async () => validProbe,
+      statFileFn: async () => 5_000_000,
+    });
+
+    expect(result.results.some((r) => r.checkName.startsWith("analyzer:"))).toBe(false);
+  });
+
+  it("fails for blocking layout issues while warning for empty segment evidence", async () => {
+    const outputDir = await makeTempDir();
+    await writeJson(join(outputDir, "layout-safety.report.json"), {
+      issues: [{ severity: "error", code: "overlap", message: "Caption overlaps CTA" }],
+    });
+    await writeJson(join(outputDir, "segment.evidence.json"), {
+      segments: [{ index: 1, evidenceStatus: "empty" }],
+      summary: { segmentCount: 1, emptySegments: 1, weakSegments: 0 },
+    });
+    await writeJson(join(outputDir, "review-bundle.json"), {
+      bundle: {
+        overallStatus: "pass",
+        reportStatuses: [{ name: "segment.evidence.json", status: "pass" }],
+      },
+    });
+    const { runQualityGate } = await import("../../src/quality/runner.js");
+
+    const result = await runQualityGate({
+      outputMp4Path: join(outputDir, "output.mp4"),
+      spec: { meta: { resolution: { width: 1920, height: 1080 } } },
+      probeVideoFn: async () => validProbe,
+      statFileFn: async () => 5_000_000,
+    });
+
+    expect(result.hasFailures).toBe(true);
+    expect(result.results.find((r) => r.checkName === "analyzer:layout-safety")?.status).toBe(
+      "fail",
+    );
+    expect(result.results.find((r) => r.checkName === "analyzer:segment-evidence")?.status).toBe(
+      "warn",
+    );
+    expect(result.results.find((r) => r.checkName === "analyzer:review-bundle")?.status).toBe(
+      "pass",
+    );
+  });
+
+  it("warns when analyzer artifacts report weak evidence or bundle warnings", async () => {
+    const outputDir = await makeTempDir();
+    await writeJson(join(outputDir, "layout-safety.report.json"), {
+      issues: [{ severity: "warning", code: "caption-zone", message: "Text near captions" }],
+    });
+    await writeJson(join(outputDir, "segment.evidence.json"), {
+      segments: [{ index: 1, evidenceStatus: "weak" }],
+      summary: { segmentCount: 1, emptySegments: 0, weakSegments: 1 },
+    });
+    await writeJson(join(outputDir, "review-bundle.json"), {
+      bundle: {
+        overallStatus: "warn",
+        reportStatuses: [{ name: "layout-safety.report.json", status: "warn" }],
+      },
+    });
+    const { runQualityGate } = await import("../../src/quality/runner.js");
+
+    const result = await runQualityGate({
+      outputMp4Path: join(outputDir, "output.mp4"),
+      spec: { meta: { resolution: { width: 1920, height: 1080 } } },
+      probeVideoFn: async () => validProbe,
+      statFileFn: async () => 5_000_000,
+    });
+
+    expect(result.hasFailures).toBe(false);
+    expect(result.results.find((r) => r.checkName === "analyzer:layout-safety")?.status).toBe(
+      "warn",
+    );
+    expect(result.results.find((r) => r.checkName === "analyzer:segment-evidence")?.status).toBe(
+      "warn",
+    );
+    expect(result.results.find((r) => r.checkName === "analyzer:review-bundle")?.status).toBe(
+      "warn",
+    );
+  });
+
+  it("warns instead of crashing when analyzer artifact JSON is malformed", async () => {
+    const outputDir = await makeTempDir();
+    await writeFile(join(outputDir, "layout-safety.report.json"), "{not-json", "utf-8");
+    const { runQualityGate } = await import("../../src/quality/runner.js");
+
+    const result = await runQualityGate({
+      outputMp4Path: join(outputDir, "output.mp4"),
+      spec: { meta: { resolution: { width: 1920, height: 1080 } } },
+      probeVideoFn: async () => validProbe,
+      statFileFn: async () => 5_000_000,
+    });
+
+    const analyzerResult = result.results.find((r) => r.checkName === "analyzer:layout-safety");
+    expect(analyzerResult?.status).toBe("warn");
+    expect(analyzerResult?.message).toContain("invalid JSON");
   });
 
   it("invokes rendered-video integrity checks with skipped data when samples are absent", async () => {

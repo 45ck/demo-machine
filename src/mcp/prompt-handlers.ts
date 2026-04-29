@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import { resolveOutputDirFromLatest } from "./output-latest.js";
+export { reviewDemoHandler } from "./review-demo-prompt.js";
 type PromptResult = {
   messages: Array<{ role: "user"; content: { type: "text"; text: string } }>;
 };
@@ -237,78 +238,5 @@ export async function specFromTestHandler({
       "",
       "Output the complete YAML spec.",
     ].join("\n"),
-  );
-}
-
-export async function reviewDemoHandler({
-  outputDir,
-  specPath,
-}: {
-  outputDir: string | undefined;
-  specPath: string | undefined;
-}): Promise<PromptResult> {
-  const resolvedOutputDir = await resolveOutputDirFromLatest(outputDir);
-
-  const eventsContent = await readFileOrFallback(join(resolvedOutputDir, "events.json"));
-  const metadataContent = await readFileOrFallback(join(resolvedOutputDir, "metadata.json"));
-  const subtitlesContent = await readFileOrFallback(join(resolvedOutputDir, "subtitles.vtt"));
-  const verificationContent = await readFileOrFallback(
-    join(resolvedOutputDir, "verification.json"),
-  );
-
-  let specContent = "";
-  if (specPath) {
-    specContent = await readFileOrFallback(resolve(specPath));
-  }
-
-  return msg(
-    [
-      "Review this demo-machine output for quality issues:",
-      `Output dir: ${resolvedOutputDir}`,
-      specPath ? `Spec file: ${resolve(specPath)}` : "",
-      "",
-      specContent
-        ? [
-            "Original spec (first 10000 chars):",
-            "```yaml",
-            specContent.substring(0, 10000),
-            "```",
-            "",
-          ].join("\n")
-        : "",
-      "Event log (events.json) — first 10000 chars:",
-      "```json",
-      eventsContent.substring(0, 10000),
-      "```",
-      "",
-      "Capture metadata (first 5000 chars):",
-      "```json",
-      metadataContent.substring(0, 5000),
-      "```",
-      "",
-      "Subtitles (subtitles.vtt) — first 10000 chars:",
-      "```",
-      subtitlesContent.substring(0, 10000),
-      "```",
-      "",
-      "Artifact verification (first 5000 chars):",
-      "```json",
-      verificationContent.substring(0, 5000),
-      "```",
-      "",
-      `Video file: ${join(resolvedOutputDir, "output.mp4")} (run ffprobe to check resolution, duration, frame rate)`,
-      "",
-      "Review checklist:",
-      "1. Timing: flag steps <100ms (no visual effect) or >10s (too long)",
-      "2. Gaps: dead air >3s with no narration",
-      "3. Narration: missing on key actions, too long (>25 words), or too short (<3 words)",
-      "4. Flow: chapters too long (>10 steps) or too short (1 step)",
-      "5. Missing assertions after key actions (form submit, delete, toggle)",
-      "6. Total duration: ideal 1-3 min, flag if >5 min or <30s",
-      "",
-      "Structure the review with: Summary, Critical Issues, Warnings, Suggestions.",
-    ]
-      .filter(Boolean)
-      .join("\n"),
   );
 }

@@ -68,6 +68,13 @@ For explicit `output` values, prefer a per-demo folder and use `overwrite` only 
 | `spec-from-test`   | Convert a Playwright or Cypress test into a demo spec.          |
 | `review-demo`      | Review a completed demo run, defaulting to `output/latest.json` |
 
+`review-demo` prefers the analyzer-generated `review-prompt.md` artifact from
+`demo-machine analyze`, which is built with `@45ck/video-evaluator`
+`package-review-prompt`. If that artifact is missing, the prompt tells the agent
+to run `demo-machine analyze <output-dir>` first and then falls back to a
+limited raw-artifact review using `events.json`, `metadata.json`,
+`subtitles.vtt`, and `verification.json`.
+
 ## Agent Workflows
 
 demo-machine works well in coding-agent harnesses because the demo spec, rendered output, quality files, and review artifacts all live in the workspace.

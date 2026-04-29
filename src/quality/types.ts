@@ -51,6 +51,17 @@ export interface RenderedVideoIntegrityThresholds {
   durationRelativeTolerance?: number | undefined;
 }
 
+export type AnalyzerArtifactName =
+  | "layout-safety.report.json"
+  | "segment.evidence.json"
+  | "review-bundle.json";
+
+export interface AnalyzerArtifactPayload {
+  path: string;
+  data?: unknown;
+  error?: string;
+}
+
 /** Context provided to quality check functions. */
 export interface QualityCheckContext {
   outputMp4Path: string;
@@ -103,4 +114,6 @@ export interface QualityCheckContext {
   renderedVideoSampleExtraction?: RenderedVideoSampleExtractionMetadata | undefined;
   /** Optional thresholds for rendered-video integrity checks. */
   renderedVideoIntegrityThresholds?: RenderedVideoIntegrityThresholds | undefined;
+  /** Optional analyzer artifacts discovered next to the rendered video. */
+  analyzerArtifacts?: Partial<Record<AnalyzerArtifactName, AnalyzerArtifactPayload>> | undefined;
 }

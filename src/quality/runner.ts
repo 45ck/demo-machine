@@ -1,4 +1,5 @@
-import { stat } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import type { CheckResult } from "../validation/types.js";
 import { postRenderFail, postRenderWarn } from "../validation/types.js";
 import { probeVideo as defaultProbeVideo } from "./ffprobe.js";
@@ -16,6 +17,7 @@ import { checkPhantomOverlay } from "./checks/visual/phantom-overlay.js";
 import { checkCursorPosition } from "./checks/visual/cursor-position.js";
 import { checkChapterTitles } from "./checks/visual/chapter-title.js";
 import { checkFileSizeTrend } from "./checks/file-size-trend.js";
+import { checkAnalyzerArtifacts } from "./checks/analyzer-artifacts.js";
 import {
   checkRenderedVideoIntegrity,
   renderedVideoIntegrityContextFromQualityGate,
@@ -27,6 +29,7 @@ import type {
   VideoProbeResult,
   ManifestEntry,
   QualityCheckContext,
+  AnalyzerArtifactName,
 } from "./types.js";
 
 export interface QualityGateResult {
@@ -86,7 +89,17 @@ interface RunQualityGateParams {
     samples: RenderedVideoFrameSample[];
     extraction: RenderedVideoSampleExtractionMetadata;
   }>;
+  /** Directory containing analyzer artifacts. Defaults to the output video directory. */
+  analyzerArtifactsDir?: string | undefined;
+  /** Injectable JSON artifact reader for testing. */
+  readAnalyzerArtifactFn?: (path: string) => Promise<string>;
 }
+
+const ANALYZER_ARTIFACTS: AnalyzerArtifactName[] = [
+  "layout-safety.report.json",
+  "segment.evidence.json",
+  "review-bundle.json",
+];
 
 async function probeForGate(
   params: RunQualityGateParams,
@@ -156,12 +169,71 @@ async function renderedVideoSamplesForGate(params: {
   };
 }
 
+function isNotFoundError(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    (err as { code?: unknown }).code === "ENOENT"
+  );
+}
+
+function parseAnalyzerArtifact(
+  path: string,
+  raw: string,
+): {
+  path: string;
+  data?: unknown;
+  error?: string;
+} {
+  try {
+    return { path, data: JSON.parse(raw) };
+  } catch (err) {
+    return {
+      path,
+      error: `invalid JSON: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
+async function readAnalyzerArtifact(params: {
+  path: string;
+  readArtifact: (path: string) => Promise<string>;
+}): Promise<{ path: string; data?: unknown; error?: string } | undefined> {
+  try {
+    return parseAnalyzerArtifact(params.path, await params.readArtifact(params.path));
+  } catch (err) {
+    if (isNotFoundError(err)) return undefined;
+    return {
+      path: params.path,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+async function analyzerArtifactsForGate(
+  params: RunQualityGateParams,
+): Promise<QualityCheckContext["analyzerArtifacts"]> {
+  const artifactsDir = params.analyzerArtifactsDir ?? dirname(params.outputMp4Path);
+  const readArtifact = params.readAnalyzerArtifactFn ?? ((path: string) => readFile(path, "utf-8"));
+  const artifacts: NonNullable<QualityCheckContext["analyzerArtifacts"]> = {};
+
+  for (const artifactName of ANALYZER_ARTIFACTS) {
+    const artifactPath = join(artifactsDir, artifactName);
+    const artifact = await readAnalyzerArtifact({ path: artifactPath, readArtifact });
+    if (artifact) artifacts[artifactName] = artifact;
+  }
+
+  return Object.keys(artifacts).length > 0 ? artifacts : undefined;
+}
+
 export async function runQualityGate(params: RunQualityGateParams): Promise<QualityGateResult> {
   const start = Date.now();
   const results: CheckResult[] = [];
   const probeResult = await probeForGate(params, results);
   const fileSizeBytes = await statForGate(params, results);
   const renderedVideo = await renderedVideoSamplesForGate({ gateParams: params, probeResult });
+  const analyzerArtifacts = await analyzerArtifactsForGate(params);
 
   const ctx: QualityCheckContext = {
     outputMp4Path: params.outputMp4Path,
@@ -185,6 +257,7 @@ export async function runQualityGate(params: RunQualityGateParams): Promise<Qual
     renderedVideoFrameSamples: renderedVideo.renderedVideoFrameSamples,
     renderedVideoSampleExtraction: renderedVideo.renderedVideoSampleExtraction,
     renderedVideoIntegrityThresholds: params.renderedVideoIntegrityThresholds,
+    analyzerArtifacts,
   };
 
   results.push(...executeChecks(ctx, probeResult));
@@ -239,6 +312,7 @@ function executeChecks(
       checkRenderedVideoIntegrity(renderedVideoIntegrityContextFromQualityGate(ctx)),
     ),
   );
+  out.push(...safeRun(() => checkAnalyzerArtifacts(ctx)));
   return out;
 }
 
