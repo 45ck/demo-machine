@@ -84,12 +84,13 @@ demo-machine analyze <output-dir> --spec <spec.yaml>
 
 The analyzer writes `review-prompt.md`, `review-bundle.json`,
 `video.shots.json`, `segment.evidence.json`, `layout-safety.report.json`, and
+`demo-capture-evidence.json` when screenshot or event evidence exists, plus
 `segment-storyboard/` artifacts beside the run. `review-demo` then embeds the
 package review prompt and asks the agent to review against those artifacts
 rather than relying only on raw logs. If local OCR dependencies are unavailable,
 use `demo-machine analyze <output-dir> --no-ocr`; the review still has shot,
-segment, layout, and bundle evidence, but OCR and transition evidence will be
-missing.
+segment, layout, capture, and bundle evidence, but OCR and transition evidence
+will be missing.
 
 ## Agent Workflows
 

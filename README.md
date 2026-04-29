@@ -151,20 +151,28 @@ Key artifacts:
 - `trace.zip`: Playwright trace for debugging
 
 `demo-machine analyze <output-dir>` runs after a capture/render has completed.
-It uses the rendered `output.mp4` or raw `video.webm` and writes analyzer
-artifacts beside the run without changing the capture. Current analyzer outputs
-include `review-bundle.json`, `review-prompt.md`, `video.shots.json`,
-`segment.evidence.json`, `layout-safety.report.json`, and
-`segment-storyboard/` files. Pass `--spec <path>` to include the source spec in
-the review prompt, `--video <path>` to analyze a standalone video, `--layout
-<path>` to include layout annotations, or `--no-ocr` when OCR-backed storyboard
-steps are not available locally.
+It uses `@45ck/video-evaluator` to inspect the rendered `output.mp4` or raw
+`video.webm` and writes analyzer artifacts beside the run without changing the
+capture. Current analyzer outputs include `review-bundle.json`,
+`review-prompt.md`, `video.shots.json`, `segment.evidence.json`,
+`layout-safety.report.json`, `demo-capture-evidence.json` when screenshot or
+event evidence exists, and `segment-storyboard/` files. Pass `--spec <path>` to
+include the source spec in the review prompt, `--video <path>` to analyze a
+standalone video, `--layout <path>` to include layout annotations, or `--no-ocr`
+when OCR-backed storyboard steps are not available locally.
 
 When analyzer artifacts are present beside the rendered video, the post-render
 quality gate reads `layout-safety.report.json`, `segment.evidence.json`, and
 `review-bundle.json` and emits their findings inside the normal `quality.json`
 result shape. Missing analyzer artifacts are allowed; they make the review less
 evidence-backed but do not fail a normal run by themselves.
+
+The ownership boundary is deliberate. `video-evaluator` owns reusable video
+analysis: media facts, storyboard/shot/segment evidence, layout safety, caption
+and technical signals, visual diffs, and agent review prompt packaging.
+demo-machine keeps browser capture, Playwright traces, action semantics,
+selector validation, narration/cursor behavior, and the final demo-specific
+`quality.json` policy local.
 
 ## Spec Example
 

@@ -89,6 +89,7 @@ Current artifact contract:
 - `segment-storyboard/storyboard.transitions.json` unless `--no-ocr`
 - `segment.evidence.json`
 - `layout-safety.report.json`
+- `demo-capture-evidence.json` when screenshot or event evidence exists
 - `review-prompt.md`
 
 Implemented dependent slice:
@@ -99,11 +100,22 @@ Implemented dependent slice:
   findings are emitted as normal post-render check results inside the existing
   `quality.json` shape; missing analyzer artifacts remain optional.
 
-Remaining work stays in the dependent beads:
+Implemented follow-up slices:
 
-- `demo-machine-bs4`: replace MCP `review-demo` prompt internals.
-- `demo-machine-lzc`: expand README/user docs once the quality-gate behavior is
-  wired.
+- `demo-machine-bs4`: MCP `review-demo` now routes reviewers toward the
+  evaluator-generated `review-prompt.md` instead of relying only on local
+  heuristics.
+- `demo-machine-lzc`: README, CLI docs, MCP docs, and the verification matrix
+  document the analyzer workflow and quality-gate behavior.
+
+Current dependency state:
+
+- `package.json` depends on `@45ck/video-evaluator` from
+  `github:45ck/video-evaluator`.
+- `pnpm-lock.yaml` pins the dependency to the pushed evaluator commit used by
+  this repo.
+- The adapter still has a local sibling fallback for active development, but
+  the package dependency is the primary runtime path.
 
 ## Cleanup Rule
 
