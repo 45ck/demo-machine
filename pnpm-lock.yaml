@@ -23,7 +23,7 @@ importers:
     dependencies:
       "@45ck/video-evaluator":
         specifier: github:45ck/video-evaluator
-        version: https://codeload.github.com/45ck/video-evaluator/tar.gz/3ed0bdfbf3f15357093230a47cd3892f0ab15f73
+        version: https://codeload.github.com/45ck/video-evaluator/tar.gz/00f2f0586e52b7b61815ba1196692ff1d06c2a96
       "@iarna/toml":
         specifier: ^2.2.5
         version: 2.2.5
@@ -129,10 +129,10 @@ importers:
         version: 3.2.4(@types/node@22.19.11)(jiti@2.6.1)(terser@5.46.2)(yaml@2.8.3)
 
 packages:
-  "@45ck/video-evaluator@https://codeload.github.com/45ck/video-evaluator/tar.gz/3ed0bdfbf3f15357093230a47cd3892f0ab15f73":
+  "@45ck/video-evaluator@https://codeload.github.com/45ck/video-evaluator/tar.gz/00f2f0586e52b7b61815ba1196692ff1d06c2a96":
     resolution:
       {
-        tarball: https://codeload.github.com/45ck/video-evaluator/tar.gz/3ed0bdfbf3f15357093230a47cd3892f0ab15f73,
+        tarball: https://codeload.github.com/45ck/video-evaluator/tar.gz/00f2f0586e52b7b61815ba1196692ff1d06c2a96,
       }
     version: 0.1.1
     engines: { node: ">=20.6.0" }
@@ -3265,6 +3265,14 @@ packages:
     resolution:
       {
         integrity: sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg==,
+      }
+    engines: { node: ">=0.4.0" }
+    hasBin: true
+
+  acorn@8.16.0:
+    resolution:
+      {
+        integrity: sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw==,
       }
     engines: { node: ">=0.4.0" }
     hasBin: true
@@ -7570,7 +7578,7 @@ packages:
       }
 
 snapshots:
-  "@45ck/video-evaluator@https://codeload.github.com/45ck/video-evaluator/tar.gz/3ed0bdfbf3f15357093230a47cd3892f0ab15f73":
+  "@45ck/video-evaluator@https://codeload.github.com/45ck/video-evaluator/tar.gz/00f2f0586e52b7b61815ba1196692ff1d06c2a96":
     dependencies:
       pixelmatch: 7.1.0
       pngjs: 7.0.0
@@ -9391,6 +9399,8 @@ snapshots:
       acorn: 8.15.0
 
   acorn@8.15.0: {}
+
+  acorn@8.16.0: {}
 
   ajv-formats@2.1.1(ajv@8.20.0):
     optionalDependencies:
@@ -11769,7 +11779,7 @@ snapshots:
   terser@5.46.2:
     dependencies:
       "@jridgewell/source-map": 0.3.11
-      acorn: 8.15.0
+      acorn: 8.16.0
       commander: 2.20.3
       source-map-support: 0.5.21
 
