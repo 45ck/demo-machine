@@ -20,12 +20,15 @@ Use this page as the map for the repo docs. Start with the workflow that matches
 - [MCP Integration](mcp.md): connect demo-machine to Claude Desktop, Codex, or any MCP-capable coding agent.
 - [Demo Anything: Meta Prompt QA](demo-anything.md#meta-prompt-qa): create a fresh fixture app, local Codex skill, prompt, narrated demos, and review handoff.
 - [.claude skills](../.claude/skills/demo-machine/SKILL.md): Claude Code-style local skill instructions for generating and reviewing demos.
+- [Analyzer review flow](mcp.md#prompts): generate `review-prompt.md` with `demo-machine analyze`, then use MCP `review-demo` for evidence-backed agent review.
 
 ## Quality And Release
 
 - [Verification Matrix](verification-matrix.md): what each validation layer proves today.
 - [Verification Roadmap](verification-roadmap.md): planned expansion for rendered-video assurance, visual polish, redaction, flake, and parity checks.
 - [Examples Assurance: Video Assurance](examples-assurance-plan.md#video-assurance): MP4 sampling checks for blank frames, frozen spans, and visual jumps.
+- [CLI Analyze](cli-reference.md#analyze-options): analyzer artifacts and how they feed the optional analyzer checks in `quality.json`.
+- [Golden Frames And Visual Diff](verification-matrix.md#current-enforcement): current frame-baseline and visual-regression command contracts.
 
 ## Project Operations
 

@@ -18,11 +18,15 @@
  *   2 — usage error
  */
 import { execSync } from "node:child_process";
-import { access, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
-import { createRequire } from "node:module";
+import { access, mkdir, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import {
+  frameDiffPercent,
+  frameStatus,
+  reviewDemoVisualFramesWithPercent,
+} from "./video-evaluator-visual.mjs";
 
 // ---------------------------------------------------------------------------
 // Arg parsing
@@ -144,37 +148,6 @@ const FRAME_NAMES = [
 ];
 
 /**
- * Compare two PNG buffers using pixelmatch and return diff percentage.
- */
-function compareFrames(PNG, pixelmatch, currentBuf, baselineBuf) {
-  const a = PNG.sync.read(currentBuf);
-  const b = PNG.sync.read(baselineBuf);
-
-  if (a.width !== b.width || a.height !== b.height) {
-    return {
-      diffPercent: 100,
-      mismatchCount: Math.max(a.width * a.height, b.width * b.height),
-      totalPixels: Math.max(a.width * a.height, b.width * b.height),
-      dimensionMismatch: true,
-      currentDimensions: `${a.width}x${a.height}`,
-      baselineDimensions: `${b.width}x${b.height}`,
-    };
-  }
-
-  const totalPixels = a.width * a.height;
-  if (totalPixels === 0) {
-    return { diffPercent: 0, mismatchCount: 0, totalPixels: 0 };
-  }
-
-  const mismatchCount = pixelmatch(a.data, b.data, null, a.width, a.height, {
-    threshold: 0.1,
-  });
-  const diffPercent = (mismatchCount / totalPixels) * 100;
-
-  return { diffPercent, mismatchCount, totalPixels };
-}
-
-/**
  * Pad a string to a fixed width (right-padded).
  */
 function pad(str, width) {
@@ -228,18 +201,6 @@ async function main() {
     process.exit(1);
   }
 
-  // Load pixelmatch + pngjs
-  const require = createRequire(import.meta.url);
-  let PNG, pixelmatch;
-  try {
-    PNG = require("pngjs").PNG;
-    pixelmatch = require("pixelmatch").default ?? require("pixelmatch");
-  } catch {
-    console.error("Error: pixelmatch and pngjs are required.");
-    console.error("Install them: pnpm add -D pixelmatch pngjs");
-    process.exit(2);
-  }
-
   // Discover demo directories with an output.mp4
   const entries = await readdir(outputDir, { withFileTypes: true });
   let slugs = entries
@@ -276,19 +237,37 @@ async function main() {
   // --update-baselines mode: extract frames and copy to baselines
   if (opts.updateBaselines) {
     let extracted = 0;
+    const tempRoot = path.join(root, "output", ".visual-diff-tmp");
+    await mkdir(tempRoot, { recursive: true });
+
     for (const { slug, mp4 } of demos) {
       const outDir = path.join(baselineDir, slug);
-      await mkdir(outDir, { recursive: true });
+      const tmpDir = path.join(tempRoot, slug);
+      await mkdir(tmpDir, { recursive: true });
 
       const durationSec = ffprobeDuration(mp4);
       const times = keyTimestamps(durationSec);
+      const frames = [];
 
       for (let i = 0; i < FRAME_NAMES.length; i++) {
         const frameName = FRAME_NAMES[i];
-        const outPath = path.join(outDir, frameName);
-        extractFrame(mp4, times[i], outPath);
+        const currentPath = path.join(tmpDir, frameName);
+        extractFrame(mp4, times[i], currentPath);
+        frames.push({
+          id: frameName,
+          baselineFramePath: path.join(outDir, frameName),
+          currentFramePath: currentPath,
+          timestampSeconds: times[i],
+        });
         extracted++;
       }
+
+      await reviewDemoVisualFramesWithPercent({
+        frames,
+        mode: "update",
+        thresholdPercent: opts.threshold,
+        missingBaselineStatus: "skip",
+      });
 
       const label = times.map((t) => t.toFixed(1) + "s").join(", ");
       console.log(`  ${slug} -- ${durationSec.toFixed(1)}s [${label}]`);
@@ -367,11 +346,21 @@ async function main() {
         continue;
       }
 
-      const currentBuf = await readFile(currentPath);
-      const baselineBuf = await readFile(baselinePath);
-
-      const result = compareFrames(PNG, pixelmatch, currentBuf, baselineBuf);
-      const diffPct = Number(result.diffPercent.toFixed(2));
+      const review = await reviewDemoVisualFramesWithPercent({
+        frames: [
+          {
+            id: frameName,
+            baselineFramePath: baselinePath,
+            currentFramePath: currentPath,
+            timestampSeconds: times[i],
+          },
+        ],
+        thresholdPercent: opts.threshold,
+        missingBaselineStatus: "skip",
+      });
+      const frame = review.report.frames?.[0];
+      const status = frameStatus(frame);
+      const diffPct = frameDiffPercent(frame);
       const pass = diffPct <= opts.threshold;
 
       if (!pass) {
@@ -388,10 +377,16 @@ async function main() {
         diffPercent: diffPct,
       };
 
-      if (result.dimensionMismatch) {
+      if (
+        status === "fail" &&
+        frame?.metadata?.baselineDimensions &&
+        frame?.metadata?.currentDimensions
+      ) {
         frameEntry.dimensionMismatch = true;
-        frameEntry.currentDimensions = result.currentDimensions;
-        frameEntry.baselineDimensions = result.baselineDimensions;
+        const currentDimensions = frame.metadata.currentDimensions;
+        const baselineDimensions = frame.metadata.baselineDimensions;
+        frameEntry.currentDimensions = `${currentDimensions.width}x${currentDimensions.height}`;
+        frameEntry.baselineDimensions = `${baselineDimensions.width}x${baselineDimensions.height}`;
       }
 
       frameResults.push(frameEntry);

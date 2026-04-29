@@ -14,11 +14,15 @@
  * Uses pixelmatch + pngjs (peer dependencies) for --compare mode.
  */
 import { execSync } from "node:child_process";
-import { access, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
-import { createRequire } from "node:module";
+import { access, mkdir, readdir } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import {
+  frameDiffPercent,
+  frameStatus,
+  reviewDemoVisualFramesWithPercent,
+} from "./video-evaluator-visual.mjs";
 
 // ---------------------------------------------------------------------------
 // Arg parsing
@@ -207,17 +211,6 @@ async function main() {
 
   // --compare mode: extract to temp dir, compare against baselines
   if (opts.compare) {
-    const require = createRequire(import.meta.url);
-    let PNG, pixelmatch;
-    try {
-      PNG = require("pngjs").PNG;
-      pixelmatch = require("pixelmatch").default ?? require("pixelmatch");
-    } catch {
-      console.error("Error: pixelmatch and pngjs are required for --compare mode.");
-      console.error("Install them: pnpm add -D pixelmatch pngjs");
-      process.exit(2);
-    }
-
     let failures = 0;
     let total = 0;
     const results = [];
@@ -252,26 +245,33 @@ async function main() {
           continue;
         }
 
-        const currentBuf = await readFile(currentPath);
-        const baselineBuf = await readFile(baselinePath);
+        const review = await reviewDemoVisualFramesWithPercent({
+          frames: [
+            {
+              id: frameName,
+              baselineFramePath: baselinePath,
+              currentFramePath: currentPath,
+              timestampSeconds: times[i],
+            },
+          ],
+          thresholdPercent: opts.threshold,
+          missingBaselineStatus: "fail",
+        });
+        const frame = review.report.frames?.[0];
+        const status = frameStatus(frame);
+        const diffPercent = frameDiffPercent(frame);
+        const baselineDimensions = frame?.metadata?.baselineDimensions;
+        const currentDimensions = frame?.metadata?.currentDimensions;
 
-        const a = PNG.sync.read(currentBuf);
-        const b = PNG.sync.read(baselineBuf);
-
-        if (a.width !== b.width || a.height !== b.height) {
-          const msg = `dimension mismatch: current ${a.width}x${a.height} vs baseline ${b.width}x${b.height}`;
+        if (status === "fail" && baselineDimensions && currentDimensions) {
+          const msg = `dimension mismatch: current ${currentDimensions.width}x${currentDimensions.height} vs baseline ${baselineDimensions.width}x${baselineDimensions.height}`;
           console.log(`  FAIL  ${slug}/${frameName} — ${msg}`);
           failures++;
           demoResults.push({ frame: frameName, status: "fail", reason: msg });
           continue;
         }
 
-        const totalPixels = a.width * a.height;
-        const mismatchCount = pixelmatch(a.data, b.data, null, a.width, a.height, {
-          threshold: 0.1,
-        });
-        const diffPercent = totalPixels > 0 ? (mismatchCount / totalPixels) * 100 : 0;
-        const pass = diffPercent <= opts.threshold;
+        const pass = status === "pass";
 
         const tag = pass ? "PASS" : "FAIL";
         console.log(`  ${tag}  ${slug}/${frameName} — ${diffPercent.toFixed(2)}% diff`);

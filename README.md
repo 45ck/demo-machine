@@ -43,6 +43,7 @@ Use it when you want product demos that are:
 - Version-controlled next to app code.
 - Narrated, with smooth cursor motion, zoom-focused camera framing, readable click feedback, and clean zoom-out transitions.
 - Reviewable through artifacts like traces, screenshots, manifests, and quality reports.
+- Analyzer-ready: completed runs can be packaged into review artifacts without recapture or rerender.
 - AI-assisted through the built-in MCP server.
 
 It is local-first. There is no required cloud service and no current CI dependency.
@@ -101,6 +102,10 @@ demo-machine capture <spec.yaml>
 # Re-render from a previous capture
 demo-machine edit <output-dir>/events.json
 
+# Analyze an existing run for review artifacts
+demo-machine analyze <output-dir>
+demo-machine analyze --latest --spec <spec.yaml>
+
 # Find examples to copy from
 demo-machine examples list
 demo-machine examples show controls-lab
@@ -130,6 +135,7 @@ spec file
   -> capture video + events + trace + screenshots
   -> render MP4
   -> write verification + quality artifacts
+  -> optionally analyze completed run for review artifacts
 ```
 
 Default runs write to `output/<spec-slug>/<run-id>` and update `output/latest.json`. If you pass `--output <dir>`, demo-machine uses that exact directory and refuses to overwrite known demo artifacts unless you also pass `--overwrite`.
@@ -143,6 +149,22 @@ Key artifacts:
 - `environment.json`: runtime/browser context
 - `quality.json`: post-render checks
 - `trace.zip`: Playwright trace for debugging
+
+`demo-machine analyze <output-dir>` runs after a capture/render has completed.
+It uses the rendered `output.mp4` or raw `video.webm` and writes analyzer
+artifacts beside the run without changing the capture. Current analyzer outputs
+include `review-bundle.json`, `review-prompt.md`, `video.shots.json`,
+`segment.evidence.json`, `layout-safety.report.json`, and
+`segment-storyboard/` files. Pass `--spec <path>` to include the source spec in
+the review prompt, `--video <path>` to analyze a standalone video, `--layout
+<path>` to include layout annotations, or `--no-ocr` when OCR-backed storyboard
+steps are not available locally.
+
+When analyzer artifacts are present beside the rendered video, the post-render
+quality gate reads `layout-safety.report.json`, `segment.evidence.json`, and
+`review-bundle.json` and emits their findings inside the normal `quality.json`
+result shape. Missing analyzer artifacts are allowed; they make the review less
+evidence-backed but do not fail a normal run by themselves.
 
 ## Spec Example
 
@@ -188,7 +210,7 @@ demo-machine includes an MCP server so AI assistants can help create, validate, 
 
 The MCP server exposes 5 tools, 4 resources, and 8 prompts. See the [MCP guide](docs/mcp.md) for the full list.
 
-The repo also includes agent skill files for Claude Code-style workflows under `.claude/skills/`, and `pnpm qa:meta-prompt` creates a fresh Codex-ready workspace with a local Demo Machine skill and prompt. In practice, you can ask a coding agent to inspect an app, write the `.demo.yaml`, run Demo Machine, review the MP4, and iterate until narration, zoom focus, cursor motion, and visual quality are clean.
+The repo also includes agent skill files for Claude Code-style workflows under `.claude/skills/`, and `pnpm qa:meta-prompt` creates a fresh Codex-ready workspace with a local Demo Machine skill and prompt. In practice, you can ask a coding agent to inspect an app, write the `.demo.yaml`, run Demo Machine, analyze the completed output, review the generated `review-prompt.md`, `quality.json`, and MP4, and iterate until narration, zoom focus, cursor motion, and visual quality are clean.
 
 ## Local Quality
 
@@ -201,10 +223,19 @@ pnpm examples:validate -- --no-build
 pnpm examples:smoke:pr -- --limit 2
 pnpm release:gates:showcase
 pnpm video:assure -- --filter assurance-long-demo
+pnpm golden-frames:compare
+pnpm visual-diff
 pnpm qa:meta-prompt
 ```
 
 `pnpm validate` runs lint, formatting, spelling, typecheck, tests, dependency checks, and strict verification inventory checks. `pnpm local-ready` adds build and example validation. `pnpm release-ready:fast` adds release gates without rendering smoke videos, while `pnpm release-ready` runs the heavier PR-tier capture/render smoke and video assurance. `pnpm examples:validate` validates manifest-backed specs, and `pnpm video:assure` scans rendered MP4 outputs for blank frames, frozen spans, and large visual jumps after rendered example outputs exist.
+
+`pnpm local-ready` is the expected local handoff gate for ordinary code and doc
+changes. It does not refresh visual baselines. Use `pnpm golden-frames` to
+extract five key-frame baselines per rendered demo, `pnpm
+golden-frames:compare` or `pnpm visual-diff` to compare current renders against
+`baselines/golden-frames`, and the corresponding update commands only after a
+human has accepted the visual change.
 
 `pnpm release:gates:showcase` protects the public-facing demo surface: the README must link the approved MP4 and poster, the main long-demo suite must stay manifest-backed with narration/cursor/selector quality signals, and the curated gallery must keep at least 10 high-quality entries with GIFs, frame captures, and durations.
 

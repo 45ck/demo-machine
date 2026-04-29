@@ -6,6 +6,10 @@ import {
   analyzeDemoRun,
   type VideoEvaluatorRuntime,
 } from "../../src/quality/video-evaluator-adapter.js";
+import {
+  compareDemoVisualFrames,
+  type DemoVisualEvaluatorRuntime,
+} from "../../src/quality/video-evaluator-visual-adapter.js";
 
 let tempDir: string | undefined;
 
@@ -19,7 +23,7 @@ async function writeJson(path: string, value: unknown): Promise<void> {
   await writeFile(path, JSON.stringify(value, null, 2) + "\n", "utf-8");
 }
 
-function createFakeEvaluator(): VideoEvaluatorRuntime {
+function createFakeEvaluator(): VideoEvaluatorRuntime & DemoVisualEvaluatorRuntime {
   return {
     runVideoShots: vi.fn(async (input) => {
       const outputDir = String(input["outputDir"]);
@@ -54,6 +58,20 @@ function createFakeEvaluator(): VideoEvaluatorRuntime {
       await writeJson(reportPath, { status: "pass" });
       return { reportPath };
     }),
+    runDemoVisualReview: vi.fn(async (input) => ({
+      report: {
+        overallStatus: "pass",
+        threshold: Number(input["maxMismatchPercent"]),
+        frames: [
+          {
+            metadata: { status: "pass" },
+            mismatchPercent: 0.015,
+            leftFramePath: "baseline.png",
+            rightFramePath: "current.png",
+          },
+        ],
+      },
+    })),
     reviewBundle: vi.fn(async (input) => ({
       bundle: {
         rootDir: String(input["outputDir"]),
@@ -111,5 +129,31 @@ describe("analyzeDemoRun", () => {
 
     expect(evaluator.runStoryboardOcr).not.toHaveBeenCalled();
     expect(evaluator.runStoryboardTransitions).not.toHaveBeenCalled();
+  });
+
+  it("adapts legacy visual diff threshold percentages to evaluator ratios", async () => {
+    const outputDir = await makeOutputDir();
+    const evaluator = createFakeEvaluator();
+
+    const result = await compareDemoVisualFrames({
+      evaluator,
+      thresholdPercent: 3,
+      frames: [
+        {
+          id: "frame-01.png",
+          baselineFramePath: join(outputDir, "baseline.png"),
+          currentFramePath: join(outputDir, "current.png"),
+        },
+      ],
+    });
+
+    expect(evaluator.runDemoVisualReview).toHaveBeenCalledWith(
+      expect.objectContaining({
+        maxMismatchPercent: 0.03,
+        pixelmatchThreshold: 0.1,
+        missingBaselineStatus: "skip",
+      }),
+    );
+    expect(result.report.threshold).toBe(0.03);
   });
 });

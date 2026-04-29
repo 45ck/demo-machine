@@ -64,6 +64,7 @@
     "validate": "pnpm lint && pnpm format && pnpm spell && pnpm typecheck && pnpm test && pnpm knip && pnpm dep-check && pnpm quality:verify:strict"
   },
   "dependencies": {
+    "@45ck/video-evaluator": "github:45ck/video-evaluator",
     "@iarna/toml": "^2.2.5",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "commander": "^13.1.0",

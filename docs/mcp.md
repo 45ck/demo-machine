@@ -75,6 +75,22 @@ to run `demo-machine analyze <output-dir>` first and then falls back to a
 limited raw-artifact review using `events.json`, `metadata.json`,
 `subtitles.vtt`, and `verification.json`.
 
+For evidence-backed MCP review, run the completed demo through the analyzer
+before asking for `review-demo`:
+
+```bash
+demo-machine analyze <output-dir> --spec <spec.yaml>
+```
+
+The analyzer writes `review-prompt.md`, `review-bundle.json`,
+`video.shots.json`, `segment.evidence.json`, `layout-safety.report.json`, and
+`segment-storyboard/` artifacts beside the run. `review-demo` then embeds the
+package review prompt and asks the agent to review against those artifacts
+rather than relying only on raw logs. If local OCR dependencies are unavailable,
+use `demo-machine analyze <output-dir> --no-ocr`; the review still has shot,
+segment, layout, and bundle evidence, but OCR and transition evidence will be
+missing.
+
 ## Agent Workflows
 
 demo-machine works well in coding-agent harnesses because the demo spec, rendered output, quality files, and review artifacts all live in the workspace.
@@ -91,8 +107,9 @@ Minimal agent loop:
 2. Draft or update the `.demo.yaml`.
 3. Run `validate-spec`.
 4. Run `run-pipeline` with narration enabled.
-5. Review `output.mp4`, `events.json`, `narration-segments.json`, and `quality.json`.
-6. Repair the spec and rerun until the MP4 is visually clean.
+5. Run `demo-machine analyze <output-dir> --spec <spec.yaml>` when review artifacts are needed.
+6. Review `output.mp4`, `events.json`, `narration-segments.json`, `quality.json`, and `review-prompt.md`.
+7. Repair the spec and rerun until the MP4 is visually clean.
 
 ## Output Behavior
 
