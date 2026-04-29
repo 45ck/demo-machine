@@ -30,10 +30,19 @@ async function writeJson(path: string, value: unknown): Promise<string> {
   return path;
 }
 
-function eventTimestampSeconds(events: JsonObject[], index: unknown): number | undefined {
+function relativeSeconds(timestamp: unknown, startTimestamp: number): number | undefined {
+  return typeof timestamp === "number" && Number.isFinite(timestamp)
+    ? Math.max(0, (timestamp - startTimestamp) / 1000)
+    : undefined;
+}
+
+function eventTimestampSeconds(
+  events: JsonObject[],
+  index: unknown,
+  startTimestamp: number,
+): number | undefined {
   if (typeof index !== "number" || !Number.isInteger(index) || index < 0) return undefined;
-  const timestamp = events[index]?.["timestamp"];
-  return typeof timestamp === "number" && Number.isFinite(timestamp) ? timestamp / 1000 : undefined;
+  return relativeSeconds(events[index]?.["timestamp"], startTimestamp);
 }
 
 function displayIndex(value: unknown): string {
@@ -62,23 +71,28 @@ function asJsonObject(value: unknown): JsonObject | null {
     : null;
 }
 
-function buildDemoCaptureEvents(events: JsonObject[]): JsonObject[] {
+function buildDemoCaptureEvents(events: JsonObject[], startTimestamp: number): JsonObject[] {
   return events.map((event, index) => {
     const action = typeof event["action"] === "string" ? event["action"] : "other";
     const timestamp = typeof event["timestamp"] === "number" ? event["timestamp"] : 0;
     const duration = typeof event["duration"] === "number" ? event["duration"] : 0;
+    const startSeconds = relativeSeconds(timestamp, startTimestamp) ?? 0;
     return {
       id: `event-${String(index).padStart(4, "0")}`,
       type: demoCaptureEventType(action),
       label: action,
-      startSeconds: Math.max(0, timestamp / 1000),
-      endSeconds: Math.max(0, (timestamp + Math.max(0, duration)) / 1000),
+      startSeconds,
+      endSeconds: startSeconds + Math.max(0, duration) / 1000,
       ...(typeof event["selector"] === "string" ? { selector: event["selector"] } : {}),
     };
   });
 }
 
-function stepScreenshotEvidence(manifest: JsonObject, events: JsonObject[]): JsonObject[] {
+function stepScreenshotEvidence(
+  manifest: JsonObject,
+  events: JsonObject[],
+  startTimestamp: number,
+): JsonObject[] {
   const evidence: JsonObject[] = [];
   const stepScreenshots = Array.isArray(manifest["stepScreenshots"])
     ? manifest["stepScreenshots"]
@@ -89,14 +103,18 @@ function stepScreenshotEvidence(manifest: JsonObject, events: JsonObject[]): Jso
     if (typeof record["path"] !== "string") continue;
     evidence.push({
       framePath: record["path"],
-      timestampSeconds: eventTimestampSeconds(events, record["stepIndex"]),
+      timestampSeconds: eventTimestampSeconds(events, record["stepIndex"], startTimestamp),
       note: `step ${displayIndex(record["stepIndex"])} screenshot`,
     });
   }
   return evidence;
 }
 
-function assertScreenshotEvidence(manifest: JsonObject, events: JsonObject[]): JsonObject[] {
+function assertScreenshotEvidence(
+  manifest: JsonObject,
+  events: JsonObject[],
+  startTimestamp: number,
+): JsonObject[] {
   const evidence: JsonObject[] = [];
   const assertPairs = Array.isArray(manifest["assertScreenshotPairs"])
     ? manifest["assertScreenshotPairs"]
@@ -104,7 +122,7 @@ function assertScreenshotEvidence(manifest: JsonObject, events: JsonObject[]): J
   for (const item of assertPairs) {
     const record = asJsonObject(item);
     if (!record) continue;
-    const timestampSeconds = eventTimestampSeconds(events, record["stepIndex"]);
+    const timestampSeconds = eventTimestampSeconds(events, record["stepIndex"], startTimestamp);
     for (const [key, label] of [
       ["beforePath", "before assert"],
       ["afterPath", "after assert"],
@@ -137,10 +155,14 @@ function chapterScreenshotEvidence(manifest: JsonObject): JsonObject[] {
   return evidence;
 }
 
-function screenshotEvidenceFromManifest(manifest: JsonObject, events: JsonObject[]): JsonObject[] {
+function screenshotEvidenceFromManifest(
+  manifest: JsonObject,
+  events: JsonObject[],
+  startTimestamp: number,
+): JsonObject[] {
   return [
-    ...stepScreenshotEvidence(manifest, events),
-    ...assertScreenshotEvidence(manifest, events),
+    ...stepScreenshotEvidence(manifest, events, startTimestamp),
+    ...assertScreenshotEvidence(manifest, events, startTimestamp),
     ...chapterScreenshotEvidence(manifest),
   ];
 }
@@ -169,6 +191,33 @@ function jsonObjectArray(value: unknown): JsonObject[] {
     : [];
 }
 
+function finiteNumber(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function nestedStartTimestamp(value: unknown): number | undefined {
+  const record = asJsonObject(value);
+  return finiteNumber(record?.["startTimestamp"]);
+}
+
+function verificationStartTimestamp(value: unknown): number | undefined {
+  const record = asJsonObject(value);
+  return nestedStartTimestamp(record?.["playback"]);
+}
+
+function deriveStartTimestamp(params: {
+  metadata: unknown;
+  verification: unknown;
+  events: JsonObject[];
+}): number {
+  return (
+    nestedStartTimestamp(params.metadata) ??
+    verificationStartTimestamp(params.verification) ??
+    finiteNumber(params.events[0]?.["timestamp"]) ??
+    0
+  );
+}
+
 export async function writeDemoCaptureEvidence(
   params: DemoCaptureEvidenceParams,
 ): Promise<string | undefined> {
@@ -176,10 +225,18 @@ export async function writeDemoCaptureEvidence(
   const screenshotManifestPath = join(outputDir, "screenshots", "manifest.json");
   const eventsPath = join(outputDir, "events.json");
   const verificationPath = join(outputDir, "verification.json");
+  const metadataPath = join(outputDir, "metadata.json");
   const screenshotManifest = await readJsonIfExists(screenshotManifestPath);
   const events = jsonObjectArray(await readJsonIfExists(eventsPath));
   const verification = await readJsonIfExists(verificationPath);
-  const screenshotEvidence = buildScreenshotEvidence(screenshotManifest, events, verification);
+  const metadata = await readJsonIfExists(metadataPath);
+  const startTimestamp = deriveStartTimestamp({ metadata, verification, events });
+  const screenshotEvidence = buildScreenshotEvidence(
+    screenshotManifest,
+    events,
+    verification,
+    startTimestamp,
+  );
   if (events.length === 0 && screenshotEvidence.length === 0) return undefined;
 
   return writeJson(join(outputDir, "demo-capture-evidence.json"), {
@@ -187,7 +244,7 @@ export async function writeDemoCaptureEvidence(
     createdAt: new Date().toISOString(),
     subject: { kind: "demo-capture", bundleDir: outputDir, videoPath },
     videoPath,
-    events: buildDemoCaptureEvents(events),
+    events: buildDemoCaptureEvents(events, startTimestamp),
     screenshotEvidence,
     summary: {
       status: "present",
@@ -196,7 +253,12 @@ export async function writeDemoCaptureEvidence(
       metrics: {},
       notes: screenshotEvidence.length > 0 ? [] : ["No screenshot evidence artifacts were found."],
     },
-    artifacts: await artifactReferences(screenshotManifestPath, eventsPath, verificationPath),
+    artifacts: await artifactReferences(
+      screenshotManifestPath,
+      eventsPath,
+      verificationPath,
+      metadataPath,
+    ),
     diagnostics: [],
   });
 }
@@ -205,9 +267,10 @@ function buildScreenshotEvidence(
   screenshotManifest: unknown,
   events: JsonObject[],
   verification: unknown,
+  startTimestamp: number,
 ): JsonObject[] {
   const manifest = asJsonObject(screenshotManifest);
-  if (manifest) return screenshotEvidenceFromManifest(manifest, events);
+  if (manifest) return screenshotEvidenceFromManifest(manifest, events, startTimestamp);
   return screenshotEvidenceFromVerification(asJsonObject(verification));
 }
 
@@ -215,6 +278,7 @@ async function artifactReferences(
   screenshotManifestPath: string,
   eventsPath: string,
   verificationPath: string,
+  metadataPath: string,
 ): Promise<JsonObject[]> {
   const references: JsonObject[] = [];
   if (await pathExists(screenshotManifestPath)) {
@@ -224,5 +288,7 @@ async function artifactReferences(
   if (await pathExists(verificationPath)) {
     references.push({ name: "verification.json", path: verificationPath });
   }
+  if (await pathExists(metadataPath))
+    references.push({ name: "metadata.json", path: metadataPath });
   return references;
 }

@@ -135,8 +135,13 @@ describe("analyzeDemoRun", () => {
     const outputDir = await makeOutputDir();
     const evaluator = createFakeEvaluator();
     await mkdir(join(outputDir, "screenshots"), { recursive: true });
+    await writeJson(join(outputDir, "metadata.json"), {
+      schemaVersion: 1,
+      startTimestamp: 100_000,
+      createdAt: "2026-04-29T00:00:00.000Z",
+    });
     await writeJson(join(outputDir, "events.json"), [
-      { action: "click", selector: "#save", timestamp: 1200, duration: 300 },
+      { action: "click", selector: "#save", timestamp: 101_200, duration: 300 },
     ]);
     await writeJson(join(outputDir, "screenshots", "manifest.json"), {
       schemaVersion: 1,
@@ -164,6 +169,7 @@ describe("analyzeDemoRun", () => {
     ) as {
       events: unknown[];
       screenshotEvidence: Array<{ framePath?: string; timestampSeconds?: number }>;
+      artifacts?: Array<{ name?: string }>;
       summary?: { screenshotCount?: number };
     };
 
@@ -174,6 +180,9 @@ describe("analyzeDemoRun", () => {
     expect(captureEvidence.screenshotEvidence).toHaveLength(3);
     expect(captureEvidence.screenshotEvidence[0]?.timestampSeconds).toBe(1.2);
     expect(captureEvidence.summary?.screenshotCount).toBe(3);
+    expect(captureEvidence.artifacts?.some((artifact) => artifact.name === "metadata.json")).toBe(
+      true,
+    );
   });
 
   it("adapts legacy visual diff threshold percentages to evaluator ratios", async () => {
