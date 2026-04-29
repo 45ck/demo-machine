@@ -4,5 +4,13 @@
     "interface": true,
     "type": true
   },
-  "ignoreDependencies": ["kokoro-js", "openai", "json5", "@iarna/toml", "pixelmatch", "pngjs"]
+  "ignoreDependencies": [
+    "@45ck/video-evaluator",
+    "kokoro-js",
+    "openai",
+    "json5",
+    "@iarna/toml",
+    "pixelmatch",
+    "pngjs"
+  ]
 }
