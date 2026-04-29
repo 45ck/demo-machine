@@ -1,6 +1,7 @@
 import { access, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { writeDemoCaptureEvidence } from "./demo-capture-evidence.js";
 
 type JsonObject = Record<string, unknown>;
 
@@ -279,6 +280,9 @@ export async function analyzeDemoRun(params: AnalyzeDemoRunParams): Promise<Anal
   }
   await runSegmentEvidenceAnalysis(ctx);
   await runLayoutSafetyAnalysis(ctx, runOcr);
+  const demoCaptureEvidencePath = await writeDemoCaptureEvidence(ctx);
+  if (demoCaptureEvidencePath)
+    ctx.artifacts["demo-capture-evidence.json"] = demoCaptureEvidencePath;
   await writeReviewArtifacts(ctx);
   return { outputDir: ctx.outputDir, videoPath: ctx.videoPath, artifacts: ctx.artifacts };
 }

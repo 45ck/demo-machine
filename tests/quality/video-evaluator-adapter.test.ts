@@ -131,6 +131,51 @@ describe("analyzeDemoRun", () => {
     expect(evaluator.runStoryboardTransitions).not.toHaveBeenCalled();
   });
 
+  it("writes demo capture screenshot evidence for packaged review prompts", async () => {
+    const outputDir = await makeOutputDir();
+    const evaluator = createFakeEvaluator();
+    await mkdir(join(outputDir, "screenshots"), { recursive: true });
+    await writeJson(join(outputDir, "events.json"), [
+      { action: "click", selector: "#save", timestamp: 1200, duration: 300 },
+    ]);
+    await writeJson(join(outputDir, "screenshots", "manifest.json"), {
+      schemaVersion: 1,
+      counts: {
+        stepScreenshots: 1,
+        assertScreenshotPairs: 1,
+        cursorPositions: 0,
+        chapterTitleScreenshots: 0,
+      },
+      stepScreenshots: [{ stepIndex: 0, path: join(outputDir, "screenshots", "step.png") }],
+      assertScreenshotPairs: [
+        {
+          stepIndex: 0,
+          beforePath: join(outputDir, "screenshots", "before.png"),
+          afterPath: join(outputDir, "screenshots", "after.png"),
+        },
+      ],
+      cursorPositions: [],
+      chapterTitleScreenshots: [],
+    });
+
+    const result = await analyzeDemoRun({ outputDir, evaluator });
+    const captureEvidence = JSON.parse(
+      await readFile(join(outputDir, "demo-capture-evidence.json"), "utf-8"),
+    ) as {
+      events: unknown[];
+      screenshotEvidence: Array<{ framePath?: string; timestampSeconds?: number }>;
+      summary?: { screenshotCount?: number };
+    };
+
+    expect(result.artifacts["demo-capture-evidence.json"]).toBe(
+      join(outputDir, "demo-capture-evidence.json"),
+    );
+    expect(captureEvidence.events).toHaveLength(1);
+    expect(captureEvidence.screenshotEvidence).toHaveLength(3);
+    expect(captureEvidence.screenshotEvidence[0]?.timestampSeconds).toBe(1.2);
+    expect(captureEvidence.summary?.screenshotCount).toBe(3);
+  });
+
   it("adapts legacy visual diff threshold percentages to evaluator ratios", async () => {
     const outputDir = await makeOutputDir();
     const evaluator = createFakeEvaluator();

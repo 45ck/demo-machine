@@ -23,7 +23,7 @@ importers:
     dependencies:
       "@45ck/video-evaluator":
         specifier: github:45ck/video-evaluator
-        version: https://codeload.github.com/45ck/video-evaluator/tar.gz/00f2f0586e52b7b61815ba1196692ff1d06c2a96
+        version: https://codeload.github.com/45ck/video-evaluator/tar.gz/f22ea22759502a2febba17ba2dfc3fec9279d2a3
       "@iarna/toml":
         specifier: ^2.2.5
         version: 2.2.5
@@ -129,10 +129,10 @@ importers:
         version: 3.2.4(@types/node@22.19.11)(jiti@2.6.1)(terser@5.46.2)(yaml@2.8.3)
 
 packages:
-  "@45ck/video-evaluator@https://codeload.github.com/45ck/video-evaluator/tar.gz/00f2f0586e52b7b61815ba1196692ff1d06c2a96":
+  "@45ck/video-evaluator@https://codeload.github.com/45ck/video-evaluator/tar.gz/f22ea22759502a2febba17ba2dfc3fec9279d2a3":
     resolution:
       {
-        tarball: https://codeload.github.com/45ck/video-evaluator/tar.gz/00f2f0586e52b7b61815ba1196692ff1d06c2a96,
+        tarball: https://codeload.github.com/45ck/video-evaluator/tar.gz/f22ea22759502a2febba17ba2dfc3fec9279d2a3,
       }
     version: 0.1.1
     engines: { node: ">=20.6.0" }
@@ -7578,7 +7578,7 @@ packages:
       }
 
 snapshots:
-  "@45ck/video-evaluator@https://codeload.github.com/45ck/video-evaluator/tar.gz/00f2f0586e52b7b61815ba1196692ff1d06c2a96":
+  "@45ck/video-evaluator@https://codeload.github.com/45ck/video-evaluator/tar.gz/f22ea22759502a2febba17ba2dfc3fec9279d2a3":
     dependencies:
       pixelmatch: 7.1.0
       pngjs: 7.0.0
