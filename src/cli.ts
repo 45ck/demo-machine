@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* eslint-disable @typescript-eslint/unbound-method */
+/* eslint-disable @typescript-eslint/unbound-method, max-lines */
 
 import { Command, InvalidArgumentError } from "commander";
 import { loadSpec } from "./spec/loader.js";
@@ -304,10 +304,11 @@ program
   });
 
 async function registerSubcommands(): Promise<void> {
+  const { registerAnalyzeCommand } = await import("./cli/analyze.js");
   const { registerExamplesCommand } = await import("./cli/examples.js");
   const { registerVoicesCommand } = await import("./cli/voices.js");
-  registerExamplesCommand(program);
-  registerVoicesCommand(program);
+  for (const register of [registerAnalyzeCommand, registerExamplesCommand, registerVoicesCommand]) {
+    register(program);
+  }
 }
-
 registerSubcommands().then(() => program.parse(), console.error);

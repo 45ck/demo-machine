@@ -10,16 +10,16 @@ Existing `.beads/*.md` planning notes were preserved.
 
 Primary issue graph:
 
-| ID | Priority | Title |
-| --- | --- | --- |
-| `demo-machine-6n8` | P0 | Adopt video-evaluator for shared demo analysis |
-| `demo-machine-8w7` | P0 | Add video-evaluator runtime dependency and adapter boundary |
-| `demo-machine-lmr` | P0 | Generate analyzer artifacts for completed demo runs |
-| `demo-machine-cu4` | P1 | Integrate analyzer status into quality runner |
-| `demo-machine-i2h` | P1 | Preserve golden-frame and visual-diff command contracts |
-| `demo-machine-bs4` | P1 | Replace MCP review-demo prompt with evaluator package-review-prompt |
-| `demo-machine-lzc` | P1 | Document demo analyzer workflow and quality gate |
-| `demo-machine-9l1` | P2 | Retire duplicated generic visual analyzer code after parity |
+| ID                 | Priority | Title                                                               |
+| ------------------ | -------- | ------------------------------------------------------------------- |
+| `demo-machine-6n8` | P0       | Adopt video-evaluator for shared demo analysis                      |
+| `demo-machine-8w7` | P0       | Add video-evaluator runtime dependency and adapter boundary         |
+| `demo-machine-lmr` | P0       | Generate analyzer artifacts for completed demo runs                 |
+| `demo-machine-cu4` | P1       | Integrate analyzer status into quality runner                       |
+| `demo-machine-i2h` | P1       | Preserve golden-frame and visual-diff command contracts             |
+| `demo-machine-bs4` | P1       | Replace MCP review-demo prompt with evaluator package-review-prompt |
+| `demo-machine-lzc` | P1       | Document demo analyzer workflow and quality gate                    |
+| `demo-machine-9l1` | P2       | Retire duplicated generic visual analyzer code after parity         |
 
 Run:
 
@@ -54,6 +54,49 @@ Keep these compatibility surfaces stable:
 - `pnpm visual-diff`
 - `pnpm visual-diff:update`
 - MCP prompt `review-demo`
+
+## Implemented First Slice
+
+The boundary lives in `src/quality/video-evaluator-adapter.ts` and exports
+`analyzeDemoRun()`. The adapter dynamically loads an installed
+`@45ck/video-evaluator` package first, then falls back to the local sibling
+`../video-evaluator/dist/index.js` during migration. It checks that the expected
+exports exist and writes analyzer artifacts into an already-completed demo
+output directory. It does not rerender, recapture, or replace demo-machine's
+existing `quality.json` gate.
+
+CLI entry point:
+
+```bash
+demo-machine analyze output/my-demo/20260429-120000-000
+demo-machine --output ./output analyze --latest
+```
+
+Optional flags:
+
+- `--spec <path>` includes the original spec path in `review-prompt.md`.
+- `--video <path>` analyzes a specific video when no run directory is available.
+- `--layout <path>` passes layout annotations to layout-safety review.
+- `--no-ocr` skips OCR and transition extraction when local OCR dependencies are
+  not ready.
+
+Current artifact contract:
+
+- `review-bundle.json`
+- `video.shots.json`
+- `segment-storyboard/storyboard.manifest.json`
+- `segment-storyboard/storyboard.ocr.json` unless `--no-ocr`
+- `segment-storyboard/storyboard.transitions.json` unless `--no-ocr`
+- `segment.evidence.json`
+- `layout-safety.report.json`
+- `review-prompt.md`
+
+Remaining work stays in the dependent beads:
+
+- `demo-machine-cu4`: consume analyzer status inside `quality.json`.
+- `demo-machine-bs4`: replace MCP `review-demo` prompt internals.
+- `demo-machine-lzc`: expand README/user docs once the quality-gate behavior is
+  wired.
 
 ## Cleanup Rule
 
