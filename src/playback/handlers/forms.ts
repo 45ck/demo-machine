@@ -21,6 +21,12 @@ function shouldShowActionFocusVisuals(
   return ctx.shouldShowActionFocusVisuals?.(stepIndex, step) ?? true;
 }
 
+function resolveUploadPath(base: string, filePath: string): string {
+  if (path.isAbsolute(filePath) || path.win32.isAbsolute(filePath)) return filePath;
+  if (path.win32.isAbsolute(base)) return path.win32.resolve(base, filePath);
+  return path.resolve(base, filePath);
+}
+
 export const handleCheck: ActionHandler = async (ctx, step, events, stepIndex) => {
   const start = Date.now();
   if (step.action !== "check") return;
@@ -256,7 +262,7 @@ export const handleUpload: ActionHandler = async (ctx, step, events, stepIndex) 
 
   const raw = step.files ?? (step.file ? [step.file] : []);
   const base = ctx.specDir ?? process.cwd();
-  const files = raw.map((p) => (path.isAbsolute(p) ? p : path.resolve(base, p)));
+  const files = raw.map((p) => resolveUploadPath(base, p));
 
   const box = await locator.boundingBox();
   await ctx.moveCursorTo(box);

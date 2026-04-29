@@ -53,7 +53,7 @@ importers:
         version: 6.22.0(zod@3.25.76)
       pixelmatch:
         specifier: ">=5.0.0"
-        version: 7.1.0
+        version: 5.3.0
       playwright:
         specifier: ^1.58.2
         version: 1.58.2
@@ -6122,6 +6122,13 @@ packages:
     engines: { node: ">=0.10" }
     hasBin: true
 
+  pixelmatch@5.3.0:
+    resolution:
+      {
+        integrity: sha512-o8mkY4E/+LNUf6LzX96ht6k6CEDi65k9G2rjMtBe9Oo+VPKSvl+0GKHuH/AlG+GA5LPG/i5hrekkxUc3s2HU+Q==,
+      }
+    hasBin: true
+
   pixelmatch@7.1.0:
     resolution:
       {
@@ -6157,6 +6164,13 @@ packages:
       }
     engines: { node: ">=18" }
     hasBin: true
+
+  pngjs@6.0.0:
+    resolution:
+      {
+        integrity: sha512-TRzzuFRRmEoSW/p1KVAmiOgPco2Irlah+bGFCeNfJXxxYGwSw7YwAOAcd7X28K/m5bjBWKsC29KyoMfHbypayg==,
+      }
+    engines: { node: ">=12.13.0" }
 
   pngjs@7.0.0:
     resolution:
@@ -11217,6 +11231,10 @@ snapshots:
 
   pidtree@0.6.0: {}
 
+  pixelmatch@5.3.0:
+    dependencies:
+      pngjs: 6.0.0
+
   pixelmatch@7.1.0:
     dependencies:
       pngjs: 7.0.0
@@ -11232,6 +11250,8 @@ snapshots:
       playwright-core: 1.58.2
     optionalDependencies:
       fsevents: 2.3.2
+
+  pngjs@6.0.0: {}
 
   pngjs@7.0.0: {}
 

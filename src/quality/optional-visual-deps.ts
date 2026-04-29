@@ -48,7 +48,9 @@ export function loadPng(): PngStatic {
 export function loadVisualDiffDeps(): { PNG: PngStatic; pixelmatch: PixelmatchFn } {
   try {
     const { PNG } = require("pngjs") as { PNG: PngStatic };
-    const pixelmatch = (require("pixelmatch") as { default: PixelmatchFn }).default;
+    const loadedPixelmatch = require("pixelmatch") as PixelmatchFn | { default: PixelmatchFn };
+    const pixelmatch =
+      typeof loadedPixelmatch === "function" ? loadedPixelmatch : loadedPixelmatch.default;
     return { PNG, pixelmatch };
   } catch (err) {
     throw new OptionalVisualDependencyError(
