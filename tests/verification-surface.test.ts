@@ -41,6 +41,10 @@ function minimalStepForAction(action: string): Record<string, unknown> {
       return { action, path: "./generated.txt" };
     case "waitForPageFunction":
       return { action, expression: "document.body.innerText.includes('Ready')" };
+    case "evaluate":
+      return { action, expression: "document.body.dataset.ready = String(arg)", arg: "true" };
+    case "runCommand":
+      return { action, command: "node --version" };
     case "assert":
       return { action, selector: "#target", visible: true };
     case "screenshot":

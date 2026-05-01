@@ -466,6 +466,94 @@ describe("actionHandlers", () => {
     expect(events[0]!.action).toBe("waitForPageFunction");
   });
 
+  it("invokes waitForPageFunction arrow expressions", async () => {
+    const step = {
+      action: "waitForPageFunction" as const,
+      expression: "() => Boolean(document.querySelector('#ready'))",
+      timeoutMs: 5000,
+      pollingMs: 250,
+    };
+
+    await actionHandlers["waitForPageFunction"]!(ctx, step, events, 0);
+
+    expect(ctx.page.waitForFunction).toHaveBeenCalledWith(
+      "(() => Boolean(document.querySelector('#ready')))()",
+      undefined,
+      { timeout: 5000, polling: 250 },
+    );
+  });
+
+  it("handles evaluate action with env arg without logging the expression", async () => {
+    process.env.DEMO_MACHINE_TEST_TOKEN = "secret-token";
+    const step = {
+      action: "evaluate" as const,
+      expression: "document.body.dataset.token = String(arg)",
+      argFromEnv: "DEMO_MACHINE_TEST_TOKEN",
+      label: "relay token",
+      timeoutMs: 5000,
+    };
+
+    try {
+      await actionHandlers["evaluate"]!(ctx, step, events, 0);
+    } finally {
+      delete process.env.DEMO_MACHINE_TEST_TOKEN;
+    }
+
+    const evaluateMock = ctx.page.evaluate as unknown as ReturnType<typeof vi.fn>;
+    expect(evaluateMock).toHaveBeenNthCalledWith(1, expect.any(Function), "secret-token");
+    expect(evaluateMock).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining("document.body.dataset.token = String(arg)"),
+    );
+    expect(String(evaluateMock.mock.calls[1]![0])).not.toContain("secret-token");
+    expect(events).toHaveLength(1);
+    expect(events[0]!.action).toBe("evaluate");
+    expect(events[0]!.selector).toBe("relay token");
+    expect(events[0]!.selector).not.toContain("secret-token");
+  });
+
+  it("throws when evaluate env arg is missing", async () => {
+    const step = {
+      action: "evaluate" as const,
+      expression: "return arg",
+      argFromEnv: "DEMO_MACHINE_MISSING_TOKEN",
+    };
+
+    await expect(actionHandlers["evaluate"]!(ctx, step, events, 0)).rejects.toThrow(
+      'evaluate argFromEnv "DEMO_MACHINE_MISSING_TOKEN" was not set',
+    );
+  });
+
+  it("handles runCommand action", async () => {
+    const dir = join(tmpdir(), `demo-machine-${String(Date.now())}-command`);
+    tempDirs.push(dir);
+    await mkdir(dir, { recursive: true });
+    ctx = { ...ctx, specDir: dir, outputDir: dir };
+    const step = {
+      action: "runCommand" as const,
+      command: "node --version",
+      timeoutMs: 5000,
+    };
+
+    await actionHandlers["runCommand"]!(ctx, step, events, 0);
+
+    expect(events).toHaveLength(1);
+    expect(events[0]!.action).toBe("runCommand");
+    expect(events[0]!.selector).toBe("node --version");
+  });
+
+  it("throws when runCommand exits non-zero", async () => {
+    const step = {
+      action: "runCommand" as const,
+      command: 'node -e "process.exit(7)"',
+      timeoutMs: 5000,
+    };
+
+    await expect(actionHandlers["runCommand"]!(ctx, step, events, 0)).rejects.toThrow(
+      "runCommand exited with 7",
+    );
+  });
+
   it("handles assert action with visibility", async () => {
     const step = { action: "assert" as const, selector: "#el", visible: true };
     await actionHandlers["assert"]!(ctx, step, events, 0);

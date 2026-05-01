@@ -56,6 +56,8 @@ Relative `navigate.url` values are resolved against `runner.url`.
 | `waitForLocalDirectoryStable` | `path`                                    | Wait for local file writes to settle.    |
 | `waitForLocalFile`            | `path` or `paths`                         | Wait for local file evidence.            |
 | `waitForPageFunction`         | `expression`                              | Wait for a browser-side condition.       |
+| `evaluate`                    | `expression`                              | Run a browser-side setup/proof script.   |
+| `runCommand`                  | `command`                                 | Run a local command during capture.      |
 | `press`                       | `key`                                     | Press a keyboard key.                    |
 | `back`                        | -                                         | Go back in browser history.              |
 | `forward`                     | -                                         | Go forward in browser history.           |
@@ -69,6 +71,12 @@ Every action supports optional `narration`, `delay`, and `timeoutMs` where relev
 each target file to include specific text before the demo continues.
 `waitForLocalDirectoryStable` resolves its path the same way and waits until recursive file count,
 latest write time, and total size stop changing for `stableMs`.
+`runCommand` executes from the spec directory by default, supports optional `cwd`, `env`, and
+`timeoutMs`, fails the capture on timeout or non-zero exit, and writes stdout/stderr logs under the
+demo output directory when one is available.
+`evaluate` executes a trusted browser-side script body as `new Function("arg", expression)`. Use
+`argFromEnv` when the script needs a secret; the event log records only `label`, not the expression
+or argument value.
 
 ## Targets
 

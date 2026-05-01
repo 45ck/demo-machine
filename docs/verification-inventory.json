@@ -11,6 +11,8 @@
     { "id": "waitForLocalDirectoryStable", "proof": ["schema", "unit", "example"] },
     { "id": "waitForLocalFile", "proof": ["schema", "unit", "example"] },
     { "id": "waitForPageFunction", "proof": ["schema", "unit", "example"] },
+    { "id": "evaluate", "proof": ["schema", "unit", "example"] },
+    { "id": "runCommand", "proof": ["schema", "unit", "example"] },
     { "id": "assert", "proof": ["schema", "unit", "example"] },
     { "id": "screenshot", "proof": ["schema", "unit", "example"] },
     { "id": "press", "proof": ["schema", "unit", "example"] },

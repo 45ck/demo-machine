@@ -13,6 +13,8 @@ const KNOWN_ACTIONS = new Set([
   "waitForLocalDirectoryStable",
   "waitForLocalFile",
   "waitForPageFunction",
+  "evaluate",
+  "runCommand",
   "assert",
   "screenshot",
   "press",
@@ -59,6 +61,16 @@ const TIMEOUT_WARNINGS = [
     action: "waitForPageFunction",
     field: "timeoutMs",
     message: "waitForPageFunction timeout {value}ms is very high",
+  },
+  {
+    action: "evaluate",
+    field: "timeoutMs",
+    message: "evaluate timeout {value}ms is very high",
+  },
+  {
+    action: "runCommand",
+    field: "timeoutMs",
+    message: "runCommand timeout {value}ms is very high",
   },
 ] as const;
 

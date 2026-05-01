@@ -176,6 +176,23 @@ describe("demoSpecSchema", () => {
         },
       },
       {
+        action: "evaluate",
+        step: {
+          action: "evaluate",
+          expression: "document.body.dataset.ready = String(arg)",
+          argFromEnv: "CONTROL_PLANE_TOKEN",
+          timeoutMs: 1000,
+        },
+      },
+      {
+        action: "runCommand",
+        step: {
+          action: "runCommand",
+          command: "node --version",
+          timeoutMs: 1000,
+        },
+      },
+      {
         action: "assert",
         step: { action: "assert", selector: ".x", visible: true },
       },
@@ -485,6 +502,16 @@ describe("demoSpecSchema", () => {
         count: 2,
       });
       expect(result.success).toBe(true);
+    });
+
+    it("rejects evaluate with both arg and argFromEnv", () => {
+      const result = stepSchema.safeParse({
+        action: "evaluate",
+        expression: "return arg",
+        arg: "inline",
+        argFromEnv: "TOKEN",
+      });
+      expect(result.success).toBe(false);
     });
   });
 

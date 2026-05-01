@@ -146,6 +146,8 @@ describe("spec-steps check", () => {
       "waitForLocalDirectoryStable",
       "waitForLocalFile",
       "waitForPageFunction",
+      "evaluate",
+      "runCommand",
       "assert",
       "screenshot",
       "press",

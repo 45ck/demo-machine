@@ -9,10 +9,12 @@ import {
   handleUncheck,
   handleUpload,
 } from "./handlers/forms.js";
+import { handleEvaluate } from "./handlers/evaluate.js";
 import { handleBack, handleForward } from "./handlers/history.js";
 import { handleHover } from "./handlers/hover.js";
 import { handleNavigate } from "./handlers/navigate.js";
 import { handlePress } from "./handlers/press.js";
+import { handleRunCommand } from "./handlers/run-command.js";
 import { handleScroll } from "./handlers/scroll.js";
 import { handleScreenshot } from "./handlers/screenshot.js";
 import { handleType } from "./handlers/type.js";
@@ -35,6 +37,8 @@ export const actionHandlers: Record<string, ActionHandler> = {
   waitForLocalDirectoryStable: handleWaitForLocalDirectoryStable,
   waitForLocalFile: handleWaitForLocalFile,
   waitForPageFunction: handleWaitForPageFunction,
+  evaluate: handleEvaluate,
+  runCommand: handleRunCommand,
   assert: handleAssert,
   screenshot: handleScreenshot,
   press: handlePress,

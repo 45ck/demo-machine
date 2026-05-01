@@ -184,6 +184,21 @@ const waitForPageFunctionStepSchema = z.object({
   focus: stepFocusSchema.optional(),
 });
 
+const evaluateStepSchema = z
+  .object({
+    action: z.literal("evaluate"),
+    expression: nonBlankString,
+    label: nonBlankString.optional(),
+    arg: z.unknown().optional(),
+    argFromEnv: nonBlankString.optional(),
+    timeoutMs: z.number().int().positive().optional(),
+    narration: z.string().optional(),
+    focus: stepFocusSchema.optional(),
+  })
+  .refine((v) => !(v.arg !== undefined && v.argFromEnv !== undefined), {
+    message: 'evaluate: provide either "arg" or "argFromEnv", not both',
+  });
+
 const waitForLocalFileStepSchema = z
   .object({
     action: z.literal("waitForLocalFile"),
@@ -209,6 +224,16 @@ const waitForLocalDirectoryStableStepSchema = z.object({
   minFiles: z.number().int().nonnegative().optional(),
   timeoutMs: z.number().int().positive().optional(),
   pollingMs: z.number().int().positive().optional(),
+  narration: z.string().optional(),
+  focus: stepFocusSchema.optional(),
+});
+
+const runCommandStepSchema = z.object({
+  action: z.literal("runCommand"),
+  command: nonBlankString,
+  cwd: nonBlankString.optional(),
+  env: z.record(z.string(), z.string()).optional(),
+  timeoutMs: z.number().int().positive().optional(),
   narration: z.string().optional(),
   focus: stepFocusSchema.optional(),
 });
@@ -396,6 +421,8 @@ export const stepSchema = z.union([
   waitForLocalDirectoryStableStepSchema,
   waitForLocalFileStepSchema,
   waitForPageFunctionStepSchema,
+  evaluateStepSchema,
+  runCommandStepSchema,
   assertStepSchemaValidated,
   screenshotStepSchema,
   pressStepSchema,
