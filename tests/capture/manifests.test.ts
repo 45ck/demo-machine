@@ -50,6 +50,8 @@ describe("capture manifests", () => {
   });
 
   afterEach(async () => {
+    delete process.env["DEMO_MACHINE_PUBLIC_SAFE"];
+    delete process.env["DEMO_MACHINE_DISABLE_TRACE"];
     await rm(tempDir, { recursive: true, force: true });
   });
 
@@ -132,6 +134,44 @@ describe("capture manifests", () => {
     expect(manifest.checks.missingRequiredArtifacts).toBeUndefined();
   });
 
+  it("records public-safe policy and rejects forbidden trace artifacts", async () => {
+    process.env["DEMO_MACHINE_PUBLIC_SAFE"] = "true";
+    const environment = buildCaptureEnvironmentManifest({
+      spec: makeSpec(),
+      baseUrl: "http://localhost:4999",
+      outputDir: tempDir,
+      browserName: "chromium",
+      headless: true,
+      strictGeometry: false,
+      resolution: { width: 1280, height: 720 },
+      renderer: "ffmpeg",
+      narrationEnabled: false,
+      narrationSyncMode: "manual",
+      narrationBufferMs: 500,
+    });
+    const manifest = buildCaptureVerificationManifest({
+      status: "passed",
+      spec: makeSpec(),
+      eventCount: 1,
+      bundle: {
+        videoPath: await writeArtifact("video.webm"),
+        tracePath: await writeArtifact("trace.zip"),
+        eventLogPath: await writeArtifact("events.json", "[]"),
+        metadataPath: await writeArtifact("metadata.json", "{}"),
+        screenshots: [],
+      },
+      environmentPath: await writeArtifact("environment.json", "{}"),
+    });
+
+    expect(environment.publicSafety).toMatchObject({
+      publicSafe: true,
+      traceDisabled: true,
+      traceEnabled: false,
+    });
+    expect(manifest.checks.publicSafeArtifactsClean).toBe(false);
+    expect(manifest.checks.forbiddenPublicArtifacts).toEqual(["tracePath"]);
+  });
+
   it("marks failed verification manifests when required failure artifacts are missing", () => {
     const manifest = buildCaptureVerificationManifest({
       status: "failed",
@@ -150,7 +190,6 @@ describe("capture manifests", () => {
 
     expect(manifest.checks.requiredArtifactsPresent).toBe(false);
     expect(manifest.checks.missingRequiredArtifacts).toEqual([
-      "tracePath",
       "eventLogPath",
       "metadataPath",
       "environmentPath",

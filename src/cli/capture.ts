@@ -29,7 +29,7 @@ const DEFAULT_BASE_URL = "http://localhost:3000";
 type CaptureRecorderModule = typeof import("../capture/recorder.js");
 
 interface CaptureArtifacts {
-  tracePath: string;
+  tracePath?: string | undefined;
   eventLogPath: string;
   metadataPath?: string | undefined;
   environmentPath: string;
@@ -155,7 +155,7 @@ async function finalizeSuccessfulCapture(params: {
     recordingStartTimestamp: params.recording.recordingStartTimestamp,
     startTimestamp: params.startTimestamp,
     artifacts: {
-      tracePath: bundle.tracePath,
+      ...(bundle.tracePath ? { tracePath: bundle.tracePath } : {}),
       eventLogPath: bundle.eventLogPath,
       metadataPath: bundle.metadataPath,
       environmentPath: params.environmentPath,

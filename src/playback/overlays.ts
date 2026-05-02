@@ -1,6 +1,7 @@
 import { generateBlurStyles } from "../redaction/mask.js";
 import { scanForSecrets } from "../redaction/secrets.js";
 import { createLogger } from "../utils/logger.js";
+import { getPublicSafetyPolicy } from "../utils/public-safety.js";
 import type { PlaywrightPage } from "./actions.js";
 import { getCursorCSS } from "./cursor.js";
 
@@ -83,5 +84,8 @@ export async function checkSecrets(
   const matches = scanForSecrets(text, patterns);
   for (const match of matches) {
     logger.warn(`Secret detected: pattern="${match.pattern}"`);
+  }
+  if (matches.length > 0 && getPublicSafetyPolicy().publicSafe) {
+    throw new Error(`Public-safe capture blocked by ${String(matches.length)} secret match(es)`);
   }
 }

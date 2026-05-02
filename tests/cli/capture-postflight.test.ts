@@ -64,6 +64,47 @@ describe("capture postflight", () => {
     ).resolves.toBeUndefined();
   });
 
+  it("passes when a sensitive public capture omits trace.zip", async () => {
+    const videoPath = join(tempDir, "video.webm");
+    const eventLogPath = join(tempDir, "events.json");
+    const metadataPath = join(tempDir, "metadata.json");
+    const environmentPath = join(tempDir, "environment.json");
+    const verificationPath = join(tempDir, "verification.json");
+    await writeFile(videoPath, "video");
+    await writeFile(eventLogPath, "[]");
+    await writeFile(metadataPath, "{}");
+    await writeFile(environmentPath, "{}");
+    await writeFile(
+      verificationPath,
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          status: "passed",
+          artifacts: {
+            videoPath,
+            eventLogPath,
+            metadataPath,
+            environmentPath,
+            verificationPath,
+          },
+          checks: { requiredArtifactsPresent: true },
+        },
+        null,
+        2,
+      ),
+    );
+
+    await expect(
+      runPostflight({
+        spec: {
+          chapters: [{ title: "Intro", steps: [{ action: "navigate", url: "/" }] }],
+        },
+        events: [{ action: "navigate", timestamp: 1, duration: 2 }],
+        opts: { output: tempDir },
+      }),
+    ).resolves.toBeUndefined();
+  });
+
   it("rejects when post-capture verification fails", async () => {
     await expect(
       runPostflight({
@@ -119,5 +160,51 @@ describe("capture postflight", () => {
         opts: { output: tempDir },
       }),
     ).rejects.toThrow(/requiredArtifactsPresent=false.*metadataPath/);
+  });
+
+  it("rejects when verification.json reports forbidden public artifacts", async () => {
+    const videoPath = join(tempDir, "video.webm");
+    const eventLogPath = join(tempDir, "events.json");
+    const metadataPath = join(tempDir, "metadata.json");
+    const environmentPath = join(tempDir, "environment.json");
+    const verificationPath = join(tempDir, "verification.json");
+    await writeFile(videoPath, "video");
+    await writeFile(eventLogPath, "[]");
+    await writeFile(metadataPath, "{}");
+    await writeFile(environmentPath, "{}");
+    await writeFile(
+      verificationPath,
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          status: "passed",
+          artifacts: {
+            videoPath,
+            eventLogPath,
+            metadataPath,
+            environmentPath,
+            verificationPath,
+            tracePath: join(tempDir, "trace.zip"),
+          },
+          checks: {
+            requiredArtifactsPresent: true,
+            publicSafeArtifactsClean: false,
+            forbiddenPublicArtifacts: ["tracePath"],
+          },
+        },
+        null,
+        2,
+      ),
+    );
+
+    await expect(
+      runPostflight({
+        spec: {
+          chapters: [{ title: "Intro", steps: [{ action: "navigate", url: "/" }] }],
+        },
+        events: [{ action: "navigate", timestamp: 1, duration: 2 }],
+        opts: { output: tempDir },
+      }),
+    ).rejects.toThrow(/forbidden public artifacts.*tracePath/);
   });
 });

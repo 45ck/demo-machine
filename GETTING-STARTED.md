@@ -50,7 +50,7 @@ Expected capture artifacts in the resolved output directory:
 - `metadata.json`
 - `environment.json`
 - `verification.json`
-- `trace.zip`
+- `trace.zip` unless `DEMO_MACHINE_PUBLIC_SAFE=true` is set for a sensitive public recording
 
 ## Create A Demo For Your App
 

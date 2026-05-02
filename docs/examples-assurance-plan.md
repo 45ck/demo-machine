@@ -46,7 +46,7 @@ Raw browser capture validation:
 pnpm examples:capture -- --filter controls-lab
 ```
 
-`examples:capture` writes each capture under `output/example-suite/<slug>/` and verifies required artifacts including `video.webm`, `events.json`, `metadata.json`, `environment.json`, `verification.json`, and `trace.zip`.
+`examples:capture` writes each capture under `output/example-suite/<slug>/` and verifies required artifacts including `video.webm`, `events.json`, `metadata.json`, `environment.json`, and `verification.json`. It also writes `trace.zip` by default; set `DEMO_MACHINE_PUBLIC_SAFE=true` for sensitive public recordings.
 
 ## Video Assurance
 

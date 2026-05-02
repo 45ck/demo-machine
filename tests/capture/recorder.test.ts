@@ -14,6 +14,8 @@ describe("recorder", () => {
   });
 
   afterEach(async () => {
+    delete process.env["DEMO_MACHINE_DISABLE_TRACE"];
+    delete process.env["DEMO_MACHINE_PUBLIC_SAFE"];
     await rm(tempDir, { recursive: true, force: true });
   });
 
@@ -96,6 +98,26 @@ describe("recorder", () => {
       });
     });
 
+    it("does not start tracing when sensitive trace capture is disabled", async () => {
+      process.env["DEMO_MACHINE_DISABLE_TRACE"] = "true";
+      const { mockBrowser, mockContext } = createMockBrowser();
+      const options = makeOptions();
+
+      await createRecordingContext(mockBrowser, options);
+
+      expect(mockContext.tracing.start).not.toHaveBeenCalled();
+    });
+
+    it("does not start tracing in public-safe mode", async () => {
+      process.env["DEMO_MACHINE_PUBLIC_SAFE"] = "true";
+      const { mockBrowser, mockContext } = createMockBrowser();
+      const options = makeOptions();
+
+      await createRecordingContext(mockBrowser, options);
+
+      expect(mockContext.tracing.start).not.toHaveBeenCalled();
+    });
+
     it("fails when strictGeometry is enabled and viewport does not match", async () => {
       const { mockBrowser, mockPage } = createMockBrowser();
       const options = { ...makeOptions(), strictGeometry: true };
@@ -161,6 +183,18 @@ describe("recorder", () => {
       expect(mockContext.tracing.stop).toHaveBeenCalledWith({
         path: join(options.outputDir, "trace.zip"),
       });
+      expect(mockContext.close).toHaveBeenCalled();
+    });
+
+    it("omits trace artifact and still closes context when sensitive trace capture is disabled", async () => {
+      process.env["DEMO_MACHINE_DISABLE_TRACE"] = "1";
+      const { mockContext, mockPage } = createMockBrowser();
+      const options = makeOptions();
+
+      const bundle = await finalizeCapture(mockContext, mockPage, [], options);
+
+      expect(bundle.tracePath).toBeUndefined();
+      expect(mockContext.tracing.stop).not.toHaveBeenCalled();
       expect(mockContext.close).toHaveBeenCalled();
     });
 

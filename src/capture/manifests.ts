@@ -4,6 +4,7 @@ import { writeFile } from "node:fs/promises";
 import process from "node:process";
 import type { DemoSpec } from "../spec/types.js";
 import type { CaptureBundle, CaptureGeometrySnapshot } from "./types.js";
+import { getPublicSafetyPolicy, type PublicSafetyPolicy } from "../utils/public-safety.js";
 
 interface CaptureEnvironmentManifestV1 {
   schemaVersion: 1;
@@ -38,6 +39,7 @@ interface CaptureEnvironmentManifestV1 {
     timezone: string;
     outputDir: string;
   };
+  publicSafety: PublicSafetyPolicy;
 }
 
 export type CaptureEnvironmentManifest = CaptureEnvironmentManifestV1;
@@ -75,6 +77,8 @@ interface CaptureVerificationManifestV1 {
   checks: {
     requiredArtifactsPresent: boolean;
     missingRequiredArtifacts?: string[];
+    publicSafeArtifactsClean?: boolean;
+    forbiddenPublicArtifacts?: string[];
     failureArtifactsPresent?: boolean;
     missingFailureArtifacts?: string[];
   };
@@ -190,6 +194,7 @@ export function buildCaptureEnvironmentManifest(params: {
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone ?? "unknown",
       outputDir: params.outputDir,
     },
+    publicSafety: getPublicSafetyPolicy(),
   };
 }
 
@@ -261,8 +266,8 @@ function buildChecks(
   status: "passed" | "failed",
   artifacts: ArtifactPaths,
 ): CaptureVerificationManifestV1["checks"] {
+  const policy = getPublicSafetyPolicy();
   const requiredArtifactKeys: Array<keyof ArtifactPaths> = [
-    "tracePath",
     "eventLogPath",
     "metadataPath",
     "environmentPath",
@@ -272,9 +277,18 @@ function buildChecks(
   const requiredArtifactsPresent = missingRequiredArtifacts.length === 0;
 
   if (status !== "failed") {
+    const publicSafeForbiddenArtifacts = findForbiddenPublicArtifacts(policy, artifacts);
     return {
       requiredArtifactsPresent,
       ...(missingRequiredArtifacts.length > 0 ? { missingRequiredArtifacts } : {}),
+      ...(policy.publicSafe
+        ? {
+            publicSafeArtifactsClean: publicSafeForbiddenArtifacts.length === 0,
+            ...(publicSafeForbiddenArtifacts.length > 0
+              ? { forbiddenPublicArtifacts: publicSafeForbiddenArtifacts }
+              : {}),
+          }
+        : {}),
     };
   }
 
@@ -289,9 +303,29 @@ function buildChecks(
   return {
     requiredArtifactsPresent,
     ...(missingRequiredArtifacts.length > 0 ? { missingRequiredArtifacts } : {}),
+    ...(policy.publicSafe
+      ? {
+          publicSafeArtifactsClean: false,
+          forbiddenPublicArtifacts: findForbiddenPublicArtifacts(policy, artifacts),
+        }
+      : {}),
     failureArtifactsPresent,
     ...(missingFailureArtifacts.length > 0 ? { missingFailureArtifacts } : {}),
   };
+}
+
+function findForbiddenPublicArtifacts(
+  policy: PublicSafetyPolicy,
+  artifacts: ArtifactPaths,
+): string[] {
+  if (!policy.publicSafe) return [];
+  const forbiddenKeys: Array<keyof ArtifactPaths> = [
+    "tracePath",
+    "failureJsonPath",
+    "failureScreenshotPath",
+    "failureHtmlPath",
+  ];
+  return forbiddenKeys.filter((key) => typeof artifacts[key] === "string");
 }
 
 function artifactExists(filePath: string | undefined): boolean {

@@ -1,5 +1,5 @@
 export interface PipelineArtifacts {
-  tracePath: string;
+  tracePath?: string | undefined;
   eventLogPath: string;
   metadataPath?: string | undefined;
   environmentPath: string;

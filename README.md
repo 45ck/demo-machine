@@ -148,7 +148,7 @@ Key artifacts:
 - `verification.json`: capture proof and artifact contract
 - `environment.json`: runtime/browser context
 - `quality.json`: post-render checks
-- `trace.zip`: Playwright trace for debugging
+- `trace.zip`: Playwright trace for debugging, unless `DEMO_MACHINE_PUBLIC_SAFE=true` is set for a sensitive public recording
 
 `demo-machine analyze <output-dir>` runs after a capture/render has completed.
 It uses `@45ck/video-evaluator` to inspect the rendered `output.mp4` or raw

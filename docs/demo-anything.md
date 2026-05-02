@@ -103,7 +103,7 @@ pnpm video:assure -- --filter assurance-long-demo
 pnpm qa:meta-prompt
 ```
 
-Use `demo-machine examples list` to find a nearby product pattern before writing a new spec. `examples:validate` loads every manifest-backed canonical spec and variant. `examples:capture` is the strongest raw-capture signal because it launches each demo app, drives the browser, records video, writes screenshot evidence when available, and writes Playwright `trace.zip`. Rendered quality evidence is produced by `demo-machine run` as `quality.json`; after rendered MP4s exist under `output/example-suite/`, `video:assure` samples them for blank frames, frozen spans, and large visual jumps. The `assurance-long-demo` filter targets the long realistic flow for full-demo QA.
+Use `demo-machine examples list` to find a nearby product pattern before writing a new spec. `examples:validate` loads every manifest-backed canonical spec and variant. `examples:capture` is the strongest raw-capture signal because it launches each demo app, drives the browser, records video, writes screenshot evidence when available, and writes Playwright `trace.zip` by default. Rendered quality evidence is produced by `demo-machine run` as `quality.json`; after rendered MP4s exist under `output/example-suite/`, `video:assure` samples them for blank frames, frozen spans, and large visual jumps. The `assurance-long-demo` filter targets the long realistic flow for full-demo QA.
 
 ## Meta Prompt QA
 
@@ -133,6 +133,6 @@ For Claude Code-style usage, the repository also carries `.claude/skills/` entri
    - `demo-machine capture` (real browser)
 5. Iterate with artifacts:
    - Use the run summary to open the resolved output directory.
-   - On failure, use `trace.zip` plus `failure.png`/`failure.html`/`failure.json`.
+   - On failure, use `trace.zip` plus `failure.png`/`failure.html`/`failure.json` when tracing is enabled.
    - Let default output create a new `./output/<spec-slug>/<run-id>` folder for repeat attempts; `./output/latest.json` points to the newest automatic run.
    - Use `--output` plus `--overwrite` only for a deliberate fixed handoff path.

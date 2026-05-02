@@ -18,7 +18,7 @@ export interface CaptureGeometrySnapshot {
 
 export interface CaptureBundle {
   videoPath: string;
-  tracePath: string;
+  tracePath?: string;
   eventLogPath: string;
   metadataPath?: string;
   environmentPath?: string;

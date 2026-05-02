@@ -6,6 +6,7 @@ import { writeCaptureMetadata } from "./metadata.js";
 import { copyFile, mkdir, rename, stat, unlink } from "node:fs/promises";
 import { join, resolve, sep } from "node:path";
 import { createLogger } from "../utils/logger.js";
+import { getPublicSafetyPolicy } from "../utils/public-safety.js";
 
 interface PlaywrightBrowser {
   newContext(options?: Record<string, unknown>): Promise<PlaywrightContext>;
@@ -146,8 +147,15 @@ export async function createRecordingContext(
     }
   }
 
-  await context.tracing.start({ screenshots: true, snapshots: true });
-  logger.info("Tracing started");
+  const policy = getPublicSafetyPolicy();
+  if (policy.traceDisabled) {
+    logger.info(
+      `Tracing disabled by ${policy.publicSafe ? "DEMO_MACHINE_PUBLIC_SAFE" : "DEMO_MACHINE_DISABLE_TRACE"}`,
+    );
+  } else {
+    await context.tracing.start({ screenshots: true, snapshots: true });
+    logger.info("Tracing started");
+  }
 
   return { context, page, recordingStartTimestamp, ...(geometry ? { geometry } : {}) };
 }
@@ -161,9 +169,13 @@ export async function finalizeCapture(
   const video = page.video();
   const rawVideoPath = video ? await video.path() : "";
 
-  const tracePath = join(options.outputDir, "trace.zip");
-  await context.tracing.stop({ path: tracePath });
-  logger.info(`Trace saved: ${tracePath}`);
+  const tracePath = getPublicSafetyPolicy().traceEnabled
+    ? join(options.outputDir, "trace.zip")
+    : undefined;
+  if (tracePath) {
+    await context.tracing.stop({ path: tracePath });
+    logger.info(`Trace saved: ${tracePath}`);
+  }
 
   await context.close();
   logger.info("Context closed, video finalized");
@@ -181,7 +193,7 @@ export async function finalizeCapture(
 
   return {
     videoPath: normalizedVideoPath,
-    tracePath,
+    ...(tracePath ? { tracePath } : {}),
     eventLogPath,
     ...(metadataPath ? { metadataPath } : {}),
     screenshots: [],

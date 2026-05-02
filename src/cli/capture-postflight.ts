@@ -27,6 +27,8 @@ interface VerificationJson {
   checks?: {
     requiredArtifactsPresent?: unknown;
     missingRequiredArtifacts?: unknown;
+    publicSafeArtifactsClean?: unknown;
+    forbiddenPublicArtifacts?: unknown;
     failureArtifactsPresent?: unknown;
     missingFailureArtifacts?: unknown;
   };
@@ -34,7 +36,6 @@ interface VerificationJson {
 
 const PASSED_REQUIRED_ARTIFACT_KEYS = [
   "videoPath",
-  "tracePath",
   "eventLogPath",
   "metadataPath",
   "environmentPath",
@@ -86,6 +87,16 @@ async function verifyArtifactContract(outputDir: string): Promise<PostflightFail
       message: `verification.json reports requiredArtifactsPresent=${String(
         parsed.checks?.requiredArtifactsPresent,
       )}${formatJsonList(parsed.checks?.missingRequiredArtifacts)}`,
+    });
+  }
+
+  if (parsed.checks?.publicSafeArtifactsClean === false) {
+    failures.push({
+      checkName: "artifact:public-safe",
+      status: "fail",
+      message: `verification.json reports forbidden public artifacts${formatJsonList(
+        parsed.checks.forbiddenPublicArtifacts,
+      )}`,
     });
   }
 
