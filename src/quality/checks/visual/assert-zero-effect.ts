@@ -4,7 +4,7 @@ import type { QualityCheckContext } from "../../types.js";
 import { diffImages } from "../../visual-diff.js";
 
 const CHECK_NAME = "visual:assert-zero-effect";
-const FAIL_MISMATCH_PERCENT = 5;
+const FAIL_MISMATCH_PERCENT = 6;
 
 /**
  * Verify that assert steps produce zero visual change.

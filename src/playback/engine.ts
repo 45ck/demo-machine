@@ -381,6 +381,7 @@ export class PlaybackEngine {
     if (!box) return;
     const pacing = this.options.pacing ?? NO_PACING;
     if (pacing.cursorDurationMs === 0) return;
+    await injectCursor(this.page);
     const rawTargetX = box.x + box.width / 2;
     const rawTargetY = box.y + box.height / 2;
     const activeTransform = mapForNarrationFocus

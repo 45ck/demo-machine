@@ -12,9 +12,9 @@ const ACCENT_COLOR = { r: 50, g: 220, b: 255, tolerance: 15 } as const;
 const MAX_ACCENT_PIXELS = 10;
 
 /**
- * Scan assert-step screenshots for the demo-machine accent color (#32dcff).
- * If more than a threshold number of pixels match this color during an assert,
- * a focus ring or cursor overlay has leaked.
+ * Scan assert-step screenshots for newly introduced demo-machine accent color
+ * (#32dcff). Product UIs may legitimately contain similar accent colors, so a
+ * stable before/after count is not enough evidence of an overlay leak.
  */
 export function checkPhantomOverlay(ctx: QualityCheckContext): CheckResult[] {
   const pairs = ctx.assertScreenshotPairs;
@@ -25,13 +25,15 @@ export function checkPhantomOverlay(ctx: QualityCheckContext): CheckResult[] {
   const results: CheckResult[] = [];
 
   for (const pair of pairs) {
+    const beforeCount = countColorPixels(pair.before, ACCENT_COLOR);
     const afterCount = countColorPixels(pair.after, ACCENT_COLOR);
+    const introducedCount = Math.max(0, afterCount - beforeCount);
 
-    if (afterCount > MAX_ACCENT_PIXELS) {
+    if (introducedCount > MAX_ACCENT_PIXELS) {
       results.push(
         postRenderFail(
           CHECK_NAME,
-          `Assert step ${String(pair.stepIndex)}: ${String(afterCount)} accent-color (#32dcff) pixels detected ` +
+          `Assert step ${String(pair.stepIndex)}: ${String(introducedCount)} new accent-color (#32dcff) pixels detected ` +
             `(threshold: ${String(MAX_ACCENT_PIXELS)})`,
           "Accent-colored pixels during assert indicate a leaked cursor overlay or focus ring",
         ),

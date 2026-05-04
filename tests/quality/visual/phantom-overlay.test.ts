@@ -93,6 +93,17 @@ describe("checkPhantomOverlay", () => {
     expect(fail!.message).toContain("50");
   });
 
+  it("passes when accent-colored product pixels are stable across the assert", () => {
+    const before = pngWithAccentPixels(10, 10, 50);
+    const after = pngWithAccentPixels(10, 10, 50);
+    const pairs = [{ stepIndex: 2, before, after }];
+
+    const results = checkPhantomOverlay(baseCtx({ assertScreenshotPairs: pairs }));
+
+    expect(results).toHaveLength(1);
+    expect(results[0]!.status).toBe("pass");
+  });
+
   it("reports each failing assert step separately", () => {
     const black = solidPng(10, 10, 0, 0, 0);
     const accent = pngWithAccentPixels(10, 10, 20);

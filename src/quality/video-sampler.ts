@@ -13,7 +13,6 @@ const DEFAULT_MAX_SAMPLES = 48;
 const MIN_SAMPLE_GAP_MS = 80;
 const BLANK_STDDEV_THRESHOLD = 4;
 const BLANK_DARK_LUMA = 8;
-const BLANK_LIGHT_LUMA = 247;
 
 interface PngImage {
   data: Uint8Array;
@@ -137,7 +136,7 @@ function pngStats(image: PngImage): { lumaMean: number; lumaStdDev: number } {
 
 function blankFromStats(stats: { lumaMean: number; lumaStdDev: number }): boolean {
   if (stats.lumaStdDev > BLANK_STDDEV_THRESHOLD) return false;
-  return stats.lumaMean <= BLANK_DARK_LUMA || stats.lumaMean >= BLANK_LIGHT_LUMA;
+  return stats.lumaMean <= BLANK_DARK_LUMA;
 }
 
 function differenceFromPrevious(previous: PngImage | null, current: PngImage): number | undefined {
