@@ -14,6 +14,7 @@
     { "id": "evaluate", "proof": ["schema", "unit", "example"] },
     { "id": "runCommand", "proof": ["schema", "unit", "example"] },
     { "id": "assert", "proof": ["schema", "unit", "example"] },
+    { "id": "requireState", "proof": ["schema", "unit", "example"] },
     { "id": "screenshot", "proof": ["schema", "unit", "example"] },
     { "id": "press", "proof": ["schema", "unit", "example"] },
     { "id": "back", "proof": ["schema", "unit", "example"] },

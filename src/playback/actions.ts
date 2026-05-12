@@ -1,5 +1,6 @@
 import type { ActionHandler } from "./action-core.js";
 import { handleAssert } from "./handlers/assert.js";
+import { handleRequireState } from "./handlers/require-state.js";
 import { handleClick, handleClickFirstVisible } from "./handlers/click.js";
 import { handleDragAndDrop } from "./handlers/drag-and-drop.js";
 import {
@@ -40,6 +41,7 @@ export const actionHandlers: Record<string, ActionHandler> = {
   evaluate: handleEvaluate,
   runCommand: handleRunCommand,
   assert: handleAssert,
+  requireState: handleRequireState,
   screenshot: handleScreenshot,
   press: handlePress,
   back: handleBack,

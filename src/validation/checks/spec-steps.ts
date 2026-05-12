@@ -16,6 +16,7 @@ const KNOWN_ACTIONS = new Set([
   "evaluate",
   "runCommand",
   "assert",
+  "requireState",
   "screenshot",
   "press",
   "back",

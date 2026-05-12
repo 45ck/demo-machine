@@ -1,3 +1,4 @@
+import { PlaybackStepError } from "../playback/errors.js";
 import { SpecLoadError } from "../spec/loader.js";
 import { PreflightError } from "../validation/errors.js";
 import { OutputCollisionError } from "./output.js";
@@ -15,6 +16,22 @@ function formatPreflightError(error: PreflightError): string {
     }
   }
   return lines.join("\n");
+}
+
+/**
+ * Surface the underlying cause's message for PlaybackStepError. The
+ * one-line wrapper message is useful as a header but the cause contains
+ * the rich diagnostic (e.g. requireState's DATA DRIFT banner) — losing
+ * it would defeat the whole point of the precondition step.
+ */
+function formatPlaybackStepError(error: PlaybackStepError): string {
+  const cause = (error as unknown as { cause?: unknown }).cause;
+  const causeMessage =
+    cause instanceof Error ? cause.message : typeof cause === "string" ? cause : "";
+  if (causeMessage && causeMessage.trim()) {
+    return `${error.message}\n${causeMessage}`;
+  }
+  return error.message;
 }
 
 export function formatCliError(error: unknown, opts: FormatCliErrorOptions = {}): string {
@@ -36,6 +53,10 @@ export function formatCliError(error: unknown, opts: FormatCliErrorOptions = {})
       `Existing artifacts: ${error.artifactNames.join(", ")}`,
       "Suggestion: choose a new --output directory or pass --overwrite after confirming these artifacts can be replaced.",
     ].join("\n");
+  }
+
+  if (error instanceof PlaybackStepError) {
+    return formatPlaybackStepError(error);
   }
 
   if (error instanceof Error) {

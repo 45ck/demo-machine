@@ -47,6 +47,8 @@ function minimalStepForAction(action: string): Record<string, unknown> {
       return { action, command: "node --version" };
     case "assert":
       return { action, selector: "#target", visible: true };
+    case "requireState":
+      return { action, selector: "#target", visible: true };
     case "screenshot":
       return { action, name: "proof" };
     case "press":

@@ -254,6 +254,28 @@ const assertStepSchema = z.object({
   focus: stepFocusSchema.optional(),
 });
 
+// `requireState` is functionally like `assert` but semantically a
+// precondition: it declares "this spec assumes the live app shows X." On
+// mismatch the failure message names data-drift as the most likely cause
+// and stops the recording loudly, so a stale spec never silently produces
+// a video that contradicts its own narration.
+const requireStateStepSchema = z.object({
+  action: z.literal("requireState"),
+  selector: nonBlankString.optional(),
+  target: targetSchema.optional(),
+  nth: z.number().int().nonnegative().optional(),
+  visible: z.boolean().optional(),
+  text: z.string().optional(),
+  count: z.number().int().nonnegative().optional(),
+  value: z.string().optional(),
+  checked: z.boolean().optional(),
+  enabled: z.boolean().optional(),
+  because: nonBlankString.optional(),
+  timeoutMs: z.number().int().positive().optional(),
+  narration: z.string().optional(),
+  focus: stepFocusSchema.optional(),
+});
+
 const checkStepSchema = z.object({
   action: z.literal("check"),
   selector: nonBlankString.optional(),
@@ -389,6 +411,24 @@ const assertStepSchemaValidated = assertStepSchema
         'assert step must specify at least one of: "visible", "text", "count", "value", "checked", "enabled"',
     },
   );
+const requireStateStepSchemaValidated = requireStateStepSchema
+  .refine(needsSelector, selectorMsg("requireState"))
+  .refine((v) => v.count === undefined || Boolean(v.selector), {
+    message: 'requireState count requires a CSS "selector"; structured "target" cannot be counted',
+  })
+  .refine(
+    (v) =>
+      v.visible !== undefined ||
+      (v.text !== undefined && v.text !== null) ||
+      v.count !== undefined ||
+      v.value !== undefined ||
+      v.checked !== undefined ||
+      v.enabled !== undefined,
+    {
+      message:
+        'requireState step must specify at least one of: "visible", "text", "count", "value", "checked", "enabled"',
+    },
+  );
 const checkStepSchemaValidated = checkStepSchema.refine(needsSelector, selectorMsg("check"));
 const uncheckStepSchemaValidated = uncheckStepSchema.refine(needsSelector, selectorMsg("uncheck"));
 const selectStepSchemaValidated = selectStepSchema.refine(needsSelector, selectorMsg("select"));
@@ -424,6 +464,7 @@ export const stepSchema = z.union([
   evaluateStepSchema,
   runCommandStepSchema,
   assertStepSchemaValidated,
+  requireStateStepSchemaValidated,
   screenshotStepSchema,
   pressStepSchema,
   backStepSchema,
