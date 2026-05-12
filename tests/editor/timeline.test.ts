@@ -263,4 +263,34 @@ describe("extendTimelineForNarration", () => {
     expect(outro).toBeDefined();
     expect(outro!.startMs).toBe(newDuration - 2000);
   });
+
+  it("trims trailing action silence when narration ends well before last action", () => {
+    // Construct a timeline whose action span is much longer than the
+    // narration so trailing silence can be trimmed.
+    const events: ActionEvent[] = [
+      { action: "navigate", timestamp: 1000, duration: 200 },
+      { action: "click", timestamp: 11000, duration: 200, selector: "#btn" },
+    ];
+    const timeline = buildTimeline(events, makeSpec());
+    // originalVideoEnd = 10200, total = 12200 (outro=2000).
+    // Narration ends at 3000ms -> targetVideoEnd = 3800ms (< 10200).
+    const trimmed = extendTimelineForNarration(timeline, 3000);
+    expect(trimmed.totalDurationMs).toBe(3800 + 2000);
+    const outro = trimmed.segments.find((s) => s.type === "outro");
+    expect(outro).toBeDefined();
+    expect(outro!.startMs).toBe(3800);
+    expect(outro!.endMs).toBe(5800);
+  });
+
+  it("does not trim when narration ends within tail of the last action", () => {
+    const events: ActionEvent[] = [
+      { action: "navigate", timestamp: 1000, duration: 200 },
+      { action: "click", timestamp: 11000, duration: 200, selector: "#btn" },
+    ];
+    const timeline = buildTimeline(events, makeSpec());
+    // originalVideoEnd = 10200; narration ending at 9800 leaves 400ms tail,
+    // which is below POST_NARRATION_TAIL_MS — keep the original timeline.
+    const result = extendTimelineForNarration(timeline, 9800);
+    expect(result).toBe(timeline);
+  });
 });

@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { adjustTiming, computeNarrationDuration, GAP_MS } from "../../src/narration/timing.js";
+import {
+  adjustTiming,
+  computeNarrationDuration,
+  GAP_MS,
+  MAX_INTER_SEGMENT_GAP_MS,
+} from "../../src/narration/timing.js";
 import type { TimedSegment } from "../../src/narration/timing.js";
 
 function makeSegments(entries: Array<{ startMs: number; durationMs: number }>): TimedSegment[] {
@@ -36,16 +41,31 @@ describe("adjustTiming", () => {
     expect(segments[1]!.startMs).toBe(3000 + GAP_MS);
   });
 
-  it("does not push forward when there is no overlap", () => {
+  it("pulls subsequent segments forward to eliminate long silence gaps", () => {
     const segments = makeSegments([
       { startMs: 5000, durationMs: 1000 },
-      { startMs: 10000, durationMs: 1000 },
+      { startMs: 20000, durationMs: 1000 },
     ]);
     adjustTiming(segments);
-    // First: starts at 4500, ends at 5500
-    // Second: starts at 9500 (no overlap with 5700)
+    // First: starts at 4500, ends at 5500.
+    // Second's anchored start would be 19500 -> 14000ms gap. The cap pulls
+    // it forward to prevEnd + MAX_INTER_SEGMENT_GAP_MS so the audio track
+    // stays continuous.
     expect(segments[0]!.startMs).toBe(4500);
-    expect(segments[1]!.startMs).toBe(9500);
+    expect(segments[1]!.startMs).toBe(5500 + MAX_INTER_SEGMENT_GAP_MS);
+  });
+
+  it("keeps anchored timing when the natural gap is within tolerance", () => {
+    const segments = makeSegments([
+      { startMs: 5000, durationMs: 1000 },
+      { startMs: 6500, durationMs: 1000 },
+    ]);
+    adjustTiming(segments);
+    // First: starts at 4500, ends at 5500.
+    // Second anchored to 6000 — gap of 500ms is within MAX_INTER_SEGMENT_GAP_MS,
+    // so we leave it alone instead of pulling forward.
+    expect(segments[0]!.startMs).toBe(4500);
+    expect(segments[1]!.startMs).toBe(6000);
   });
 
   it("handles empty array", () => {
