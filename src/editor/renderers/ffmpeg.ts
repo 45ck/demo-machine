@@ -166,14 +166,24 @@ function renderDurationMsFor(timeline: Timeline, options: RenderOptions): number
 }
 
 function escapeDrawtext(text: string): string {
-  return text
-    .replace(/%/g, "%%")
-    .replace(/\n/g, " ")
-    .replace(/\\/g, "\\\\")
-    .replace(/'/g, "\\'")
-    .replace(/:/g, "\\:")
-    .replace(/;/g, "\\;")
-    .replace(/\[/g, "\\[")
-    .replace(/]/g, "\\]")
-    .replace(/=/g, "\\=");
+  return (
+    text
+      .replace(/%/g, "%%")
+      .replace(/\n/g, " ")
+      .replace(/\\/g, "\\\\")
+      // ASCII single-quote is the worst character to hand ffmpeg's filter
+      // graph parser: even with backslash-escape inside a single-quoted
+      // text= argument, the parser intermittently terminates the value
+      // early and then tries to parse the rest of the filter graph as a
+      // chain of new filters — producing baffling "No such filter: '...)'"
+      // errors. Swap it for U+2019 (typographic right single quotation
+      // mark): visually indistinguishable in the rendered overlay, but
+      // unambiguous to the parser.
+      .replace(/'/g, "’")
+      .replace(/:/g, "\\:")
+      .replace(/;/g, "\\;")
+      .replace(/\[/g, "\\[")
+      .replace(/]/g, "\\]")
+      .replace(/=/g, "\\=")
+  );
 }

@@ -38,18 +38,57 @@ function driftBanner(lines: string[]): string {
   ].join("\n");
 }
 
-async function readVisibility(locator: PlaywrightLocator, timeoutMs: number): Promise<boolean> {
-  try {
-    await locator.waitFor({ state: "attached", timeout: Math.min(timeoutMs, 1500) });
-    return await locator.isVisible();
-  } catch {
-    return false;
+/**
+ * All readers poll until either the deadline or a definitive answer. Without
+ * polling, a precondition that runs immediately after a navigation can race
+ * the React re-render and fail spuriously. The original `assert` handler
+ * loops on the same pattern; `requireState` does the same.
+ */
+const POLL_INTERVAL_MS = 200;
+
+async function pollUntil<T>(
+  read: () => Promise<T>,
+  isAccepted: (value: T) => boolean,
+  timeoutMs: number,
+): Promise<T> {
+  const deadline = Date.now() + timeoutMs;
+  let last: T = await read();
+  while (Date.now() <= deadline) {
+    if (isAccepted(last)) return last;
+    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+    last = await read();
   }
+  return last;
+}
+
+async function readVisibility(locator: PlaywrightLocator, timeoutMs: number): Promise<boolean> {
+  // .first() avoids Playwright's strict-mode throw when the selector
+  // matches multiple elements (common for `table tbody tr`). For a
+  // visibility precondition, "at least one of these is visible" is the
+  // right semantic.
+  const probe = locator.nth(0);
+  try {
+    await probe.waitFor({ state: "attached", timeout: Math.min(timeoutMs, 1500) });
+  } catch {
+    /* fall through — isVisible() will return false */
+  }
+  return pollUntil(
+    async () => {
+      try {
+        return await probe.isVisible();
+      } catch {
+        return false;
+      }
+    },
+    (v) => v === true,
+    timeoutMs,
+  );
 }
 
 async function readText(locator: PlaywrightLocator): Promise<string | null> {
+  // .nth(0) avoids strict-mode throw when the selector matches multiple.
   try {
-    return await locator.textContent();
+    return await locator.nth(0).textContent();
   } catch {
     return null;
   }
@@ -68,9 +107,11 @@ async function readCount(page: PlaywrightPage, selector: string): Promise<number
 
 async function readValue(locator: PlaywrightLocator): Promise<string> {
   try {
-    return (await locator.evaluate(
-      ((el: unknown) => (el as HTMLInputElement).value ?? "") as (...args: unknown[]) => unknown,
-    )) as string;
+    return (await locator
+      .nth(0)
+      .evaluate(
+        ((el: unknown) => (el as HTMLInputElement).value ?? "") as (...args: unknown[]) => unknown,
+      )) as string;
   } catch {
     return "";
   }
@@ -78,11 +119,13 @@ async function readValue(locator: PlaywrightLocator): Promise<string> {
 
 async function readChecked(locator: PlaywrightLocator): Promise<boolean | null> {
   try {
-    return (await locator.evaluate(
-      ((el: unknown) => (el as HTMLInputElement).checked ?? null) as (
-        ...args: unknown[]
-      ) => unknown,
-    )) as boolean | null;
+    return (await locator
+      .nth(0)
+      .evaluate(
+        ((el: unknown) => (el as HTMLInputElement).checked ?? null) as (
+          ...args: unknown[]
+        ) => unknown,
+      )) as boolean | null;
   } catch {
     return null;
   }
@@ -90,11 +133,13 @@ async function readChecked(locator: PlaywrightLocator): Promise<boolean | null> 
 
 async function readEnabled(locator: PlaywrightLocator): Promise<boolean | null> {
   try {
-    return (await locator.evaluate(
-      ((el: unknown) => !(el as HTMLElement).hasAttribute("disabled")) as (
-        ...args: unknown[]
-      ) => unknown,
-    )) as boolean | null;
+    return (await locator
+      .nth(0)
+      .evaluate(
+        ((el: unknown) => !(el as HTMLElement).hasAttribute("disabled")) as (
+          ...args: unknown[]
+        ) => unknown,
+      )) as boolean | null;
   } catch {
     return null;
   }
@@ -137,9 +182,14 @@ const checkVisible: Check = async (step, ctx) => {
 
 const checkText: Check = async (step, ctx) => {
   if (step.text === undefined) return null;
-  const actual = await readText(ctx.locator);
-  if (actual?.includes(step.text)) return null;
-  return { field: "text contains", expected: step.text, actual };
+  const expected = step.text;
+  const actual = await pollUntil(
+    () => readText(ctx.locator),
+    (v) => Boolean(v?.includes(expected)),
+    ctx.timeoutMs,
+  );
+  if (actual?.includes(expected)) return null;
+  return { field: "text contains", expected, actual };
 };
 
 const checkCount: Check = async (step, ctx) => {
@@ -149,30 +199,51 @@ const checkCount: Check = async (step, ctx) => {
       `requireState count requires a CSS "selector" (not "target") because it uses querySelectorAll`,
     );
   }
-  const actual = await readCount(ctx.page, ctx.selector);
-  if (actual === step.count) return null;
-  return { field: "count", expected: step.count, actual };
+  const expected = step.count;
+  const selector = ctx.selector;
+  const actual = await pollUntil(
+    () => readCount(ctx.page, selector),
+    (v) => v === expected,
+    ctx.timeoutMs,
+  );
+  if (actual === expected) return null;
+  return { field: "count", expected, actual };
 };
 
 const checkValue: Check = async (step, ctx) => {
   if (step.value === undefined) return null;
-  const actual = await readValue(ctx.locator);
-  if (actual === step.value) return null;
-  return { field: "value", expected: step.value, actual };
+  const expected = step.value;
+  const actual = await pollUntil(
+    () => readValue(ctx.locator),
+    (v) => v === expected,
+    ctx.timeoutMs,
+  );
+  if (actual === expected) return null;
+  return { field: "value", expected, actual };
 };
 
 const checkChecked: Check = async (step, ctx) => {
   if (step.checked === undefined) return null;
-  const actual = await readChecked(ctx.locator);
-  if (actual === step.checked) return null;
-  return { field: "checked", expected: step.checked, actual };
+  const expected = step.checked;
+  const actual = await pollUntil(
+    () => readChecked(ctx.locator),
+    (v) => v === expected,
+    ctx.timeoutMs,
+  );
+  if (actual === expected) return null;
+  return { field: "checked", expected, actual };
 };
 
 const checkEnabled: Check = async (step, ctx) => {
   if (step.enabled === undefined) return null;
-  const actual = await readEnabled(ctx.locator);
-  if (actual === step.enabled) return null;
-  return { field: "enabled", expected: step.enabled, actual };
+  const expected = step.enabled;
+  const actual = await pollUntil(
+    () => readEnabled(ctx.locator),
+    (v) => v === expected,
+    ctx.timeoutMs,
+  );
+  if (actual === expected) return null;
+  return { field: "enabled", expected, actual };
 };
 
 const CHECKS: ReadonlyArray<Check> = [
