@@ -58,6 +58,8 @@ function minimalStepForAction(action: string): Record<string, unknown> {
       return { action };
     case "select":
       return { action, selector: "#target", option: { label: "Pro" } };
+    case "selectOptionInListbox":
+      return { action, selector: "#target", option: { label: "Pro" } };
     case "upload":
       return { action, selector: "#target", file: "./sample.txt" };
     case "dragAndDrop":

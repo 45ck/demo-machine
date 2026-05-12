@@ -319,6 +319,22 @@ const selectStepSchema = z.object({
   focus: stepFocusSchema.optional(),
 });
 
+// `selectOptionInListbox` is for inline listboxes — `<select multiple>` or
+// `<select size>1>` where options are rendered in-place. Unlike `select`,
+// it does not draw a dropdown overlay; it moves the cursor to the chosen
+// option and uses selectOption() under the hood for reliability.
+const selectOptionInListboxStepSchema = z.object({
+  action: z.literal("selectOptionInListbox"),
+  selector: nonBlankString.optional(),
+  target: targetSchema.optional(),
+  nth: z.number().int().nonnegative().optional(),
+  option: selectOptionSchema,
+  timeoutMs: z.number().int().positive().optional(),
+  delay: z.number().int().positive().optional(),
+  narration: z.string().optional(),
+  focus: stepFocusSchema.optional(),
+});
+
 const selectFirstNonPlaceholderStepSchema = z.object({
   action: z.literal("selectFirstNonPlaceholder"),
   selector: nonBlankString.optional(),
@@ -432,6 +448,10 @@ const requireStateStepSchemaValidated = requireStateStepSchema
 const checkStepSchemaValidated = checkStepSchema.refine(needsSelector, selectorMsg("check"));
 const uncheckStepSchemaValidated = uncheckStepSchema.refine(needsSelector, selectorMsg("uncheck"));
 const selectStepSchemaValidated = selectStepSchema.refine(needsSelector, selectorMsg("select"));
+const selectOptionInListboxStepSchemaValidated = selectOptionInListboxStepSchema.refine(
+  needsSelector,
+  selectorMsg("selectOptionInListbox"),
+);
 const selectFirstNonPlaceholderStepSchemaValidated = selectFirstNonPlaceholderStepSchema.refine(
   needsSelector,
   selectorMsg("selectFirstNonPlaceholder"),
@@ -472,6 +492,7 @@ export const stepSchema = z.union([
   checkStepSchemaValidated,
   uncheckStepSchemaValidated,
   selectStepSchemaValidated,
+  selectOptionInListboxStepSchemaValidated,
   selectFirstNonPlaceholderStepSchemaValidated,
   uploadStepSchemaValidated,
   dragAndDropStepSchemaValidated,

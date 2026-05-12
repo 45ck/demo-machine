@@ -24,6 +24,7 @@ const KNOWN_ACTIONS = new Set([
   "check",
   "uncheck",
   "select",
+  "selectOptionInListbox",
   "selectFirstNonPlaceholder",
   "upload",
   "dragAndDrop",

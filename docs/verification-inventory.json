@@ -22,6 +22,7 @@
     { "id": "check", "proof": ["schema", "unit", "example"] },
     { "id": "uncheck", "proof": ["schema", "unit", "example"] },
     { "id": "select", "proof": ["schema", "unit", "example"] },
+    { "id": "selectOptionInListbox", "proof": ["schema", "unit", "example"] },
     { "id": "selectFirstNonPlaceholder", "proof": ["schema", "unit", "example"] },
     { "id": "upload", "proof": ["schema", "unit", "example"] },
     { "id": "dragAndDrop", "proof": ["schema", "unit", "example"] }

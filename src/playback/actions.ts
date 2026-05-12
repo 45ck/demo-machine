@@ -1,6 +1,7 @@
 import type { ActionHandler } from "./action-core.js";
 import { handleAssert } from "./handlers/assert.js";
 import { handleRequireState } from "./handlers/require-state.js";
+import { handleSelectOptionInListbox } from "./handlers/select-option-in-listbox.js";
 import { handleClick, handleClickFirstVisible } from "./handlers/click.js";
 import { handleDragAndDrop } from "./handlers/drag-and-drop.js";
 import {
@@ -49,6 +50,7 @@ export const actionHandlers: Record<string, ActionHandler> = {
   check: handleCheck,
   uncheck: handleUncheck,
   select: handleSelect,
+  selectOptionInListbox: handleSelectOptionInListbox,
   selectFirstNonPlaceholder: handleSelectFirstNonPlaceholder,
   upload: handleUpload,
   dragAndDrop: handleDragAndDrop,
