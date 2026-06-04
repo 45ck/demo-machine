@@ -13,6 +13,7 @@ const NOISE_PATTERNS = [
   /\[vite\]/i,
   /favicon\.ico.*404/i,
   /hot update/i,
+  /Minified React error #418/i,
 ];
 
 function isNoise(text: string): boolean {
