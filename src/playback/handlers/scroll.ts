@@ -21,6 +21,7 @@ async function scrollElement(
   ctx: PlaybackContext,
   step: ScrollStep,
   timeoutMs: number,
+  stepIndex: number,
 ): Promise<{
   selectorForEvent: string;
   box: Awaited<ReturnType<import("../playwright.js").PlaywrightLocator["boundingBox"]>>;
@@ -42,8 +43,10 @@ async function scrollElement(
 
   const box = await locator.boundingBox();
   await ctx.moveCursorTo(box);
-  await flashSpotlight(ctx.page, box);
-  await pulseFocus(ctx.page, box);
+  if (ctx.shouldShowActionFocusVisuals?.(stepIndex, step) ?? true) {
+    await flashSpotlight(ctx.page, box);
+    await pulseFocus(ctx.page, box);
+  }
 
   const beforeScroll = await readElementScrollPosition(locator);
   await locator.evaluate(
@@ -63,12 +66,14 @@ async function handleElementScroll(
   step: ScrollStep,
   start: number,
   events: Parameters<ActionHandler>[2],
+  stepIndex: number,
 ): Promise<void> {
   const timeoutMs = stepTimeoutMs(step);
   const { selectorForEvent, box, locator, beforeScroll } = await scrollElement(
     ctx,
     step,
     timeoutMs,
+    stepIndex,
   );
   await checkElementScrollPosition({
     locator,
@@ -157,7 +162,7 @@ export const handleScroll: ActionHandler = async (ctx, step, events, stepIndex) 
   const hasSelector = typeof step.selector === "string" && step.selector.length > 0;
 
   if (hasSelector || hasTarget) {
-    await handleElementScroll(ctx, step, start, events);
+    await handleElementScroll(ctx, step, start, events, stepIndex);
   } else {
     await handleWindowScroll(ctx, step, start, events);
   }

@@ -44,6 +44,11 @@ export interface NarrationFocusConfig {
   transitionMs: number;
 }
 
+export interface VisualsConfig {
+  cursor: boolean;
+  highlight: boolean;
+}
+
 export interface PlaybackOptions {
   baseUrl: string;
   outputDir?: string | undefined;
@@ -66,5 +71,6 @@ export interface PlaybackOptions {
         narrationFocus: NarrationFocusConfig;
       }
     | undefined;
+  visuals?: VisualsConfig | undefined;
   changeDetection?: import("./change-detection/config.js").ChangeDetectionConfig | undefined;
 }

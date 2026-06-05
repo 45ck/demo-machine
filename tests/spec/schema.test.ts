@@ -554,6 +554,19 @@ describe("demoSpecSchema", () => {
     });
   });
 
+  describe("visuals", () => {
+    it("applies default cursor and highlight visuals", () => {
+      const result = demoSpecSchema.parse(minimalSpec());
+      expect(result.visuals).toEqual({ cursor: true, highlight: true });
+    });
+
+    it("allows disabling action highlights while keeping the cursor", () => {
+      const spec = { ...minimalSpec(), visuals: { highlight: false } };
+      const result = demoSpecSchema.parse(spec);
+      expect(result.visuals).toEqual({ cursor: true, highlight: false });
+    });
+  });
+
   /* ---------- Per-step delay -------------------------------------- */
 
   describe("per-step delay", () => {

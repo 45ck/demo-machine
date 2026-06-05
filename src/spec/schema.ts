@@ -46,6 +46,11 @@ const pacingSchema = z.object({
   settleDelayMs: z.number().nonnegative().optional().default(200),
 });
 
+const visualsSchema = z.object({
+  cursor: z.boolean().optional().default(true),
+  highlight: z.boolean().optional().default(true),
+});
+
 const narrationSyncSchema = z.object({
   mode: z.enum(["auto-sync", "manual", "warn-only"]).optional().default("manual"),
   bufferMs: z.number().int().nonnegative().optional().default(500),
@@ -96,6 +101,7 @@ export const demoSpecSchema = z.object({
   narration: narrationSchema.optional(),
   presentation: presentationSchema.optional().default({ narrationFocus: defaultNarrationFocus }),
   pacing: pacingSchema.optional().default({}),
+  visuals: visualsSchema.optional().default({}),
   changeDetection: changeDetectionSchema.optional(),
   chapters: z.array(chapterSchema).min(1),
 });

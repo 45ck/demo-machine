@@ -946,6 +946,32 @@ describe("PlaybackEngine", () => {
     );
   });
 
+  it("suppresses action spotlight, focus pulse, and ripple when visuals.highlight is false", async () => {
+    vi.mocked(visuals.flashSpotlight).mockClear();
+    vi.mocked(visuals.pulseFocus).mockClear();
+    vi.mocked(visuals.spawnRipple).mockClear();
+    const chapters: Chapter[] = [
+      {
+        title: "Test",
+        steps: [{ action: "click", selector: "#btn" }],
+      },
+    ];
+
+    const engine = new PlaybackEngine(page, {
+      baseUrl: "https://example.com",
+      pacing: TEST_PACING,
+      visuals: { cursor: true, highlight: false },
+    });
+    await engine.execute(chapters);
+
+    expect(page.addStyleTag).toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.stringContaining("#dm-cursor") }),
+    );
+    expect(visuals.flashSpotlight).not.toHaveBeenCalled();
+    expect(visuals.pulseFocus).not.toHaveBeenCalled();
+    expect(visuals.spawnRipple).not.toHaveBeenCalled();
+  });
+
   it("hides the persistent cursor before scanning for overlay leaks", async () => {
     const chapters: Chapter[] = [
       {

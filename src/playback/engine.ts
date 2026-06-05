@@ -4,7 +4,14 @@ import { createLogger } from "../utils/logger.js";
 import type { PlaywrightPage, PlaybackContext } from "./actions.js";
 import { actionHandlers } from "./actions.js";
 import { PlaybackStepError } from "./errors.js";
-import type { ActionEvent, BoundingBox, Pacing, PlaybackOptions, PlaybackResult } from "./types.js";
+import type {
+  ActionEvent,
+  BoundingBox,
+  Pacing,
+  PlaybackOptions,
+  PlaybackResult,
+  VisualsConfig,
+} from "./types.js";
 import { selectorForEvent, selectorForEventFromInput, type Target } from "./selector.js";
 import { createNarrationWaiter } from "./narration-waiter.js";
 import { applyRedaction, checkSecrets, hideCursor, injectCursor } from "./overlays.js";
@@ -47,6 +54,11 @@ const DEFAULT_NARRATION_FOCUS = {
   scale: 1.35,
   durationMs: 2600,
   transitionMs: 700,
+};
+
+const DEFAULT_VISUALS: VisualsConfig = {
+  cursor: true,
+  highlight: true,
 };
 
 async function executeStep(
@@ -370,9 +382,13 @@ export class PlaybackEngine {
     this.options = options;
   }
 
+  private visuals(): VisualsConfig {
+    return this.options.visuals ?? DEFAULT_VISUALS;
+  }
+
   private async reinjectOverlays(): Promise<void> {
     await applyRedaction(this.page, this.options.redactionSelectors ?? []);
-    if (this.options.pacing) {
+    if (this.options.pacing && this.visuals().cursor) {
       await injectCursor(this.page);
     }
   }
@@ -381,6 +397,7 @@ export class PlaybackEngine {
     if (!box) return;
     const pacing = this.options.pacing ?? NO_PACING;
     if (pacing.cursorDurationMs === 0) return;
+    if (!this.visuals().cursor) return;
     await injectCursor(this.page);
     const rawTargetX = box.x + box.width / 2;
     const rawTargetY = box.y + box.height / 2;
@@ -502,6 +519,7 @@ export class PlaybackEngine {
     }
 
     const stepsWithFocusedPresentation = new Set<number>();
+    const visuals = this.visuals();
     const ctx: PlaybackContext = {
       page: this.page,
       baseUrl: this.options.baseUrl,
@@ -511,7 +529,9 @@ export class PlaybackEngine {
       moveCursorTo: (box) => this.moveCursorTo(box),
       reinjectCursor: () => this.reinjectOverlays(),
       waitAfterStep: (stepIndex, step) => narrationWaiter.waitAfterStep(stepIndex, step),
-      shouldShowActionFocusVisuals: (stepIndex) => !stepsWithFocusedPresentation.has(stepIndex),
+      shouldShowActionVisuals: () => visuals.highlight,
+      shouldShowActionFocusVisuals: (stepIndex) =>
+        visuals.highlight && !stepsWithFocusedPresentation.has(stepIndex),
     };
 
     await runChapters({

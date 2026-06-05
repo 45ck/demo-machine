@@ -48,8 +48,11 @@ export const handleDragAndDrop: ActionHandler = async (ctx, step, events, stepIn
   }
 
   await ctx.moveCursorTo(fromBox);
-  await flashSpotlight(ctx.page, fromBox);
-  await pulseFocus(ctx.page, fromBox);
+  const showFocusVisuals = ctx.shouldShowActionFocusVisuals?.(stepIndex, step) ?? true;
+  if (showFocusVisuals) {
+    await flashSpotlight(ctx.page, fromBox);
+    await pulseFocus(ctx.page, fromBox);
+  }
 
   // Animate cursor toward destination concurrently with the drag so it appears
   // to carry the element rather than teleporting after the drop completes.
@@ -65,8 +68,10 @@ export const handleDragAndDrop: ActionHandler = async (ctx, step, events, stepIn
       }),
   ]);
 
-  await flashSpotlight(ctx.page, toBox);
-  await pulseFocus(ctx.page, toBox);
+  if (showFocusVisuals) {
+    await flashSpotlight(ctx.page, toBox);
+    await pulseFocus(ctx.page, toBox);
+  }
 
   events.push(
     buildEvent({
