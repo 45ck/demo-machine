@@ -24,7 +24,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "lint": "eslint src --max-warnings=0 --cache",
+    "lint": "node scripts/lint-src.mjs",
     "format": "prettier --check --cache .",
     "format:fix": "prettier --write --cache .",
     "typecheck": "tsc --noEmit",
@@ -109,6 +109,8 @@
     }
   },
   "devDependencies": {
+    "@eslint/eslintrc": "2.1.4",
+    "@eslint/js": "8.57.1",
     "@stryker-mutator/core": "^9.6.1",
     "@types/node": "^22.13.4",
     "@typescript-eslint/eslint-plugin": "^8.55.0",

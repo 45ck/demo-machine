@@ -32,7 +32,7 @@ export function resolveChangeDetectionConfig(
     : { ...DEFAULT_CHANGE_DETECTION_CONFIG };
   if (opts.changeDetection) base.mode = opts.changeDetection;
   if (base.mode === "off") return undefined;
-  return base as ChangeDetectionConfig;
+  return base;
 }
 
 export function createPlaybackEngine(params: {

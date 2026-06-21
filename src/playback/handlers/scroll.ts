@@ -14,6 +14,14 @@ import type { ElementScrollPosition } from "../guards.js";
 import type { PlaywrightLocator } from "../playwright.js";
 
 type ScrollStep = Extract<Chapter["steps"][number], { action: "scroll" }>;
+type ScrollEvents = Parameters<ActionHandler>[2];
+type ElementScrollRequest = {
+  ctx: PlaybackContext;
+  step: ScrollStep;
+  start: number;
+  events: ScrollEvents;
+  stepIndex: number;
+};
 const SCROLL_SETTLE_INTERVAL_MS = 75;
 const SCROLL_SETTLE_TIMEOUT_MS = 1500;
 
@@ -61,13 +69,13 @@ async function scrollElement(
   return { selectorForEvent: resolved.selectorForEvent, box, locator, beforeScroll };
 }
 
-async function handleElementScroll(
-  ctx: PlaybackContext,
-  step: ScrollStep,
-  start: number,
-  events: Parameters<ActionHandler>[2],
-  stepIndex: number,
-): Promise<void> {
+async function handleElementScroll({
+  ctx,
+  step,
+  start,
+  events,
+  stepIndex,
+}: ElementScrollRequest): Promise<void> {
   const timeoutMs = stepTimeoutMs(step);
   const { selectorForEvent, box, locator, beforeScroll } = await scrollElement(
     ctx,
@@ -162,7 +170,7 @@ export const handleScroll: ActionHandler = async (ctx, step, events, stepIndex) 
   const hasSelector = typeof step.selector === "string" && step.selector.length > 0;
 
   if (hasSelector || hasTarget) {
-    await handleElementScroll(ctx, step, start, events, stepIndex);
+    await handleElementScroll({ ctx, step, start, events, stepIndex });
   } else {
     await handleWindowScroll(ctx, step, start, events);
   }
