@@ -4,15 +4,16 @@ Demo specs can be written as YAML, JSON, JSON5, or TOML. YAML with a `.demo.yaml
 
 ## Top-Level Fields
 
-| Field       | Required | Purpose                                                       |
-| ----------- | -------- | ------------------------------------------------------------- |
-| `meta`      | Yes      | Title, resolution, and optional branding.                     |
-| `runner`    | No       | Command, URL, healthcheck, and timeout for the target app.    |
-| `pacing`    | No       | Cursor, typing, click, navigation, and settle timing.         |
-| `narration` | No       | TTS provider, voice, and narration sync mode.                 |
-| `preSteps`  | No       | Setup actions before capture, such as API calls or cookies.   |
-| `chapters`  | Yes      | Ordered demo chapters, each with user-visible steps.          |
-| `redaction` | No       | Selectors and secret patterns to hide in captures and output. |
+| Field       | Required | Purpose                                                               |
+| ----------- | -------- | --------------------------------------------------------------------- |
+| `meta`      | Yes      | Title, resolution, and optional branding.                             |
+| `runner`    | No       | Command, URL, healthcheck, and timeout for the target app.            |
+| `pacing`    | No       | Cursor, typing, click, navigation, and settle timing.                 |
+| `narration` | No       | TTS provider, voice, and narration sync mode.                         |
+| `preSteps`  | No       | Setup actions before capture, such as API calls or cookies.           |
+| `chapters`  | Yes      | Ordered demo chapters, each with user-visible steps.                  |
+| `redaction` | No       | Selectors and secret patterns to hide in captures and output.         |
+| `share`     | No       | Static chaptered viewer, publication flags, and safe calls to action. |
 
 ## Minimal Spec
 
@@ -140,6 +141,39 @@ redaction:
 ```
 
 Use redaction for sensitive UI text, tokens, accounts, or customer data.
+
+## Share Viewer
+
+```yaml
+share:
+  summary: "Follow the workflow from intake to handover."
+  profile:
+    label: "Aged Care"
+    syntheticBoundary: "Synthetic demonstration data only. Not for clinical use."
+  brand:
+    name: "Example Health"
+    primary: "#57d6b0"
+    background: "#101723"
+  primaryCta:
+    label: "Test it yourself"
+    url: "https://demo.example.com"
+  secondaryCta:
+    label: "Book a call"
+    url: "/contact"
+  poster: "poster.png"
+  noindex: true
+  publicSafe: true
+  embedMode: "deny"
+```
+
+The summary, profile label, synthetic-boundary statement, and primary call to
+action are required. `title` defaults to `meta.title`; the secondary call to
+action and poster are optional. Video and caption filenames default to
+`output.mp4` and `subtitles.vtt`. `embedMode` defaults to `deny`; only the
+explicit `same-origin` value produces a same-origin framing header contract.
+The generator accepts only sibling media filenames and HTTPS, loopback HTTP,
+or safe same-origin call-to-action links. See [Share Viewer](share-viewer.md)
+for the runtime, accessibility, privacy, and publication contract.
 
 ## More Authoring Guidance
 

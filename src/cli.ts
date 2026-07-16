@@ -306,8 +306,14 @@ program
 async function registerSubcommands(): Promise<void> {
   const { registerAnalyzeCommand } = await import("./cli/analyze.js");
   const { registerExamplesCommand } = await import("./cli/examples.js");
+  const { registerShareCommand } = await import("./cli/share.js");
   const { registerVoicesCommand } = await import("./cli/voices.js");
-  for (const register of [registerAnalyzeCommand, registerExamplesCommand, registerVoicesCommand]) {
+  for (const register of [
+    registerAnalyzeCommand,
+    registerExamplesCommand,
+    registerShareCommand,
+    registerVoicesCommand,
+  ]) {
     register(program);
   }
 }

@@ -16,4 +16,6 @@ export interface RunResult {
   renderedVideoPath?: string | undefined;
   qualityReportPath?: string | undefined;
   qualityStatus?: "pass" | "warn" | "fail" | undefined;
+  shareViewerPath?: string | undefined;
+  shareManifestPath?: string | undefined;
 }

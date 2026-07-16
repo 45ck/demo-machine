@@ -10,6 +10,7 @@ import { prepareNarration, writeSubtitlesFromTimed } from "./narration.js";
 import { displayTimelineAndSaveSegments } from "./timeline-display.js";
 import { runPostRenderQualityGate } from "./quality-gate.js";
 import { writeLatestOutputPointer } from "./output.js";
+import { generateShareViewer } from "../share/generator.js";
 
 export { runEditPipeline } from "./edit-pipeline.js";
 export { runPostRenderQualityGate } from "./quality-gate.js";
@@ -168,6 +169,25 @@ function buildNonEmptyScreenshotData(
   return result;
 }
 
+async function generateShare(
+  capture: Awaited<ReturnType<typeof captureFromSpec>>,
+  outputDir: string,
+  durationMs: number,
+): Promise<Awaited<ReturnType<typeof generateShareViewer>> | undefined> {
+  const config = capture.spec.share;
+  if (!config?.enabled) return undefined;
+  const result = await generateShareViewer({
+    outputDir,
+    config,
+    spec: capture.spec,
+    events: capture.events,
+    startTimestamp: capture.startTimestamp,
+    durationMs,
+  });
+  log.info(`Share viewer: ${result.viewerPath}`);
+  return result;
+}
+
 async function runEditPhase(params: {
   capture: Awaited<ReturnType<typeof captureFromSpec>>;
   spec: DemoSpec;
@@ -177,6 +197,8 @@ async function runEditPhase(params: {
   outputPath: string;
   qualityReportPath?: string | undefined;
   qualityStatus?: "pass" | "warn" | "fail" | undefined;
+  shareViewerPath?: string | undefined;
+  shareManifestPath?: string | undefined;
 }> {
   const timelineMod = await import("../editor/timeline.js");
   const { workingCapture, trim } = await prepareTrimmedCapture({
@@ -239,11 +261,20 @@ async function runEditPhase(params: {
     extractRenderedVideoSamples: true,
   });
 
+  const durationMs = narrationPrep.extendToMs ?? narrationPrep.timeline.totalDurationMs;
+  const shareViewer = await generateShare(workingCapture, params.opts.output, durationMs);
+
   log.info(`Output: ${outputPath}`);
   return {
     outputPath,
     ...(quality.qualityReportPath ? { qualityReportPath: quality.qualityReportPath } : {}),
     qualityStatus: quality.status,
+    ...(shareViewer
+      ? {
+          shareViewerPath: shareViewer.viewerPath,
+          shareManifestPath: shareViewer.manifestPath,
+        }
+      : {}),
   };
 }
 
@@ -266,6 +297,8 @@ function buildEditedRunResult(
     renderedVideoPath: edit.outputPath,
     ...(edit.qualityReportPath ? { qualityReportPath: edit.qualityReportPath } : {}),
     qualityStatus: edit.qualityStatus,
+    ...(edit.shareViewerPath ? { shareViewerPath: edit.shareViewerPath } : {}),
+    ...(edit.shareManifestPath ? { shareManifestPath: edit.shareManifestPath } : {}),
   };
 }
 

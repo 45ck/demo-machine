@@ -106,6 +106,9 @@ demo-machine edit <output-dir>/events.json
 demo-machine analyze <output-dir>
 demo-machine analyze --latest --spec <spec.yaml>
 
+# Generate a chaptered static viewing page beside a completed run
+demo-machine share <spec.yaml> <output-dir>
+
 # Find examples to copy from
 demo-machine examples list
 demo-machine examples show controls-lab
@@ -135,6 +138,7 @@ spec file
   -> capture video + events + trace + screenshots
   -> render MP4
   -> write verification + quality artifacts
+  -> optionally write a static share viewer + integration manifest
   -> optionally analyze completed run for review artifacts
 ```
 
@@ -149,6 +153,7 @@ Key artifacts:
 - `environment.json`: runtime/browser context
 - `quality.json`: post-render checks
 - `trace.zip`: Playwright trace for debugging, unless `DEMO_MACHINE_PUBLIC_SAFE=true` is set for a sensitive public recording
+- `viewer.html` and `viewer.manifest.json`: tracking-free, deep-linkable chaptered viewing page and duration/embed integration contract when `share` is configured
 
 `demo-machine analyze <output-dir>` runs after a capture/render has completed.
 It uses `@45ck/video-evaluator` to inspect the rendered `output.mp4` or raw

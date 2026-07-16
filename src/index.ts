@@ -19,7 +19,21 @@ export type {
   Branding,
   Pacing,
   PreStep,
+  ShareViewer,
 } from "./spec/types.js";
+export {
+  shareCtaSchema,
+  shareViewerConfigSchema,
+  isSafeCtaUrl,
+  isSafeSiblingFile,
+} from "./spec/share-schema.js";
+export type { ShareCta, ShareViewerConfig } from "./spec/share-schema.js";
+export { generateShareViewer } from "./share/generator.js";
+export type { ShareViewerManifest, ShareViewerResult } from "./share/generator.js";
+export { deriveViewerChapters, formatViewerTime } from "./share/chapters.js";
+export type { ViewerChapter } from "./share/chapters.js";
+export { parseVttTranscript } from "./share/transcript.js";
+export type { TranscriptCue } from "./share/transcript.js";
 
 // Runner
 export { startRunner, createRunnerOptions } from "./runner/runner.js";

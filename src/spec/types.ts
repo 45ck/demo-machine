@@ -11,3 +11,4 @@ export type Resolution = Meta["resolution"];
 export type Branding = NonNullable<Meta["branding"]>;
 export type Pacing = DemoSpec["pacing"];
 export type PreStep = z.infer<typeof preStepSchema>;
+export type ShareViewer = NonNullable<DemoSpec["share"]>;

@@ -19,6 +19,8 @@ interface RunSummaryInput extends CaptureSummaryInput {
   renderedVideoPath?: string | undefined;
   qualityReportPath?: string | undefined;
   qualityStatus?: "pass" | "warn" | "fail" | undefined;
+  shareViewerPath?: string | undefined;
+  shareManifestPath?: string | undefined;
 }
 
 function addArtifactLines(lines: string[], artifacts: ArtifactSummary | undefined): void {
@@ -56,5 +58,7 @@ export function formatRunSummary(input: RunSummaryInput): string {
   addArtifactLines(lines, input.artifacts);
   if (input.qualityReportPath) lines.push(`- Quality report: ${input.qualityReportPath}`);
   if (input.qualityStatus) lines.push(`- Quality status: ${input.qualityStatus}`);
+  if (input.shareViewerPath) lines.push(`- Share viewer: ${input.shareViewerPath}`);
+  if (input.shareManifestPath) lines.push(`- Share manifest: ${input.shareManifestPath}`);
   return lines.join("\n");
 }

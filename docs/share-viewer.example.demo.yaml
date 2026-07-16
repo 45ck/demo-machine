@@ -1,0 +1,42 @@
+meta:
+  title: "A review-ready product workflow"
+
+runner:
+  url: "http://localhost:3000"
+
+share:
+  summary: "See how a team moves from intake to a clear, traceable handover."
+  profile:
+    label: "Aged Care"
+    syntheticBoundary: "Synthetic demonstration data only. Not for clinical use."
+  brand:
+    name: "Example Health"
+    primary: "#57d6b0"
+    background: "#101723"
+  primaryCta:
+    label: "Test it yourself"
+    url: "https://demo.example.com"
+  secondaryCta:
+    label: "Book a call"
+    url: "/contact"
+  poster: "poster.png"
+  disclaimer: "Synthetic demonstration data only."
+  noindex: true
+  publicSafe: true
+  embedMode: "deny"
+
+chapters:
+  - title: "Open the workflow"
+    steps:
+      - action: navigate
+        url: "/"
+        narration: "Open the workflow at its reviewed starting state."
+  - title: "Review the result"
+    steps:
+      - action: assert
+        target:
+          by: role
+          role: heading
+          name: "Review"
+        visible: true
+        narration: "Confirm the reviewed result is visible before handover."

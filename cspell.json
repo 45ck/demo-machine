@@ -94,7 +94,19 @@
     "Prereqs",
     "luma",
     "unclipped",
-    "Pngs"
+    "Pngs",
+    "arrowleft",
+    "arrowright",
+    "Segoe",
+    "nums",
+    "noopener",
+    "noreferrer",
+    "playsinline",
+    "describedby",
+    "noarchive",
+    "SAMEORIGIN",
+    "inputmode",
+    "NDIS"
   ],
   "ignorePaths": ["node_modules", "dist", "pnpm-lock.yaml", "*.json"]
 }
