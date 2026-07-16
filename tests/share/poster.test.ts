@@ -51,6 +51,15 @@ describe("share viewer poster generation", () => {
     ).resolves.toBe(posterPath);
     expect(await readFile(posterPath, "utf8")).toBe("generated poster");
     expect(commandRunner).toHaveBeenCalledOnce();
+    const provenance = JSON.parse(
+      await readFile(join(outputDir, ".poster.png.demo-machine-source.json"), "utf8"),
+    ) as Record<string, unknown>;
+    expect(provenance).toMatchObject({
+      schemaVersion: 2,
+      kind: "demo-machine-generated-poster",
+      sourceDurationMs: 8_000,
+      seekMs: 4_000,
+    });
   });
 
   it("regenerates its own poster when the source video changes", async () => {
@@ -67,6 +76,24 @@ describe("share viewer poster generation", () => {
 
     expect(await readFile(posterPath, "utf8")).toBe("generated poster 2");
     expect(commandRunner).toHaveBeenCalledTimes(2);
+  });
+
+  it("regenerates its own poster when the reviewed source duration changes", async () => {
+    let generation = 0;
+    const commandRunner = vi.fn(async (_command: string, args: readonly string[]) => {
+      generation += 1;
+      await writeFile(args.at(-1)!, `generated poster ${String(generation)}`, "utf8");
+    });
+
+    await ensurePosterAsset({ videoPath, posterPath, durationMs: 8_000, commandRunner });
+    await ensurePosterAsset({ videoPath, posterPath, durationMs: 10_000, commandRunner });
+
+    expect(await readFile(posterPath, "utf8")).toBe("generated poster 2");
+    expect(commandRunner).toHaveBeenCalledTimes(2);
+    const provenance = JSON.parse(
+      await readFile(join(outputDir, ".poster.png.demo-machine-source.json"), "utf8"),
+    ) as Record<string, unknown>;
+    expect(provenance).toMatchObject({ sourceDurationMs: 10_000, seekMs: 5_000 });
   });
 
   it("retries at the first frame when ffmpeg exits without producing a frame", async () => {

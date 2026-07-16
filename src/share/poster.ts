@@ -5,13 +5,15 @@ import { lstat, readFile, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const MAX_STDERR = 4_096;
-const POSTER_PROVENANCE_VERSION = 1;
+const POSTER_PROVENANCE_VERSION = 2;
 
 interface GeneratedPosterProvenance {
   schemaVersion: typeof POSTER_PROVENANCE_VERSION;
   kind: "demo-machine-generated-poster";
   sourceVideoSha256: string;
   posterSha256: string;
+  sourceDurationMs: number;
+  seekMs: number;
 }
 
 export type PosterCommandRunner = (command: string, args: readonly string[]) => Promise<void>;
@@ -107,33 +109,48 @@ async function hashFile(filePath: string): Promise<string> {
   return hash.digest("hex");
 }
 
-function provenancePathFor(posterPath: string): string {
-  return path.join(
-    path.dirname(posterPath),
-    `.${path.basename(posterPath)}.demo-machine-source.json`,
-  );
+const provenancePathFor = (posterPath: string): string =>
+  path.join(path.dirname(posterPath), `.${path.basename(posterPath)}.demo-machine-source.json`);
+
+function parseGeneratedProvenance(value: string): GeneratedPosterProvenance {
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(value) as Record<string, unknown>;
+  } catch {
+    throw new Error("Poster provenance is not valid JSON");
+  }
+  const sourceDurationMs = Number(parsed["sourceDurationMs"]);
+  const seekMs = Number(parsed["seekMs"]);
+  const valid = [
+    parsed["schemaVersion"] === POSTER_PROVENANCE_VERSION,
+    parsed["kind"] === "demo-machine-generated-poster",
+    typeof parsed["sourceVideoSha256"] === "string",
+    typeof parsed["posterSha256"] === "string",
+    /^[a-f0-9]{64}$/.test(String(parsed["sourceVideoSha256"])),
+    /^[a-f0-9]{64}$/.test(String(parsed["posterSha256"])),
+    Number.isSafeInteger(sourceDurationMs),
+    sourceDurationMs >= 1,
+    Number.isSafeInteger(seekMs),
+    seekMs >= 0,
+    seekMs < sourceDurationMs,
+  ].every(Boolean);
+  if (!valid) {
+    throw new Error("Poster provenance is invalid or from an unsupported schema version");
+  }
+  return parsed as unknown as GeneratedPosterProvenance;
 }
 
 async function readGeneratedProvenance(
   provenancePath: string,
 ): Promise<GeneratedPosterProvenance | undefined> {
-  if ((await regularFileState(provenancePath)) !== "regular") return undefined;
-  try {
-    const parsed = JSON.parse(await readFile(provenancePath, "utf8")) as Record<string, unknown>;
-    if (
-      parsed["schemaVersion"] !== POSTER_PROVENANCE_VERSION ||
-      parsed["kind"] !== "demo-machine-generated-poster" ||
-      typeof parsed["sourceVideoSha256"] !== "string" ||
-      typeof parsed["posterSha256"] !== "string" ||
-      !/^[a-f0-9]{64}$/.test(parsed["sourceVideoSha256"]) ||
-      !/^[a-f0-9]{64}$/.test(parsed["posterSha256"])
-    ) {
-      return undefined;
-    }
-    return parsed as unknown as GeneratedPosterProvenance;
-  } catch {
-    return undefined;
+  const state = await regularFileState(provenancePath);
+  if (state === "missing") return undefined;
+  if (state === "unsafe") {
+    throw new Error(
+      `Poster provenance must be a regular sibling file: ${path.basename(provenancePath)}`,
+    );
   }
+  return parseGeneratedProvenance(await readFile(provenancePath, "utf8"));
 }
 
 interface PosterGenerationPlan {
@@ -146,6 +163,7 @@ async function planPosterGeneration(
   videoPath: string,
   posterPath: string,
   provenancePath: string,
+  durationMs: number,
 ): Promise<PosterGenerationPlan> {
   const existingState = await regularFileState(posterPath);
   if (existingState === "unsafe") {
@@ -165,7 +183,9 @@ async function planPosterGeneration(
   }
   const sourceVideoSha256 = await hashFile(videoPath);
   return {
-    preserve: sourceVideoSha256 === provenance.sourceVideoSha256,
+    preserve:
+      sourceVideoSha256 === provenance.sourceVideoSha256 &&
+      provenance.sourceDurationMs === Math.round(durationMs),
     sourceVideoSha256,
     replacePosterSha256: posterSha256,
   };
@@ -190,7 +210,8 @@ async function extractPoster(params: {
   temporaryPath: string;
   durationMs: number;
   commandRunner: PosterCommandRunner;
-}): Promise<void> {
+}): Promise<number> {
+  const defaultSeekMs = Math.max(0, Math.floor(params.durationMs / 2));
   await params.commandRunner(
     "ffmpeg",
     buildPosterArgs({
@@ -199,9 +220,8 @@ async function extractPoster(params: {
       durationMs: params.durationMs,
     }),
   );
-  if ((await regularFileState(params.temporaryPath)) === "regular") return;
+  if ((await regularFileState(params.temporaryPath)) === "regular") return defaultSeekMs;
 
-  const defaultSeekMs = Math.max(0, Math.floor(params.durationMs / 2));
   if (defaultSeekMs > 0) {
     await params.commandRunner(
       "ffmpeg",
@@ -216,6 +236,7 @@ async function extractPoster(params: {
   if ((await regularFileState(params.temporaryPath)) !== "regular") {
     throw new Error("ffmpeg did not produce a regular PNG poster");
   }
+  return 0;
 }
 
 async function assertPosterDestination(
@@ -235,12 +256,16 @@ async function writeTemporaryProvenance(params: {
   temporaryPath: string;
   sourceVideoSha256: string;
   posterSha256: string;
+  sourceDurationMs: number;
+  seekMs: number;
 }): Promise<void> {
   const provenance: GeneratedPosterProvenance = {
     schemaVersion: POSTER_PROVENANCE_VERSION,
     kind: "demo-machine-generated-poster",
     sourceVideoSha256: params.sourceVideoSha256,
     posterSha256: params.posterSha256,
+    sourceDurationMs: Math.round(params.sourceDurationMs),
+    seekMs: Math.round(params.seekMs),
   };
   await writeFile(params.temporaryPath, `${JSON.stringify(provenance, null, 2)}\n`, {
     encoding: "utf8",
@@ -255,7 +280,12 @@ export async function ensurePosterAsset(params: {
   commandRunner?: PosterCommandRunner | undefined;
 }): Promise<string> {
   const provenancePath = provenancePathFor(params.posterPath);
-  const plan = await planPosterGeneration(params.videoPath, params.posterPath, provenancePath);
+  const plan = await planPosterGeneration(
+    params.videoPath,
+    params.posterPath,
+    provenancePath,
+    params.durationMs,
+  );
   if (plan.preserve) return params.posterPath;
   await assertGenerationPaths(params.posterPath, provenancePath);
 
@@ -265,7 +295,7 @@ export async function ensurePosterAsset(params: {
   );
   const temporaryProvenancePath = `${temporaryPath}.json`;
   try {
-    await extractPoster({
+    const seekMs = await extractPoster({
       videoPath: params.videoPath,
       temporaryPath,
       durationMs: params.durationMs,
@@ -276,6 +306,8 @@ export async function ensurePosterAsset(params: {
       temporaryPath: temporaryProvenancePath,
       sourceVideoSha256: plan.sourceVideoSha256 ?? (await hashFile(params.videoPath)),
       posterSha256: await hashFile(temporaryPath),
+      sourceDurationMs: params.durationMs,
+      seekMs,
     });
     await rename(temporaryPath, params.posterPath);
     await rename(temporaryProvenancePath, provenancePath);
