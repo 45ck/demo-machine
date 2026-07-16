@@ -1,19 +1,13 @@
 import type { DemoSpec } from "../spec/types.js";
 import type { PlaywrightPage } from "../playback/actions.js";
 import type { GlobalOptions } from "./options.js";
-import { createLogger } from "../utils/logger.js";
 import type { NarrationPreSynthesisResult } from "../utils/narration-sync-types.js";
-import {
-  buildEstimatedNarrationTiming,
-  preSynthesizeNarration,
-} from "../narration/pre-synthesizer.js";
+import { preSynthesizeNarration } from "../narration/pre-synthesizer.js";
 import type { NarrationSettings } from "./narration.js";
 import {
   DEFAULT_CHANGE_DETECTION_CONFIG,
   type ChangeDetectionConfig,
 } from "../playback/change-detection/types.js";
-
-const log = createLogger("cli:capture:runtime");
 
 export function resolveChangeDetectionConfig(
   spec: DemoSpec,
@@ -85,17 +79,12 @@ export async function prepareNarrationTiming(params: {
   if (!params.settings.enabled) return {};
   if (params.settings.syncMode === "manual") return {};
 
-  try {
-    const { createTTSProvider } = await import("../narration/provider.js");
-    const provider = createTTSProvider(params.settings.provider);
-    const ttsOptions = params.settings.voice ? { voice: params.settings.voice } : {};
-    const pre =
-      (await preSynthesizeNarration(params.spec, provider, ttsOptions, params.outputDir)) ??
-      undefined;
+  const { createTTSProvider } = await import("../narration/provider.js");
+  const provider = createTTSProvider(params.settings.provider);
+  const ttsOptions = params.settings.voice ? { voice: params.settings.voice } : {};
+  const pre =
+    (await preSynthesizeNarration(params.spec, provider, ttsOptions, params.outputDir)) ??
+    undefined;
 
-    return { timing: pre?.timing ?? buildEstimatedNarrationTiming(params.spec), preSynth: pre };
-  } catch (err) {
-    log.warn(`Pre-synthesis unavailable, falling back to estimates: ${String(err)}`);
-    return { timing: buildEstimatedNarrationTiming(params.spec) };
-  }
+  return { timing: pre?.timing, preSynth: pre };
 }

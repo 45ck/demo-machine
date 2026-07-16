@@ -129,23 +129,30 @@ export async function prepareNarrationFocus(params: {
   if (!shouldPrepareFocus(params.step, focus)) return undefined;
 
   const resolved = locatorForNarrationFocus(params.page, params.step, focusOverride(params.step));
+  // Page-level actions such as navigate, wait, back, and forward legitimately
+  // have narration without an element target. Declared element targets still
+  // fail closed below when they cannot be made visible and boxed.
   if (!resolved) return undefined;
 
   try {
     const timeoutMs = Math.min(stepTimeoutMs(params.step), PRESENTATION_TIMEOUT_MS);
     await ensureTargetReady(resolved.locator, timeoutMs);
     const box = await resolved.locator.boundingBox();
-    if (!box) return undefined;
+    if (!box) {
+      throw new Error(
+        `Narration focus target has no visible bounding box: ${resolved.selectorForEvent}`,
+      );
+    }
 
     const mappedBox = await applyNarrationFocus({ ...params, box, focus });
     return { mappedBox, focus, canShowActionPulse: canShowActionPulse(params.step) };
   } catch (err) {
-    log.debug(
-      `Skipped narration focus for ${resolved.selectorForEvent}: ${
-        err instanceof Error ? err.message : String(err)
-      }`,
+    const detail = err instanceof Error ? err.message : String(err);
+    log.error(`Narration focus failed for ${resolved.selectorForEvent}: ${detail}`);
+    throw new Error(
+      `Unable to present narration focus for ${resolved.selectorForEvent}: ${detail}`,
+      { cause: err },
     );
-    return undefined;
   }
 }
 

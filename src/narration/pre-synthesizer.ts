@@ -49,12 +49,19 @@ function tryParsePcmWavDurationMs(buf: Buffer): number | undefined {
   const sampleRate = buf.readUInt32LE(24);
   const bitsPerSample = buf.readUInt16LE(34);
   const dataBytes = buf.readUInt32LE(40);
-  if (numChannels <= 0 || sampleRate <= 0 || bitsPerSample <= 0) return undefined;
+  const positiveHeaderValues = [numChannels, sampleRate, bitsPerSample, dataBytes].every(
+    (value) => value > 0,
+  );
+  const completePcmPayload = bitsPerSample % 8 === 0 && dataBytes <= buf.length - 44;
+  if (!positiveHeaderValues || !completePcmPayload) {
+    return undefined;
+  }
   const bytesPerSample = bitsPerSample / 8;
   const denom = sampleRate * numChannels * bytesPerSample;
   if (!Number.isFinite(denom) || denom <= 0) return undefined;
   const seconds = dataBytes / denom;
-  return Math.round(seconds * 1000);
+  const durationMs = Math.round(seconds * 1000);
+  return durationMs > 0 ? durationMs : undefined;
 }
 
 function guessExtension(audio: Buffer): string {
@@ -99,6 +106,46 @@ async function probeDurationMsWithFfprobe(filePath: string): Promise<number> {
   });
 }
 
+async function measureAudioDurationMs(
+  audio: Buffer,
+  extension: string,
+  audioPath: string,
+): Promise<number> {
+  const parsedDuration = extension === "wav" ? tryParsePcmWavDurationMs(audio) : undefined;
+  const durationMs = parsedDuration ?? (await probeDurationMsWithFfprobe(audioPath));
+  if (!Number.isFinite(durationMs) || durationMs <= 0) {
+    throw new Error("TTS provider returned audio with no measurable duration");
+  }
+  return durationMs;
+}
+
+async function synthesizeNarrationItem(params: {
+  item: NarrationItem;
+  provider: TTSProvider;
+  ttsOptions: TTSOptions;
+  outputDir: string;
+}): Promise<{ durationMs: number; audioPath: string }> {
+  const { item } = params;
+  try {
+    const audio = await params.provider.synthesize(item.text, params.ttsOptions);
+    const extension = guessExtension(audio);
+    if (extension === "audio") {
+      throw new Error("TTS provider returned an unsupported or unrecognizable audio payload");
+    }
+    const audioPath = join(params.outputDir, `seg-${item.actionIndex}.${extension}`);
+    await writeFile(audioPath, audio);
+    const durationMs = await measureAudioDurationMs(audio, extension, audioPath);
+    return { durationMs, audioPath };
+  } catch (err) {
+    throw new Error(
+      `Failed to synthesize complete narration for action ${String(item.actionIndex)} (${item.action}): ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+      { cause: err },
+    );
+  }
+}
+
 export function buildEstimatedNarrationTiming(spec: DemoSpec): NarrationTimingMap {
   const timing: NarrationTimingMap = new Map();
   for (const item of extractNarrationItems(spec)) {
@@ -124,40 +171,11 @@ export async function preSynthesizeNarration(
   const timing: NarrationTimingMap = new Map();
 
   for (const item of items) {
-    try {
-      const audio = await provider.synthesize(item.text, ttsOptions);
-      const ext = guessExtension(audio);
-      const audioPath = join(dir, `seg-${item.actionIndex}.${ext}`);
-      await writeFile(audioPath, audio);
-
-      let durationMs: number | undefined =
-        ext === "wav" ? tryParsePcmWavDurationMs(audio) : undefined;
-      if (durationMs === undefined) {
-        try {
-          durationMs = await probeDurationMsWithFfprobe(audioPath);
-        } catch (err) {
-          // ffprobe might be missing; keep going with an estimate.
-          log.warn(
-            `Failed to measure duration for action ${String(item.actionIndex)} (${item.action}): ${String(
-              err,
-            )}`,
-          );
-          durationMs = estimateDurationMs(item.text);
-        }
-      }
-
-      timing.set(item.actionIndex, { text: item.text, durationMs, audioPath });
-      log.debug(
-        `Segment ${String(item.actionIndex)} (${item.action}): ${durationMs}ms -> ${audioPath}`,
-      );
-    } catch (err) {
-      log.warn(
-        `Failed to synthesize segment for action ${String(item.actionIndex)} (${item.action}): ${String(
-          err,
-        )}`,
-      );
-      timing.set(item.actionIndex, { text: item.text, durationMs: estimateDurationMs(item.text) });
-    }
+    const segment = await synthesizeNarrationItem({ item, provider, ttsOptions, outputDir: dir });
+    timing.set(item.actionIndex, { text: item.text, ...segment });
+    log.debug(
+      `Segment ${String(item.actionIndex)} (${item.action}): ${segment.durationMs}ms -> ${segment.audioPath}`,
+    );
   }
 
   return {

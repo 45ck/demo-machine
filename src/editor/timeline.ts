@@ -7,12 +7,6 @@ const CHAPTER_TITLE_DURATION_MS = 1500;
 const OUTRO_DURATION_MS = 2000;
 const DEAD_TIME_THRESHOLD_MS = 3000;
 const DEAD_TIME_SPEED_FACTOR = 3;
-/**
- * Tail of visible action retained after the last narration before the outro
- * card slides in. Keeps the demo from cutting too abruptly while still
- * eliminating long stretches of silent video at the end of a recording.
- */
-const POST_NARRATION_TAIL_MS = 800;
 
 export function buildTimeline(
   events: ActionEvent[],
@@ -166,27 +160,7 @@ export function extendTimelineForNarration(
     };
   }
 
-  // No narration at all: leave the captured video alone.
-  if (narrationDurationMs <= 0) return timeline;
-
-  // Narration finished comfortably before the actions did. Trim the trailing
-  // silent action window so the outro card lands shortly after the last
-  // narration ends. We keep POST_NARRATION_TAIL_MS of visible action so the
-  // final state of the demo still settles on screen before the outro.
-  const targetVideoEndMs = narrationDurationMs + POST_NARRATION_TAIL_MS;
-  const originalVideoEndMs = timeline.totalDurationMs - OUTRO_DURATION_MS;
-  if (targetVideoEndMs >= originalVideoEndMs) return timeline;
-
-  const newTotal = targetVideoEndMs + OUTRO_DURATION_MS;
-  const segments = timeline.segments.map((seg) => {
-    if (seg.type === "outro") {
-      return { ...seg, startMs: targetVideoEndMs, endMs: newTotal };
-    }
-    return seg;
-  });
-  return {
-    ...timeline,
-    segments,
-    totalDurationMs: newTotal,
-  };
+  // Narration may finish before the captured actions. That silence represents
+  // real action timing and must not truncate the evidence or move the outro.
+  return timeline;
 }

@@ -11,17 +11,32 @@ function baseCtx(overrides?: Partial<QualityCheckContext>): QualityCheckContext 
 }
 
 describe("checkCursorPosition", () => {
-  it("warns when no cursor position data is provided", () => {
-    const results = checkCursorPosition(baseCtx());
+  it("fails when no cursor position data is provided for click actions", () => {
+    const results = checkCursorPosition(
+      baseCtx({
+        spec: {
+          meta: { resolution: { width: 1920, height: 1080 } },
+          chapters: [{ steps: [{ action: "click" }] }],
+        },
+      }),
+    );
     expect(results).toHaveLength(1);
-    expect(results[0]!.status).toBe("warn");
-    expect(results[0]!.message).toContain("skipped");
+    expect(results[0]!.status).toBe("fail");
+    expect(results[0]!.message).toContain("No cursor position data");
   });
 
-  it("warns when cursorPositions is empty array", () => {
-    const results = checkCursorPosition(baseCtx({ cursorPositions: [] }));
+  it("fails when cursorPositions is empty for click actions", () => {
+    const results = checkCursorPosition(
+      baseCtx({
+        spec: {
+          meta: { resolution: { width: 1920, height: 1080 } },
+          chapters: [{ steps: [{ action: "click" }] }],
+        },
+        cursorPositions: [],
+      }),
+    );
     expect(results).toHaveLength(1);
-    expect(results[0]!.status).toBe("warn");
+    expect(results[0]!.status).toBe("fail");
   });
 
   it("passes skipped when the spec has no click actions to sample", () => {
@@ -40,7 +55,24 @@ describe("checkCursorPosition", () => {
     expect(results[0]!.message).toContain("skipped");
   });
 
-  it("warns when fewer cursor samples are recorded than click actions", () => {
+  it("passes skipped when the cursor is explicitly disabled", () => {
+    const results = checkCursorPosition(
+      baseCtx({
+        spec: {
+          meta: { resolution: { width: 1920, height: 1080 } },
+          visuals: { cursor: false },
+          chapters: [{ steps: [{ action: "click" }] }],
+        },
+        cursorPositions: [],
+      }),
+    );
+
+    expect(results).toHaveLength(1);
+    expect(results[0]!.status).toBe("pass");
+    expect(results[0]!.message).toContain("skipped");
+  });
+
+  it("fails when fewer cursor samples are recorded than click actions", () => {
     const results = checkCursorPosition(
       baseCtx({
         spec: {
@@ -53,7 +85,7 @@ describe("checkCursorPosition", () => {
       }),
     );
 
-    expect(results.some((result) => result.status === "warn")).toBe(true);
+    expect(results.some((result) => result.status === "fail")).toBe(true);
     expect(results[0]!.message).toContain("1/2");
   });
 

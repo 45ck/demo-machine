@@ -1,4 +1,4 @@
-import { postRenderPass, postRenderFail, postRenderWarn } from "../../../validation/types.js";
+import { postRenderPass, postRenderFail } from "../../../validation/types.js";
 import type { CheckResult } from "../../../validation/types.js";
 import type { QualityCheckContext } from "../../types.js";
 
@@ -9,6 +9,7 @@ const CLICK_ACTIONS = new Set(["click", "clickFirstVisible"]);
 const TOLERANCE_PX = 5;
 
 function expectedCursorSampleCount(ctx: QualityCheckContext): number | null {
+  if (ctx.spec.visuals?.cursor === false) return 0;
   const chapters = ctx.spec.chapters;
   if (!chapters) return null;
   let count = 0;
@@ -27,7 +28,8 @@ function expectedCursorSampleCount(ctx: QualityCheckContext): number | null {
 export function checkCursorPosition(ctx: QualityCheckContext): CheckResult[] {
   const positions = ctx.cursorPositions;
   if (!positions || positions.length === 0) {
-    if (expectedCursorSampleCount(ctx) === 0) {
+    const expectedCount = expectedCursorSampleCount(ctx);
+    if (expectedCount === null || expectedCount === 0) {
       return [
         {
           ...postRenderPass(CHECK_NAME),
@@ -35,16 +37,23 @@ export function checkCursorPosition(ctx: QualityCheckContext): CheckResult[] {
         },
       ];
     }
-    return [postRenderWarn(CHECK_NAME, "No cursor position data provided (skipped)")];
+    return [
+      postRenderFail(
+        CHECK_NAME,
+        "No cursor position data recorded for expected click actions",
+        "Keep the Demo Machine cursor overlay present and visible at each click",
+      ),
+    ];
   }
 
   const results: CheckResult[] = [];
   const expectedCount = expectedCursorSampleCount(ctx);
   if (expectedCount !== null && positions.length < expectedCount) {
     results.push(
-      postRenderWarn(
+      postRenderFail(
         CHECK_NAME,
         `Recorded ${String(positions.length)}/${String(expectedCount)} expected cursor position sample(s)`,
+        "Record the real cursor overlay position for every click action",
       ),
     );
   }

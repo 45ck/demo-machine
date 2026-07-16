@@ -264,32 +264,27 @@ describe("extendTimelineForNarration", () => {
     expect(outro!.startMs).toBe(newDuration - 2000);
   });
 
-  it("trims trailing action silence when narration ends well before last action", () => {
-    // Construct a timeline whose action span is much longer than the
-    // narration so trailing silence can be trimmed.
+  it("never shortens the captured action span when narration ends early", () => {
     const events: ActionEvent[] = [
       { action: "navigate", timestamp: 1000, duration: 200 },
       { action: "click", timestamp: 11000, duration: 200, selector: "#btn" },
     ];
     const timeline = buildTimeline(events, makeSpec());
-    // originalVideoEnd = 10200, total = 12200 (outro=2000).
-    // Narration ends at 3000ms -> targetVideoEnd = 3800ms (< 10200).
-    const trimmed = extendTimelineForNarration(timeline, 3000);
-    expect(trimmed.totalDurationMs).toBe(3800 + 2000);
-    const outro = trimmed.segments.find((s) => s.type === "outro");
-    expect(outro).toBeDefined();
-    expect(outro!.startMs).toBe(3800);
-    expect(outro!.endMs).toBe(5800);
+    const result = extendTimelineForNarration(timeline, 3000);
+
+    expect(result).toBe(timeline);
+    expect(result.totalDurationMs).toBe(12200);
+    expect(result.totalDurationMs).toBeGreaterThanOrEqual(timeline.totalDurationMs);
+    const outro = result.segments.find((segment) => segment.type === "outro");
+    expect(outro).toMatchObject({ startMs: 10200, endMs: 12200 });
   });
 
-  it("does not trim when narration ends within tail of the last action", () => {
+  it("leaves the timeline unchanged whenever narration is shorter", () => {
     const events: ActionEvent[] = [
       { action: "navigate", timestamp: 1000, duration: 200 },
       { action: "click", timestamp: 11000, duration: 200, selector: "#btn" },
     ];
     const timeline = buildTimeline(events, makeSpec());
-    // originalVideoEnd = 10200; narration ending at 9800 leaves 400ms tail,
-    // which is below POST_NARRATION_TAIL_MS — keep the original timeline.
     const result = extendTimelineForNarration(timeline, 9800);
     expect(result).toBe(timeline);
   });

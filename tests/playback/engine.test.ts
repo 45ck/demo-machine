@@ -1195,6 +1195,9 @@ describe("PlaybackEngine", () => {
   });
 
   it("populates screenshot collector data during real playback", async () => {
+    vi.mocked(page.evaluate).mockImplementation(async (fn) =>
+      String(fn).includes('getElementById("dm-cursor")') ? { x: 50, y: 25 } : "page text content",
+    );
     const chapters: Chapter[] = [
       {
         title: "Capture",

@@ -67,10 +67,14 @@ async function recordClickCursor(params: {
     const centerX = box.x + box.width / 2;
     const centerY = box.y + box.height / 2;
     const cursorTip = await readCursorTip(params.page);
+    if (!cursorTip || !Number.isFinite(cursorTip.x) || !Number.isFinite(cursorTip.y)) {
+      log.warn(`Cursor overlay missing for click step ${String(params.stepIndex)}`);
+      return;
+    }
     params.collector.recordCursorPosition({
       stepIndex: params.stepIndex,
-      cursorX: cursorTip?.x ?? centerX,
-      cursorY: cursorTip?.y ?? centerY,
+      cursorX: cursorTip.x,
+      cursorY: cursorTip.y,
       targetCenterX: centerX,
       targetCenterY: centerY,
     });

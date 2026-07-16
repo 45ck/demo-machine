@@ -173,6 +173,25 @@ describe("wrapWithScreenshotCapture", () => {
     expect(collector.recordCursorPosition).not.toHaveBeenCalled();
   });
 
+  it("does not fabricate a target-centre cursor sample when the overlay is missing", async () => {
+    (page.evaluate as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
+    const handler: ActionHandler = vi.fn(async (_ctx, _step, events: ActionEvent[]) => {
+      events.push({
+        action: "click",
+        timestamp: 1000,
+        duration: 100,
+        selector: "#btn",
+        boundingBox: { x: 100, y: 200, width: 80, height: 40 },
+      });
+    });
+    const wrapped = wrapWithScreenshotCapture(handler, collector);
+    const step = { action: "click", selector: "#btn" } as unknown as Step;
+
+    await wrapped(ctx, step, [], 2);
+
+    expect(collector.recordCursorPosition).not.toHaveBeenCalled();
+  });
+
   it("swallows collector errors (handler still completes)", async () => {
     const handler: ActionHandler = vi.fn().mockResolvedValue(undefined);
     (collector.captureStep as ReturnType<typeof vi.fn>).mockRejectedValue(
@@ -264,6 +283,7 @@ describe("wrapWithScreenshotCapture", () => {
   });
 
   it("records cursor position for clickFirstVisible steps", async () => {
+    (page.evaluate as ReturnType<typeof vi.fn>).mockResolvedValue({ x: 110, y: 75 });
     const handler: ActionHandler = vi.fn(async (_ctx, _step, events: ActionEvent[]) => {
       events.push({
         action: "clickFirstVisible",
@@ -285,8 +305,8 @@ describe("wrapWithScreenshotCapture", () => {
 
     expect(collector.recordCursorPosition).toHaveBeenCalledWith({
       stepIndex: 4,
-      cursorX: 110, // 50 + 120/2
-      cursorY: 75, // 60 + 30/2
+      cursorX: 110,
+      cursorY: 75,
       targetCenterX: 110,
       targetCenterY: 75,
     });

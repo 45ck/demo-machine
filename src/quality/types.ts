@@ -67,6 +67,7 @@ export interface QualityCheckContext {
   outputMp4Path: string;
   spec: {
     meta: { resolution: { width: number; height: number } };
+    visuals?: { cursor?: boolean | undefined } | undefined;
     chapters?: Array<{ steps?: Array<{ action?: string }> }> | undefined;
   };
   manifestEntry?: ManifestEntry | undefined;

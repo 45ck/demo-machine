@@ -1,10 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  adjustTiming,
-  computeNarrationDuration,
-  GAP_MS,
-  MAX_INTER_SEGMENT_GAP_MS,
-} from "../../src/narration/timing.js";
+import { adjustTiming, computeNarrationDuration, GAP_MS } from "../../src/narration/timing.js";
 import type { TimedSegment } from "../../src/narration/timing.js";
 
 function makeSegments(entries: Array<{ startMs: number; durationMs: number }>): TimedSegment[] {
@@ -41,18 +36,19 @@ describe("adjustTiming", () => {
     expect(segments[1]!.startMs).toBe(3000 + GAP_MS);
   });
 
-  it("pulls subsequent segments forward to eliminate long silence gaps", () => {
+  it("preserves sparse action anchors instead of pulling later narration forward", () => {
     const segments = makeSegments([
       { startMs: 5000, durationMs: 1000 },
       { startMs: 20000, durationMs: 1000 },
     ]);
     adjustTiming(segments);
     // First: starts at 4500, ends at 5500.
-    // Second's anchored start would be 19500 -> 14000ms gap. The cap pulls
-    // it forward to prevEnd + MAX_INTER_SEGMENT_GAP_MS so the audio track
-    // stays continuous.
+    // Second remains anchored at 19500 so the action at 20000 still lands
+    // mid-sentence even though the preceding action was much earlier.
     expect(segments[0]!.startMs).toBe(4500);
-    expect(segments[1]!.startMs).toBe(5500 + MAX_INTER_SEGMENT_GAP_MS);
+    expect(segments[1]!.startMs).toBe(19500);
+    expect(segments[1]!.startMs).toBeLessThanOrEqual(20000);
+    expect(segments[1]!.startMs + segments[1]!.durationMs).toBeGreaterThanOrEqual(20000);
   });
 
   it("keeps anchored timing when the natural gap is within tolerance", () => {
@@ -62,8 +58,7 @@ describe("adjustTiming", () => {
     ]);
     adjustTiming(segments);
     // First: starts at 4500, ends at 5500.
-    // Second anchored to 6000 — gap of 500ms is within MAX_INTER_SEGMENT_GAP_MS,
-    // so we leave it alone instead of pulling forward.
+    // Second remains anchored to 6000.
     expect(segments[0]!.startMs).toBe(4500);
     expect(segments[1]!.startMs).toBe(6000);
   });
