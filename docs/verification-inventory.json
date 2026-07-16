@@ -42,6 +42,31 @@
     { "id": "altText", "proof": ["schema", "unit", "example"] },
     { "id": "title", "proof": ["schema", "unit", "example"] }
   ],
+  "deliveryArtifacts": [
+    {
+      "id": "share-viewer",
+      "outputs": ["viewer.html", "viewer.manifest.json"],
+      "proof": ["schema", "unit", "example", "docs"],
+      "invariants": [
+        "native-controls",
+        "chapter-timing",
+        "timestamp-deep-links",
+        "captions-and-transcript",
+        "silent-reviewed-caption-derivation",
+        "transcript-search-and-copy",
+        "playback-speed",
+        "persistent-synthetic-boundary",
+        "accessible-end-state-cta",
+        "duration-contract",
+        "reduced-motion",
+        "safe-cta",
+        "content-security-policy",
+        "deny-by-default-embed-policy",
+        "public-safe-noindex",
+        "no-tracking"
+      ]
+    }
+  ],
   "patternTags": [
     { "id": "smoke", "description": "Minimal end-to-end flow proving the basic pipeline." },
     {

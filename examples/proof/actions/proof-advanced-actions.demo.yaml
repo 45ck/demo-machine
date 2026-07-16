@@ -1,0 +1,41 @@
+meta:
+  title: "Proof: Advanced Actions"
+  resolution:
+    width: 1280
+    height: 720
+
+runner:
+  command: "node examples/controls-lab/serve.mjs"
+  url: "http://localhost:4571"
+  timeout: 10000
+
+chapters:
+  - title: "Advanced Action Proof"
+    steps:
+      - action: navigate
+        url: "/"
+
+      - action: evaluate
+        expression: 'document.body.dataset.proofReady = "true"'
+        label: "mark advanced proof ready"
+
+      - action: requireState
+        selector: "body[data-proof-ready='true']"
+        visible: true
+        because: "the trusted setup step must complete before the interaction proof"
+
+      - action: selectOptionInListbox
+        selector: "#reviewersList"
+        option:
+          label: "Coordinator"
+        narration: "Choose the coordinator from the visible reviewer list."
+
+      - action: assert
+        target:
+          by: testId
+          testId: "status-text"
+        text: "Reviewer: Coordinator"
+
+      - action: runCommand
+        command: "node --version"
+        timeoutMs: 5000

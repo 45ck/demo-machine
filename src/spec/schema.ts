@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { shareViewerConfigSchema } from "./share-schema.js";
 import { narrationFocusSchema, preStepSchema, stepSchema } from "./step-schema.js";
 
 const resolutionSchema = z.object({
@@ -103,5 +104,6 @@ export const demoSpecSchema = z.object({
   pacing: pacingSchema.optional().default({}),
   visuals: visualsSchema.optional().default({}),
   changeDetection: changeDetectionSchema.optional(),
+  share: shareViewerConfigSchema.optional(),
   chapters: z.array(chapterSchema).min(1),
 });

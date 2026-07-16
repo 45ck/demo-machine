@@ -120,6 +120,24 @@ describe("output resolution", () => {
     expect(result.outputDir).toBe(outputDir);
   });
 
+  it("treats generated share viewer files as protected demo artifacts", async () => {
+    const outputDir = join(tempDir, "shared");
+    await mkdir(outputDir, { recursive: true });
+    await writeFile(join(outputDir, "viewer.html"), "viewer", "utf8");
+    await writeFile(join(outputDir, "viewer.manifest.json"), "{}", "utf8");
+
+    await expect(
+      resolveOutputDirectory({
+        spec,
+        requestedOutput: outputDir,
+        outputWasExplicit: true,
+        cwd: tempDir,
+      }),
+    ).rejects.toMatchObject({
+      artifactNames: ["viewer.html", "viewer.manifest.json"],
+    } satisfies Partial<OutputCollisionError>);
+  });
+
   it("returns options with absolute output and resolution metadata", async () => {
     const { opts, resolution } = await resolveOutputOptions({
       opts: makeOptions("./output"),

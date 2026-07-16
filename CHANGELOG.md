@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Schema-validated, deterministic static share viewers with native video,
+  timestamp deep links, chapters, searchable and copyable transcripts,
+  playback speed, persistent synthetic-profile context, completion calls to
+  action, safe embed-header contracts, a hash-based Content Security Policy,
+  and a machine-readable integration manifest.
+
 ## 0.3.0 — 2026-04-24
 
 ### Added

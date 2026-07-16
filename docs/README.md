@@ -7,12 +7,14 @@ Use this page as the map for the repo docs. Start with the workflow that matches
 - [Getting Started](../GETTING-STARTED.md): first local run, install requirements, and the starter workflow.
 - [CLI Reference](cli-reference.md): every command, common option, and output rule.
 - [Spec Reference](spec-reference.md): supported fields, actions, targets, narration, and redaction.
+- [Share Viewer](share-viewer.md): generate a private-by-default chaptered viewing page with safe calls to action.
 - [Glossary](glossary.md): names for artifacts, manifests, quality files, and pipeline stages.
 
 ## Create Better Demos
 
 - [Demo Anything](demo-anything.md): authoring principles, target selection, example matrix, and the new-app playbook.
 - [Demo Gallery](demo-gallery.md): curated visual examples with GIF previews and frame captures.
+- [Share Viewer](share-viewer.md): package a completed video for accessible, tracking-free review or publication.
 - [Examples Assurance](examples-assurance-plan.md): how examples are organized, validated, rendered, and reviewed.
 
 ## Agent Workflows

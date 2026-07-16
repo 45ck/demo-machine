@@ -9,6 +9,7 @@ interface VerificationInventory {
   actions: Array<{ id: string }>;
   preSteps: Array<{ id: string }>;
   targetStrategies: Array<{ id: string }>;
+  deliveryArtifacts: Array<{ id: string; outputs: string[]; invariants: string[] }>;
 }
 
 function inventory(): VerificationInventory {
@@ -183,5 +184,19 @@ describe("verification surface", () => {
       expect(fixture, `Missing preStep fixture for ${id}`).toBeDefined();
       expect(preStepSchema.safeParse(fixture).success).toBe(true);
     }
+  });
+
+  it("inventories the static share viewer contract", () => {
+    const shareViewer = inventory().deliveryArtifacts.find((entry) => entry.id === "share-viewer");
+    expect(shareViewer?.outputs).toEqual(["viewer.html", "viewer.manifest.json"]);
+    expect(shareViewer?.invariants).toEqual(
+      expect.arrayContaining([
+        "native-controls",
+        "captions-and-transcript",
+        "safe-cta",
+        "content-security-policy",
+        "no-tracking",
+      ]),
+    );
   });
 });

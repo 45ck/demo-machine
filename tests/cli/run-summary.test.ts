@@ -28,11 +28,15 @@ describe("run summaries", () => {
       renderedVideoPath: "C:\\demo\\output\\checkout\\run\\output.mp4",
       qualityReportPath: "C:\\demo\\output\\checkout\\run\\quality.json",
       qualityStatus: "pass",
+      shareViewerPath: "C:\\demo\\output\\checkout\\run\\viewer.html",
+      shareManifestPath: "C:\\demo\\output\\checkout\\run\\viewer.manifest.json",
       eventCount: 3,
     });
 
     expect(summary).toContain("- Rendered video: C:\\demo\\output\\checkout\\run\\output.mp4");
     expect(summary).toContain("- Quality report: C:\\demo\\output\\checkout\\run\\quality.json");
     expect(summary).toContain("- Quality status: pass");
+    expect(summary).toContain("- Share viewer: C:\\demo\\output\\checkout\\run\\viewer.html");
+    expect(summary).toContain("viewer.manifest.json");
   });
 });

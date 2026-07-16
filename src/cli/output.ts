@@ -48,6 +48,8 @@ const KNOWN_ARTIFACT_NAMES = new Set([
   "trace.zip",
   "verification.json",
   "video.webm",
+  "viewer.html",
+  "viewer.manifest.json",
 ]);
 
 function fallbackTitleFromSpecPath(specPath: string | undefined): string {

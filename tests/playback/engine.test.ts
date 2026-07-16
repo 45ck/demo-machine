@@ -543,6 +543,10 @@ describe("actionHandlers", () => {
   });
 
   it("throws when runCommand exits non-zero", async () => {
+    const dir = join(tmpdir(), `demo-machine-${String(Date.now())}-command-error`);
+    tempDirs.push(dir);
+    await mkdir(dir, { recursive: true });
+    ctx = { ...ctx, outputDir: dir };
     const step = {
       action: "runCommand" as const,
       command: 'node -e "process.exit(7)"',

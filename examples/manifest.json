@@ -340,6 +340,16 @@
       "qualitySignals": ["artifact-capture", "deterministic-data"]
     },
     {
+      "slug": "proof-advanced-actions",
+      "suiteType": "proof",
+      "canonicalSpec": "examples/proof/actions/proof-advanced-actions.demo.yaml",
+      "variantSpecs": [],
+      "releaseTier": "proof",
+      "visualBaseline": "none",
+      "patternTags": ["forms"],
+      "qualitySignals": ["artifact-capture", "deterministic-data", "selector-intent"]
+    },
+    {
       "slug": "assurance-long-demo",
       "suiteType": "assurance",
       "canonicalSpec": "examples/assurance/long-demo/long-demo.demo.yaml",
