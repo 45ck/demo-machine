@@ -25,7 +25,7 @@ export function buildPosterArgs(params: {
   if (!Number.isFinite(params.durationMs) || params.durationMs < 1) {
     throw new Error("Poster source duration must be a positive finite value");
   }
-  const seekMs = params.seekMs ?? Math.min(1_000, Math.max(0, Math.floor(params.durationMs / 2)));
+  const seekMs = params.seekMs ?? Math.max(0, Math.floor(params.durationMs / 2));
   if (!Number.isFinite(seekMs) || seekMs < 0 || seekMs >= params.durationMs) {
     throw new Error("Poster seek must be finite, non-negative, and below the source duration");
   }
@@ -201,7 +201,7 @@ async function extractPoster(params: {
   );
   if ((await regularFileState(params.temporaryPath)) === "regular") return;
 
-  const defaultSeekMs = Math.min(1_000, Math.max(0, Math.floor(params.durationMs / 2)));
+  const defaultSeekMs = Math.max(0, Math.floor(params.durationMs / 2));
   if (defaultSeekMs > 0) {
     await params.commandRunner(
       "ffmpeg",

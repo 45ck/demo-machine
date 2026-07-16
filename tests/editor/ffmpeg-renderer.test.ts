@@ -227,4 +227,32 @@ describe("FfmpegRenderer.buildArgs", () => {
     expect(args[movflagsIndex + 1]).toBe("+faststart");
     expect(movflagsIndex).toBeLessThan(args.indexOf("/output/output.mp4"));
   });
+
+  it("fits long intro titles within the rendered width", async () => {
+    const renderer = new FfmpegRenderer();
+    const timeline: Timeline = {
+      ...baseTimeline,
+      resolution: { width: 1440, height: 810 },
+      segments: [
+        {
+          type: "intro",
+          startMs: 0,
+          endMs: 2000,
+          label: "NDIS SIL - From Support Handover to Coordinator Proof Across One Workflow",
+        },
+      ],
+    };
+
+    await renderer.render(timeline, {
+      outputPath: "/output/output.mp4",
+      videoPath: "/input/video.webm",
+    });
+
+    const args = mockSpawn.mock.calls[0]![1] as string[];
+    const filter = args[args.indexOf("-filter_complex") + 1]!;
+    const fontSize = Number(/fontsize=(\d+)/.exec(filter)?.[1]);
+    expect(fontSize).toBeGreaterThanOrEqual(22);
+    expect(fontSize).toBeLessThan(52);
+    expect(filter).toContain("x=(w-text_w)/2");
+  });
 });

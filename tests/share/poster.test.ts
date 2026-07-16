@@ -20,11 +20,11 @@ describe("share viewer poster generation", () => {
     await rm(outputDir, { recursive: true, force: true });
   });
 
-  it("uses a bounded one-second seek and deterministic PNG settings", () => {
+  it("uses the video midpoint and deterministic PNG settings", () => {
     expect(buildPosterArgs({ videoPath, posterPath, durationMs: 8_000 })).toEqual(
       expect.arrayContaining([
         "-ss",
-        "1.000",
+        "4.000",
         "-vf",
         "scale=1280:-2:flags=lanczos",
         "-map_metadata",

@@ -71,7 +71,7 @@ export class FfmpegRenderer implements VideoRenderer {
     }
 
     for (const segment of timeline.segments) {
-      const filter = this.segmentToFilter(segment, options);
+      const filter = this.segmentToFilter(segment, options, timeline.resolution.width);
       if (filter) {
         filterSteps.push(filter);
       }
@@ -90,25 +90,33 @@ export class FfmpegRenderer implements VideoRenderer {
     return parts.join(";");
   }
 
-  private segmentToFilter(segment: Segment, options: RenderOptions): string | undefined {
+  private segmentToFilter(
+    segment: Segment,
+    options: RenderOptions,
+    resolutionWidth: number,
+  ): string | undefined {
     switch (segment.type) {
       case "intro":
       case "chapter":
       case "outro":
-        return this.buildDrawtextFilter(segment, options);
+        return this.buildDrawtextFilter(segment, options, resolutionWidth);
       default:
         return undefined;
     }
   }
 
-  private buildDrawtextFilter(segment: Segment, options: RenderOptions): string {
+  private buildDrawtextFilter(
+    segment: Segment,
+    options: RenderOptions,
+    resolutionWidth: number,
+  ): string {
     const text = escapeDrawtext(segment.label ?? "");
     const color = options.branding?.colors?.primary ?? "white";
     const start = msToSec(segment.startMs);
     const end = msToSec(segment.endMs);
 
     const isIntroOutro = segment.type === "intro" || segment.type === "outro";
-    const fontSize = isIntroOutro ? 52 : 36;
+    const fontSize = isIntroOutro ? fitIntroFontSize(segment.label ?? "", resolutionWidth) : 36;
     const boxColor = isIntroOutro ? "black@0.7" : "black@0.45";
     const boxPadding = isIntroOutro ? 24 : 14;
     const yPos = isIntroOutro ? "(h-text_h)/2" : "96";
@@ -155,6 +163,21 @@ export class FfmpegRenderer implements VideoRenderer {
       });
     });
   }
+}
+
+function fitIntroFontSize(label: string, resolutionWidth: number): number {
+  const safeWidth =
+    Number.isFinite(resolutionWidth) && resolutionWidth > 0 ? resolutionWidth : 1_280;
+  const characterUnits = Array.from(label).reduce((total, character) => {
+    if (character === " ") return total + 0.35;
+    if (/[ilI1.,:;|]/.test(character)) return total + 0.32;
+    if (/[MW@%&]/.test(character)) return total + 0.9;
+    return total + 0.58;
+  }, 0);
+  if (characterUnits === 0) return 52;
+
+  const availableWidth = Math.max(1, safeWidth * 0.86 - 48);
+  return Math.max(22, Math.min(52, Math.floor(availableWidth / characterUnits)));
 }
 
 function msToSec(ms: number): string {
