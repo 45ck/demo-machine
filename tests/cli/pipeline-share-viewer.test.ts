@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   writeSubtitles: vi.fn(),
   render: vi.fn(),
   quality: vi.fn(),
+  probeVideo: vi.fn(),
   generateShareViewer: vi.fn(),
 }));
 
@@ -23,6 +24,7 @@ vi.mock("../../src/editor/renderer.js", () => ({
 vi.mock("../../src/cli/quality-gate.js", () => ({
   runPostRenderQualityGate: mocks.quality,
 }));
+vi.mock("../../src/quality/ffprobe.js", () => ({ probeVideo: mocks.probeVideo }));
 vi.mock("../../src/share/generator.js", () => ({
   generateShareViewer: mocks.generateShareViewer,
 }));
@@ -51,6 +53,7 @@ describe("run share viewer integration", () => {
     mocks.prepareNarration.mockImplementation(({ timeline }) => Promise.resolve({ timeline }));
     mocks.render.mockImplementation(({ outputPath }) => Promise.resolve(outputPath));
     mocks.quality.mockResolvedValue({ qualityReportPath: "/output/quality.json", status: "pass" });
+    mocks.probeVideo.mockResolvedValue({ videoDurationSec: 112.48 });
     mocks.generateShareViewer.mockResolvedValue({
       viewerPath: "/output/viewer.html",
       manifestPath: "/output/viewer.manifest.json",
@@ -78,6 +81,9 @@ describe("run share viewer integration", () => {
       spec,
       startTimestamp: 1_000,
     });
+    mocks.prepareNarration.mockImplementation(({ timeline }) =>
+      Promise.resolve({ timeline: { ...timeline, totalDurationMs: 112_457 } }),
+    );
     const { runFullPipeline } = await import("../../src/cli/pipeline.js");
     const result = await runFullPipeline({
       spec,
@@ -96,9 +102,13 @@ describe("run share viewer integration", () => {
       spec,
       events: [{ action: "wait", timestamp: 1_000, duration: 100 }],
       startTimestamp: 1_000,
-      durationMs: expect.any(Number),
+      durationMs: 112_480,
     });
+    expect(mocks.probeVideo).toHaveBeenCalledWith("/output/output.mp4");
     expect(mocks.quality.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.probeVideo.mock.invocationCallOrder[0]!,
+    );
+    expect(mocks.probeVideo.mock.invocationCallOrder[0]).toBeLessThan(
       mocks.generateShareViewer.mock.invocationCallOrder[0]!,
     );
     expect(result).toMatchObject({

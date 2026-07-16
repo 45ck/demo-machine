@@ -1,6 +1,7 @@
 /* eslint-disable max-lines */
 import type { DemoSpec } from "../spec/types.js";
 import type { RunResult } from "../pipeline-types.js";
+import path from "node:path";
 import { createLogger } from "../utils/logger.js";
 import type { GlobalOptions } from "./options.js";
 import type { NarrationSettings } from "./narration.js";
@@ -11,6 +12,7 @@ import { displayTimelineAndSaveSegments } from "./timeline-display.js";
 import { runPostRenderQualityGate } from "./quality-gate.js";
 import { writeLatestOutputPointer } from "./output.js";
 import { generateShareViewer } from "../share/generator.js";
+import { probeVideo } from "../quality/ffprobe.js";
 
 export { runEditPipeline } from "./edit-pipeline.js";
 export { runPostRenderQualityGate } from "./quality-gate.js";
@@ -172,17 +174,17 @@ function buildNonEmptyScreenshotData(
 async function generateShare(
   capture: Awaited<ReturnType<typeof captureFromSpec>>,
   outputDir: string,
-  durationMs: number,
 ): Promise<Awaited<ReturnType<typeof generateShareViewer>> | undefined> {
   const config = capture.spec.share;
   if (!config?.enabled) return undefined;
+  const probe = await probeVideo(path.join(outputDir, config.video));
   const result = await generateShareViewer({
     outputDir,
     config,
     spec: capture.spec,
     events: capture.events,
     startTimestamp: capture.startTimestamp,
-    durationMs,
+    durationMs: Math.round(probe.videoDurationSec * 1_000),
   });
   log.info(`Share viewer: ${result.viewerPath}`);
   return result;
@@ -261,8 +263,7 @@ async function runEditPhase(params: {
     extractRenderedVideoSamples: true,
   });
 
-  const durationMs = narrationPrep.extendToMs ?? narrationPrep.timeline.totalDurationMs;
-  const shareViewer = await generateShare(workingCapture, params.opts.output, durationMs);
+  const shareViewer = await generateShare(workingCapture, params.opts.output);
 
   log.info(`Output: ${outputPath}`);
   return {
