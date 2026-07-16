@@ -169,7 +169,10 @@ share:
 The summary, profile label, synthetic-boundary statement, and primary call to
 action are required. `title` defaults to `meta.title`; the secondary call to
 action and poster are optional. Video and caption filenames default to
-`output.mp4` and `subtitles.vtt`. `embedMode` defaults to `deny`; only the
+`output.mp4` and `subtitles.vtt`. A configured missing PNG poster is extracted
+deterministically from the rendered video. Generated-poster hash provenance
+refreshes it when the video changes, supplied posters are preserved, and other
+missing poster formats fail closed. `embedMode` defaults to `deny`; only the
 explicit `same-origin` value produces a same-origin framing header contract.
 The generator accepts only sibling media filenames and HTTPS, loopback HTTP,
 or safe same-origin call-to-action links. See [Share Viewer](share-viewer.md)

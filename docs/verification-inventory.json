@@ -45,10 +45,13 @@
   "deliveryArtifacts": [
     {
       "id": "share-viewer",
-      "outputs": ["viewer.html", "viewer.manifest.json"],
+      "outputs": ["viewer.html", "viewer.manifest.json", "configured PNG poster"],
       "proof": ["schema", "unit", "example", "docs"],
       "invariants": [
         "native-controls",
+        "focused-character-key-shortcuts",
+        "deterministic-source-matched-poster",
+        "mp4-fast-start",
         "chapter-timing",
         "timestamp-deep-links",
         "captions-and-transcript",

@@ -46,13 +46,21 @@ traversal, oversized copy, and nested media paths fail validation.
 
 Viewer media is deliberately constrained to sibling files. Defaults are
 `output.mp4` and `subtitles.vtt`; an optional poster may be PNG, JPEG, WebP, or
-AVIF. A configured poster must exist. If the VTT file is absent, the generator
-creates it deterministically from reviewed step `narration` and captured event
-timestamps. This works with `--no-narration`: no TTS provider, audio file,
-network service, or model is required. An existing VTT is preserved as the
-reviewed source. Steps without narration are omitted; when a spec has neither
-reviewed step narration nor an existing VTT, captions and transcript remain
-unavailable rather than inventing product copy that has not been reviewed.
+AVIF. An existing regular poster is always preserved. When a configured PNG is
+missing, the generator extracts a deterministic 1280-pixel-wide Lanczos frame
+from the rendered video at one second or the midpoint of shorter media, with a
+first-frame retry, through shell-free FFmpeg execution and an atomic sibling-file
+install. A local hash-provenance sidecar lets later runs refresh generated
+posters when the video changes while preserving a supplied or manually replaced
+poster. That sidecar is generation state, not a public viewer asset. Missing
+non-PNG posters still fail closed rather than changing the requested format. If
+the VTT file is absent, the generator creates it deterministically from reviewed
+step `narration` and captured event timestamps. This works with
+`--no-narration`: no TTS provider, audio file, network service, or model is
+required. An existing VTT is preserved as the reviewed source. Steps without
+narration are omitted; when a spec has neither reviewed step narration nor an
+existing VTT, captions and transcript remain unavailable rather than inventing
+product copy that has not been reviewed.
 
 ## Viewer Interactions
 
@@ -67,7 +75,10 @@ Clipboard API with a local fallback. Playback speed offers 0.75×, 1×, 1.25×,
 1.5×, and 2×. No preference or query is persisted to cookies, local storage, or
 analytics. When playback ends, an accessible prompt repeats the primary call to
 action and offers replay; the primary call to action also stays visible beside
-the player throughout playback.
+the player throughout playback. Keyboard shortcuts apply only while the native
+video player has focus, so printable shortcut keys cannot unexpectedly activate
+elsewhere on the page. Control, Command, and Alt-modified keys are left to the
+browser and operating system.
 
 ## Generate
 
@@ -98,6 +109,10 @@ duration with FFprobe, and writes:
 - `viewer.manifest.json`: deterministic media hashes, exact duration, calls to
   action, chapter timings, profile boundary, publication/embed flags, required
   response headers, accessibility features, and privacy invariants.
+
+Rendered MP4 files use fast-start metadata placement for progressive web
+playback. When `share.poster` names a missing PNG, the run also writes that
+source-matched poster before hashing the complete viewer package.
 
 Serve the directory over HTTP so browsers can seek video and load captions:
 

@@ -10,6 +10,12 @@
   action, safe embed-header contracts, a hash-based Content Security Policy,
   and a machine-readable integration manifest.
 
+### Changed
+
+- Missing configured PNG posters are generated deterministically from the final
+  video, MP4 output uses fast-start metadata placement, and printable viewer
+  shortcuts activate only while the native player has focus.
+
 ## 0.3.0 — 2026-04-24
 
 ### Added

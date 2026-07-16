@@ -188,10 +188,17 @@ describe("verification surface", () => {
 
   it("inventories the static share viewer contract", () => {
     const shareViewer = inventory().deliveryArtifacts.find((entry) => entry.id === "share-viewer");
-    expect(shareViewer?.outputs).toEqual(["viewer.html", "viewer.manifest.json"]);
+    expect(shareViewer?.outputs).toEqual([
+      "viewer.html",
+      "viewer.manifest.json",
+      "configured PNG poster",
+    ]);
     expect(shareViewer?.invariants).toEqual(
       expect.arrayContaining([
         "native-controls",
+        "focused-character-key-shortcuts",
+        "deterministic-source-matched-poster",
+        "mp4-fast-start",
         "captions-and-transcript",
         "safe-cta",
         "content-security-policy",

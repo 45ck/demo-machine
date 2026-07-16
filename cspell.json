@@ -106,7 +106,14 @@
     "noarchive",
     "SAMEORIGIN",
     "inputmode",
-    "NDIS"
+    "NDIS",
+    "Lanczos",
+    "bitexact",
+    "fflags",
+    "faststart",
+    "movflags",
+    "nostdin",
+    "unstub"
   ],
   "ignorePaths": ["node_modules", "dist", "pnpm-lock.yaml", "*.json"]
 }

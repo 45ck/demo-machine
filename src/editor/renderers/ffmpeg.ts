@@ -27,7 +27,7 @@ export class FfmpegRenderer implements VideoRenderer {
     this.addAudioMapping(args, options);
     this.addDuration(args, timeline, options);
 
-    args.push("-c:v", "libx264", "-preset", "fast", "-crf", "23");
+    args.push("-c:v", "libx264", "-preset", "fast", "-crf", "23", "-movflags", "+faststart");
     args.push(options.outputPath);
     return args;
   }

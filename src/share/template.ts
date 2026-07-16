@@ -91,7 +91,7 @@ function renderKeyboardHelp(): string {
     ["C", "Show or hide captions"],
     ["F", "Enter full screen"],
   ];
-  return `<dl class="key-grid">${shortcuts
+  return `<p>Focus the video player before using these shortcuts.</p><dl class="key-grid">${shortcuts
     .map(([key, label]) => `<dt><kbd>${key}</kbd></dt><dd>${label}</dd>`)
     .join("")}</dl>`;
 }

@@ -142,6 +142,7 @@ export const VIEWER_SCRIPT = `
   };
 
   const editableTarget = (target) => target instanceof Element && Boolean(target.closest("a, button, input, textarea, select, summary"));
+  const playerHasShortcutFocus = (target) => target === video || document.activeElement === video;
 
   for (const button of chapterButtons) {
     button.addEventListener("click", () => {
@@ -205,16 +206,19 @@ export const VIEWER_SCRIPT = `
     }
   });
   document.addEventListener("keydown", (event) => {
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
     if (editableTarget(event.target)) return;
+    if (!playerHasShortcutFocus(event.target)) return;
     const key = event.key.toLowerCase();
     if (key === " " || key === "k") { event.preventDefault(); togglePlayback(); }
     else if (key === "arrowleft") { event.preventDefault(); seekBy(-5); }
     else if (key === "arrowright") { event.preventDefault(); seekBy(5); }
-    else if (key === "j") seekBy(-10);
-    else if (key === "l") seekBy(10);
-    else if (key === "m") { video.muted = !video.muted; announce(video.muted ? "Muted" : "Unmuted"); }
-    else if (key === "c") toggleCaptions();
+    else if (key === "j") { event.preventDefault(); seekBy(-10); }
+    else if (key === "l") { event.preventDefault(); seekBy(10); }
+    else if (key === "m") { event.preventDefault(); video.muted = !video.muted; announce(video.muted ? "Muted" : "Unmuted"); }
+    else if (key === "c") { event.preventDefault(); toggleCaptions(); }
     else if (key === "f" && document.fullscreenEnabled && typeof video.requestFullscreen === "function") {
+      event.preventDefault();
       void video.requestFullscreen().catch(() => announce("Full screen is unavailable."));
     }
   });

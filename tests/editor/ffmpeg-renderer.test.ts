@@ -213,4 +213,18 @@ describe("FfmpegRenderer.buildArgs", () => {
     const tIndex = args.indexOf("-t");
     expect(args[tIndex + 1]).toBe("5.000");
   });
+
+  it("moves MP4 metadata to the front for web playback", async () => {
+    const renderer = new FfmpegRenderer();
+    await renderer.render(baseTimeline, {
+      outputPath: "/output/output.mp4",
+      videoPath: "/input/video.webm",
+    });
+
+    const args = mockSpawn.mock.calls[0]![1] as string[];
+    const movflagsIndex = args.indexOf("-movflags");
+    expect(movflagsIndex).toBeGreaterThan(-1);
+    expect(args[movflagsIndex + 1]).toBe("+faststart");
+    expect(movflagsIndex).toBeLessThan(args.indexOf("/output/output.mp4"));
+  });
 });

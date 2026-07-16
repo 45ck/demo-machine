@@ -10,6 +10,7 @@ import { deriveReviewedSpecCaptions } from "./captions.js";
 import { deriveViewerChapters } from "./chapters.js";
 import { createViewerDocument, type ViewerSecurityPolicies } from "./template.js";
 import { parseVttTranscript, type TranscriptCue } from "./transcript.js";
+import { ensurePosterAsset, type PosterCommandRunner } from "./poster.js";
 
 const VIEWER_FILE = "viewer.html";
 const MANIFEST_FILE = "viewer.manifest.json";
@@ -107,15 +108,6 @@ async function requireAsset(outputDir: string, filename: string, label: string):
     throw new Error(`${label} not found beside the viewer output: ${filename}`);
   }
   return assetPath;
-}
-
-async function optionalAsset(
-  outputDir: string,
-  filename: string | undefined,
-): Promise<string | undefined> {
-  if (!filename) return undefined;
-  const assetPath = path.join(outputDir, filename);
-  return (await isRegularFile(assetPath)) ? assetPath : undefined;
 }
 
 async function resolveCaptionsAsset(params: {
@@ -230,6 +222,7 @@ export async function generateShareViewer(params: {
   events: ActionEvent[];
   startTimestamp: number;
   durationMs: number;
+  posterCommandRunner?: PosterCommandRunner | undefined;
 }): Promise<ShareViewerResult> {
   const config = shareViewerConfigSchema.parse(params.config);
   if (!config.enabled) throw new Error("Share viewer generation is disabled in the demo spec");
@@ -244,10 +237,14 @@ export async function generateShareViewer(params: {
   const outputDir = path.resolve(params.outputDir);
   await mkdir(outputDir, { recursive: true });
   const videoPath = await requireAsset(outputDir, config.video, "Video");
-  const posterPath = await optionalAsset(outputDir, config.poster);
-  if (config.poster && !posterPath) {
-    throw new Error(`Poster not found beside the viewer output: ${config.poster}`);
-  }
+  const posterPath = config.poster
+    ? await ensurePosterAsset({
+        videoPath,
+        posterPath: path.join(outputDir, config.poster),
+        durationMs,
+        commandRunner: params.posterCommandRunner,
+      })
+    : undefined;
   const captionsPath = await resolveCaptionsAsset({
     outputDir,
     filename: config.captions,

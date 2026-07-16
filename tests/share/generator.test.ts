@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createHash } from "node:crypto";
 import { mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -196,7 +196,7 @@ describe("generateShareViewer", () => {
   });
 
   it("fails closed when an explicitly configured poster is missing", async () => {
-    const spec = demoSpec("missing.png");
+    const spec = demoSpec("missing.webp");
     await expect(
       generateShareViewer({
         outputDir,
@@ -206,7 +206,31 @@ describe("generateShareViewer", () => {
         startTimestamp: 1_000,
         durationMs: 8_000,
       }),
-    ).rejects.toThrow("Poster not found");
+    ).rejects.toThrow("Automatic poster generation requires a .png filename");
+  });
+
+  it("generates and hashes a missing configured PNG poster", async () => {
+    await rm(join(outputDir, "poster.png"));
+    const spec = demoSpec();
+    const posterCommandRunner = vi.fn(async (_command: string, args: readonly string[]) => {
+      await writeFile(args.at(-1)!, "source-matched poster fixture", "utf8");
+    });
+    const result = await generateShareViewer({
+      outputDir,
+      config: spec.share,
+      spec,
+      events: [{ action: "wait", timestamp: 1_000, duration: 100 }],
+      startTimestamp: 1_000,
+      durationMs: 8_000,
+      posterCommandRunner,
+    });
+
+    expect(posterCommandRunner).toHaveBeenCalledOnce();
+    expect(result.manifest.media.poster).toEqual({
+      path: "poster.png",
+      sha256: createHash("sha256").update("source-matched poster fixture").digest("hex"),
+    });
+    expect(await readFile(result.viewerPath, "utf8")).toContain('poster="./poster.png"');
   });
 
   it("does not follow media symlinks outside the output package", async () => {
